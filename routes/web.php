@@ -7,15 +7,19 @@ use Inertia\Inertia;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
+        'canLogin' => true, // GitHubログインは常に利用可能
+        'canRegister' => false, // GitHubログインのみのため false
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
     ]);
 });
 
+Route::get('/docs', function () {
+    return Inertia::render('Documentation');
+})->name('docs');
+
 Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
+    return redirect()->route('projects.index');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -27,11 +31,23 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects', [\App\Http\Controllers\ProjectController::class, 'index'])->name('projects.index');
     Route::get('/projects/create', [\App\Http\Controllers\ProjectController::class, 'create'])->name('projects.create');
     Route::post('/projects', [\App\Http\Controllers\ProjectController::class, 'store'])->name('projects.store');
-    Route::get('/projects/{project}', [\App\Http\Controllers\ProjectController::class, 'show'])->name('projects.show');
+    Route::get('/projects/{project}/edit', [\App\Http\Controllers\ProjectController::class, 'edit'])->name('projects.edit');
+    Route::patch('/projects/{project}', [\App\Http\Controllers\ProjectController::class, 'update'])->name('projects.update');
+    Route::delete('/projects/{project}', [\App\Http\Controllers\ProjectController::class, 'destroy'])->name('projects.destroy');
+    Route::post('/projects/{project}/generate-approval-url', [\App\Http\Controllers\ProjectController::class, 'generateApprovalUrl'])->name('projects.generate-approval-url');
+    
+    // GitHub API Proxy
+    Route::get('/api/github/organizations', [\App\Http\Controllers\ProjectController::class, 'getOrganizations'])->name('api.github.organizations');
+    Route::get('/api/github/repositories', [\App\Http\Controllers\ProjectController::class, 'getRepositories'])->name('api.github.repositories');
+    Route::get('/api/github/workflows', [\App\Http\Controllers\ProjectController::class, 'getWorkflows'])->name('api.github.workflows');
+    Route::get('/api/github/branches', [\App\Http\Controllers\ProjectController::class, 'getBranches'])->name('api.github.branches');
 });
 
-// 承認ページ（ログイン不要）
+// 承認ページ（ログイン不要、レート制限付き）
 Route::get('/approve/{token}', [\App\Http\Controllers\ApproveController::class, 'show'])->name('approve.show');
-Route::post('/approve/{token}', [\App\Http\Controllers\ApproveController::class, 'approve'])->name('approve.approve');
+Route::post('/approve/{token}', [\App\Http\Controllers\ApproveController::class, 'approve'])
+    ->middleware('throttle:10,60') // 1分間に10回まで
+    ->name('approve.approve');
+Route::get('/approve/{token}/status/{deployLog}', [\App\Http\Controllers\ApproveController::class, 'status'])->name('approve.status');
 
 require __DIR__.'/auth.php';

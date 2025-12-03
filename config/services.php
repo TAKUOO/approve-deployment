@@ -15,7 +15,10 @@ return [
     */
 
     'github' => [
-        'token' => env('GITHUB_TOKEN'),
+        'client_id' => env('GITHUB_CLIENT_ID'),
+        'client_secret' => env('GITHUB_CLIENT_SECRET'),
+        'redirect' => env('GITHUB_REDIRECT_URI', '/auth/github/callback'),
+        'token' => env('GITHUB_TOKEN'), // 後方互換性のため残す（将来的に削除可能）
     ],
 
     'google' => [

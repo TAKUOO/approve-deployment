@@ -14,6 +14,7 @@ class DeployLog extends Model
         'started_at',
         'finished_at',
         'raw_log',
+        'approval_message_id',
     ];
 
     protected $casts = [
@@ -24,5 +25,10 @@ class DeployLog extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function approvalMessage(): BelongsTo
+    {
+        return $this->belongsTo(ApprovalMessage::class);
     }
 }

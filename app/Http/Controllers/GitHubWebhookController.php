@@ -40,16 +40,39 @@ class GitHubWebhookController extends Controller
         return response()->json(['status' => 'ok']);
     }
 
-    private function mapStatus(string $status, ?string $conclusion): string
+    private function mapStatus(?string $status, ?string $conclusion): string
     {
+        // conclusionが設定されている場合は、それを優先
         if ($conclusion === 'success') {
+            Log::info('Deploy status mapped to success', [
+                'status' => $status,
+                'conclusion' => $conclusion,
+            ]);
             return 'success';
-        } elseif ($conclusion === 'failure' || $conclusion === 'cancelled') {
+        } elseif ($conclusion === 'failure' || $conclusion === 'cancelled' || $conclusion === 'action_required') {
+            Log::info('Deploy status mapped to failed', [
+                'status' => $status,
+                'conclusion' => $conclusion,
+            ]);
             return 'failed';
+        }
+        
+        // conclusionがない場合は、statusで判定
+        if ($status === 'completed') {
+            // completedだがconclusionがない場合は、成功とみなす
+            Log::info('Deploy status mapped to success (completed without conclusion)', [
+                'status' => $status,
+                'conclusion' => $conclusion,
+            ]);
+            return 'success';
         } elseif ($status === 'in_progress' || $status === 'queued') {
             return 'running';
         }
 
+        Log::warning('Deploy status mapped to pending (unknown status)', [
+            'status' => $status,
+            'conclusion' => $conclusion,
+        ]);
         return 'pending';
     }
 }

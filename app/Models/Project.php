@@ -18,6 +18,7 @@ class Project extends Model
         'github_repo',
         'github_workflow_id',
         'github_branch',
+        'server_dir',
     ];
 
     public function user(): BelongsTo
@@ -28,5 +29,10 @@ class Project extends Model
     public function deployLogs(): HasMany
     {
         return $this->hasMany(DeployLog::class);
+    }
+
+    public function approvals(): HasMany
+    {
+        return $this->hasMany(Approval::class);
     }
 }

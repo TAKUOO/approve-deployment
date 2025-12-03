@@ -38,8 +38,8 @@ const features = [
     },
     {
         title: 'GitHub Actions連携',
-        description: 'ApproveDeployからworkflow_dispatchを呼び出し、SSH/FTP/Envoyなど好みの手法で本番に反映します。',
-        detail: 'Secrets/環境変数をApproveDeployから安全に注入。ロールバック手順もワンクリック。',
+        description: 'Quickneeからworkflow_dispatchを呼び出し、SSH/FTP/Envoyなど好みの手法で本番に反映します。',
+        detail: 'Secrets/環境変数をQuickneeから安全に注入。ロールバック手順もワンクリック。',
         icon: 'layers',
         accent: 'from-blue-200 via-sky-100 to-emerald-200',
     },
@@ -56,7 +56,7 @@ const workflowSteps = [
     {
         title: '1. Pull Request',
         summary: 'GitHubでレビューが完了',
-        detail: 'mainブランチへのマージ待ち。ApproveDeployがテスト環境への承認URLを自動生成します。',
+        detail: 'mainブランチへのマージ待ち。Quickneeがテスト環境への承認URLを自動生成します。',
     },
     {
         title: '2. クライアント承認',
@@ -71,13 +71,13 @@ const workflowSteps = [
     {
         title: '4. 履歴で確認',
         summary: '承認/デプロイ履歴',
-        detail: '完了後はApproveDeployの履歴画面から承認者と実行結果を振り返れます。',
+        detail: '完了後はQuickneeの履歴画面から承認者と実行結果を振り返れます。',
     },
 ];
 
 const faqs = [
     {
-        question: 'ApproveDeployはどんなワークフローに向いていますか？',
+        question: 'Quickneeはどんなワークフローに向いていますか？',
         answer:
             'GitHubでコードレビュー→クライアント承認→本番反映という一連の流れを自動化したいWeb制作チームに最適です。静的サイト・WordPress・Laravel・Next.jsなどフレームワークを問いません。',
     },
@@ -89,7 +89,12 @@ const faqs = [
     {
         question: 'サーバー環境は限定されますか？',
         answer:
-            'GitHub Actionsの中でSSH/FTP/rsync/Envoyなど好きな手段を指定できるため、レンタルサーバーからクラウドまで幅広く対応します。ApproveDeploy側はサーバーを持たず、コードも管理しません。',
+            'GitHub Actionsの中でSSH/FTP/rsync/Envoyなど好きな手段を指定できるため、レンタルサーバーからクラウドまで幅広く対応します。Quicknee側はサーバーを持たず、コードも管理しません。',
+    },
+    {
+        question: '利用にあたって推奨される環境はありますか？',
+        answer:
+            'GitHub Actionsでworkflow_dispatchが使えるGitHubリポジトリと、テスト環境（ステージング）を用意していることが前提です。QuickneeからはGitHub ActionsのAPIを呼び出すため、CI/CDをGitHub Actionsで構築しているチームに最適です。',
     },
     {
         question: '承認やデプロイの履歴はどれくらい保存されますか？',
@@ -107,7 +112,7 @@ const faqs = [
 <template>
     <Head title="WEBデザイナー向けデプロイ自動化サービス" />
 
-    <div class="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-100 via-slate-200 to-indigo-200/50 text-slate-900">
+    <div class="overflow-hidden relative min-h-screen bg-gradient-to-br from-slate-100 via-slate-200 to-indigo-200/50 text-slate-900">
         <div class="absolute inset-0 pointer-events-none">
             <div class="absolute top-10 -left-16 w-72 h-72 rounded-full blur-3xl bg-indigo-200/40"></div>
             <div class="absolute bottom-0 right-0 h-[26rem] w-[26rem] rounded-full bg-sky-200/40 blur-[120px]"></div>
@@ -115,61 +120,45 @@ const faqs = [
         </div>
 
         <div class="flex relative z-10 flex-col min-h-screen">
-            <header class="mx-auto mt-6 flex w-full max-w-6xl flex-wrap items-center justify-between gap-6 rounded-[32px] border border-white/60 bg-white/80 px-8 py-6 text-slate-600 shadow-xl shadow-indigo-100/70 backdrop-blur">
+            <header class="flex flex-wrap gap-6 justify-between items-center mx-auto mt-6 w-full max-w-6xl">
                 <div class="flex gap-4 items-center">
-                    <div class="flex justify-center items-center w-12 h-12 bg-white rounded-2xl shadow-lg shadow-indigo-100">
-                        <svg class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
                     <div>
-                        <p class="text-lg font-semibold tracking-wide text-slate-900">ApproveDeploy</p>
-                        <p class="text-xs uppercase text-slate-500">Approve → Auto Deploy</p>
+                        <p class="text-3xl font-bold tracking-wide text-slate-900">Quicknee</p>
                     </div>
                 </div>
 
-                <nav class="flex flex-wrap gap-4 items-center text-sm text-slate-600">
+                <nav class="flex flex-wrap gap-6 items-center font-semibold text-md text-slate-600">
                     <a class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex" href="#features">機能</a>
                     <a class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex" href="#workflow">ワークフロー</a>
                     <a class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex" href="#faq">FAQ</a>
+                    <Link :href="route('docs')" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">ドキュメント</Link>
 
                     <Link
                         v-if="$page.props.auth?.user"
-                        :href="route('dashboard')"
+                        :href="route('projects.index')"
                         class="px-5 py-2 rounded-full border transition border-slate-200 text-slate-700 hover:border-slate-400 hover:text-slate-900"
                     >
-                        ダッシュボードへ
+                        プロジェクト一覧へ
                     </Link>
 
                     <template v-else>
                         <button
                             @click="openLoginModal"
-                            class="px-5 py-2 rounded-full transition text-slate-600 hover:text-slate-900"
+                            class="px-6 py-2 font-semibold text-white bg-indigo-600 rounded-full shadow-lg transition shadow-indigo-200 hover:opacity-90"
                         >
-                            ログイン
-                        </button>
-                        <button
-                            @click="openLoginModal"
-                            class="px-6 py-2 font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full shadow-lg transition shadow-indigo-200 hover:opacity-90"
-                        >
-                            無料で始める
+                        ログイン
                         </button>
                     </template>
                 </nav>
             </header>
 
             <main class="flex-1">
-                <section class="px-6 pt-10 pb-20 sm:pt-16 lg:pb-36">
-                    <div class="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+                <section class="px-6 pt-60 pb-20 sm:pt-16 lg:pb-26">
+                    <div class="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[1.05fr_0.95fr] items-center">
                         <div class="space-y-10">
-                            <div class="inline-flex gap-3 items-center px-4 py-2 text-sm rounded-full shadow-sm bg-white/70 shadow-indigo-100">
-                                <span class="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-500">新しい承認体験</span>
-                                <span class="text-xs text-slate-500">Pushから45秒で本番反映</span>
-                            </div>
-
                             <div>
                                 <h1 class="text-4xl font-semibold tracking-tight leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                                    <span class="block">WEBデザイナー向け</span>
+                                    <span class="block mb-5">WEBデザイナー向け</span>
                                     <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-sky-400 to-purple-500">デプロイ自動化サービス</span>
                                 </h1>
                                 <p class="mt-6 text-lg leading-relaxed text-slate-600">
@@ -181,7 +170,7 @@ const faqs = [
                                 <button
                                     v-if="!$page.props.auth?.user"
                                     @click="openLoginModal"
-                                    class="px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl shadow-xl transition shadow-indigo-200 hover:-translate-y-0.5"
+                                    class="px-8 py-4 text-lg font-semibold text-white bg-indigo-600 rounded-2xl shadow-xl transition shadow-indigo-200 hover:-translate-y-0.5"
                                 >
                                     今すぐ試す
                                 </button>
@@ -198,9 +187,9 @@ const faqs = [
                                         <span>main · production</span>
                                     </div>
                                     <div class="mt-4 space-y-5">
-                                        <div class="p-4 bg-gradient-to-br rounded-2xl shadow-inner from-slate-50 to-indigo-50/70 shadow-indigo-100/60">
+                                        <div class="p-4 bg-indigo-50 rounded-2xl border border-indigo-200">
                                             <p class="text-sm text-indigo-500">承認状況</p>
-                                            <p class="text-lg font-semibold text-slate-900">Ready for deploy</p>
+                                        <p class="text-lg font-semibold text-slate-900">本番反映の準備完了</p>
                                             <p class="text-xs text-slate-500">3 reviewers approved</p>
                                         </div>
                                         <div class="space-y-4">
@@ -213,12 +202,12 @@ const faqs = [
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="p-5 mt-6 text-sm bg-gradient-to-br rounded-2xl border border-indigo-100 shadow-inner from-slate-50 to-emerald-50/50 text-slate-600 shadow-indigo-100/60">
+                                    <div class="p-5 mt-6 text-sm bg-emerald-50 rounded-2xl border border-emerald-300 text-slate-60">
                                         <p class="font-semibold text-slate-900">Actions ready</p>
                                         <p class="mt-1 text-xs text-slate-500">workflow_dispatch · secrets synced</p>
                                         <div class="flex justify-between items-center mt-4">
-                                            <span class="text-2xl font-bold text-emerald-500">00:45</span>
-                                            <span class="text-xs text-slate-500">署名済みトークンで安全に実行</span>
+                                            <span class="text-2xl font-bold text-emerald-600">00:45</span>
+                                            <span class="text-xs font-bold text-emerald-500">署名済みトークンで安全に実行</span>
                                         </div>
                                     </div>
                                 </div>
@@ -232,7 +221,7 @@ const faqs = [
                         <div class="space-y-3 text-center">
                             <p class="text-xs uppercase tracking-[0.3em] text-indigo-500">Capabilities</p>
                             <h2 class="text-3xl font-semibold text-slate-900">更新時の二重作業を抑え、無駄な時間を排除</h2>
-                            <p class="text-slate-600">ApproveDeployは、テスト→承認→本番アップを一本化し、同じ作業を繰り返さないための仕組みを標準搭載しています。</p>
+                            <p class="text-slate-600">Quickneeは、テスト→承認→本番アップを一本化し、同じ作業を繰り返さないための仕組みを標準搭載しています。</p>
                         </div>
                         <div class="grid gap-8 md:grid-cols-3">
                             <article
@@ -270,28 +259,27 @@ const faqs = [
                         <div class="space-y-6">
                             <p class="text-xs uppercase tracking-[0.3em] text-indigo-500">Workflow</p>
                             <h2 class="text-3xl font-semibold text-slate-900">4ステップで承認〜自動デプロイ</h2>
-                            <p class="text-slate-600">ApproveDeployはGitHub Actionsと連動し、Pull Requestから承認、デプロイ実行までを一気通貫でトラッキングします。</p>
+                            <p class="text-slate-600">QuickneeはGitHub Actionsと連動し、Pull Requestから承認、デプロイ実行までを一気通貫でトラッキングします。</p>
                             <div class="space-y-4">
                                 <div
                                     v-for="step in workflowSteps"
                                     :key="step.title"
-                                    class="flex gap-4 p-5 bg-gradient-to-br from-white via-indigo-50 rounded-3xl border border-indigo-100 shadow-xl to-indigo-100/70 shadow-indigo-100/70"
+                                    class="flex gap-4 p-5 rounded-2xl border border-indigo-100 to-indigo-100/90"
                                 >
-                                    <div class="flex justify-center items-center w-12 h-12 text-sm font-semibold text-indigo-600 bg-white rounded-2xl shadow-sm">
+                                    <div class="flex justify-center items-center w-12 h-12 text-sm font-semibold text-indigo-600 bg-indigo-100 rounded-2xl">
                                         {{ step.title.split('.')[0] }}
                                     </div>
                                     <div>
-                                        <p class="text-sm uppercase tracking-[0.2em] text-indigo-500">{{ step.summary }}</p>
                                         <p class="text-lg font-semibold text-slate-900">{{ step.title }}</p>
                                         <p class="mt-2 text-sm text-slate-600">{{ step.detail }}</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="relative overflow-hidden rounded-[32px] border border-indigo-100 bg-gradient-to-br from-white via-slate-50 to-indigo-100/60 p-8 shadow-[0_25px_70px_rgba(79,70,229,0.2)]">
+                        <div class="relative overflow-hidden rounded-[32px] border border-indigo-100 bg-indigo-100 p-8">
                             <div class="mb-6 space-y-2">
                                 <p class="text-sm text-indigo-500">Live status</p>
-                                <p class="text-2xl font-semibold text-slate-900">ApproveDeploy Bot</p>
+                                <p class="text-2xl font-semibold text-slate-900">Quicknee Bot</p>
                                 <p class="text-sm text-slate-500">github-actions · production</p>
                             </div>
                             <div class="space-y-6 text-sm text-slate-600">
@@ -331,7 +319,7 @@ const faqs = [
                             <div
                                 v-for="(faq, index) in faqs"
                                 :key="faq.question"
-                                class="overflow-hidden bg-white rounded-2xl border border-transparent ring-1 shadow-lg shadow-slate-200/80 ring-slate-100"
+                                class="overflow-hidden bg-white rounded-2xl border border-transparent ring-1 ring-slate-100"
                             >
                                 <button
                                     @click="toggleFaq(index)"
@@ -359,20 +347,14 @@ const faqs = [
                     <div class="mx-auto max-w-5xl rounded-[40px] border border-slate-200 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-1">
                         <div class="rounded-[36px] bg-gradient-to-br from-white via-slate-50 to-indigo-50/50 px-10 py-12 text-center text-slate-900 shadow-[0_25px_80px_rgba(79,70,229,0.15)]">
                             <p class="text-xs uppercase tracking-[0.3em] text-indigo-500">Get started</p>
-                            <h2 class="mt-4 text-3xl font-semibold">Googleアカウントで今日から運用を自動化</h2>
+                            <h2 class="mt-4 text-3xl font-semibold">GitHubアカウントで今日から運用を自動化</h2>
                             <p class="mt-3 text-slate-600">ログインして承認URLを送り、ワンクリックでGitHub Actionsを呼び出すだけ。初期費用はゼロです。</p>
                             <div class="flex flex-wrap gap-4 justify-center mt-8">
                                 <button
                                     @click="openLoginModal"
-                                    class="px-10 py-4 text-lg font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl shadow-2xl transition shadow-indigo-200 hover:-translate-y-0.5"
+                                    class="px-10 py-4 text-lg font-semibold text-white bg-indigo-600 rounded-2xl shadow-2xl transition shadow-indigo-200 hover:-translate-y-0.5"
                                 >
-                                    無料で始める
-                                </button>
-                                <button
-                                    @click="openLoginModal"
-                                    class="px-10 py-4 text-lg font-semibold rounded-2xl border shadow-lg transition border-white/70 bg-white/80 text-slate-700 shadow-indigo-100/70 hover:-translate-y-0.5"
-                                >
-                                    デモを見る
+                                    今すぐ試す
                                 </button>
                             </div>
                         </div>
@@ -380,29 +362,30 @@ const faqs = [
                 </section>
             </main>
 
-            <footer class="px-6 py-10 text-xs text-center text-slate-500">
-                &copy; {{ new Date().getFullYear() }} ApproveDeploy. All rights reserved.
+            <footer class="px-6 py-10 space-y-2 text-xs text-center text-slate-500">
+                <div class="flex flex-wrap gap-4 justify-center text-sm text-slate-600">
+                    <span>運営元：Quicknee</span>
+                    <a href="/terms" class="underline hover:text-slate-900">利用規約</a>
+                    <a href="/privacy" class="underline hover:text-slate-900">プライバシーポリシー</a>
+                </div>
+                <div>&copy; {{ new Date().getFullYear() }} Quicknee. All rights reserved.</div>
             </footer>
         </div>
 
         <Modal :show="showLoginModal" @close="closeLoginModal" max-width="md">
             <div class="p-8 bg-white rounded-3xl text-slate-900">
                 <div class="mb-6 text-center">
-                    <p class="text-sm uppercase tracking-[0.3em] text-indigo-500">Sign in</p>
-                    <h2 class="mt-2 text-2xl font-semibold">Googleアカウントでログイン</h2>
-                    <p class="mt-2 text-sm text-slate-500">承認→自動デプロイのワークフローを60秒でセットアップできます。</p>
+                    <h2 class="mt-2 text-2xl font-semibold">GitHubアカウントでログイン</h2>
+                    <p class="mt-3 text-sm font-medium text-slate-500">QuickneeはWEBデザイナー向けデプロイ自動化サービスです。承認→自動デプロイのワークフローを60秒でセットアップできます。</p>
                 </div>
                 <a
-                    :href="route('google.login')"
+                    :href="route('github.login')"
                     class="flex gap-3 justify-center items-center px-4 py-3 mb-6 text-sm font-semibold bg-white rounded-2xl border shadow-sm transition border-slate-200 text-slate-700 hover:border-indigo-200 hover:text-indigo-600"
                 >
-                    <svg class="w-5 h-5" viewBox="0 0 24 24">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                     </svg>
-                    Googleでログイン
+                    GitHubでログイン
                 </a>
                 <button
                     @click="closeLoginModal"

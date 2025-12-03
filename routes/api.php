@@ -13,3 +13,6 @@ Route::post('/projects/{project}/deploy', [\App\Http\Controllers\DeployControlle
 // GitHub Webhook
 Route::post('/github/webhook', [\App\Http\Controllers\GitHubWebhookController::class, 'handle'])->name('github.webhook');
 
+// Deploy Log Status (公開API、認証不要)
+Route::get('/deploy-logs/{deployLog}', [\App\Http\Controllers\DeployLogController::class, 'show'])->name('deploy-logs.show');
+

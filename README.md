@@ -1,4 +1,4 @@
-# ApproveDeploy
+# Quicknee
 
 Web製作者向けのSaaS「承認 → 自動アップ」サービス
 
@@ -10,6 +10,7 @@ Web製作者向けのSaaS「承認 → 自動アップ」サービス
 - [技術スタック](#技術スタック)
 - [システムアーキテクチャ](#システムアーキテクチャ)
 - [データベーススキーマ](#データベーススキーマ)
+- [各テーブルの必要性](#各テーブルの必要性)
 - [認証フロー](#認証フロー)
 - [デプロイフロー](#デプロイフロー)
 - [API仕様](#api仕様)
@@ -120,7 +121,9 @@ Web製作者向けのSaaS「承認 → 自動アップ」サービス
 | id | bigint | 主キー |
 | name | string | ユーザー名 |
 | email | string | メールアドレス（ユニーク） |
-| google_id | string | Google OAuth ID（nullable） |
+| github_id | string | GitHub ID（nullable） |
+| github_username | string | GitHubユーザー名（nullable） |
+| github_token | text | GitHubアクセストークン（encrypted, nullable） |
 | avatar | string | アバター画像URL（nullable） |
 | email_verified_at | timestamp | メール確認日時（nullable） |
 | password | string | パスワード（ハッシュ化） |
@@ -163,21 +166,147 @@ Web製作者向けのSaaS「承認 → 自動アップ」サービス
 
 Laravel標準のセッション管理用テーブル
 
+| カラム名 | 型 | 説明 |
+|---------|-----|------|
+| id | string | セッションID（主キー） |
+| user_id | bigint | ユーザーID（nullable、外部キー） |
+| ip_address | string | IPアドレス（nullable） |
+| user_agent | text | ユーザーエージェント（nullable） |
+| payload | longtext | セッションデータ |
+| last_activity | integer | 最終アクセス時刻 |
+
 ### cache テーブル
 
 Laravel標準のキャッシュ管理用テーブル
 
+| カラム名 | 型 | 説明 |
+|---------|-----|------|
+| key | string | キャッシュキー（主キー） |
+| value | mediumtext | キャッシュ値 |
+| expiration | integer | 有効期限（Unixタイムスタンプ） |
+
+## 各テーブルの必要性
+
+### 1. **users テーブル** - 必須
+
+**役割**: ユーザー情報の管理
+
+**必要な理由**:
+- GitHub OAuthでログインしたユーザー情報を保存
+- プロジェクトの所有権を管理（どのユーザーがどのプロジェクトを作成したか）
+- 認証状態の管理（ログイン/ログアウト）
+- `github_id`で既存ユーザーを識別し、新規作成/更新を判断
+- `github_token`を保存し、GitHub APIへのアクセス（リポジトリ一覧取得、デプロイ実行）に使用
+
+**使用箇所**:
+- GitHubログイン時のユーザー作成/更新
+- プロジェクト作成時に`user_id`を保存
+- プロジェクト一覧で自分のプロジェクトのみ表示
+- デプロイ実行時にトークンを復号して使用
+
+---
+
+### 2. **projects テーブル** - 必須
+
+**役割**: プロジェクト情報の管理
+
+**必要な理由**:
+- 各プロジェクトの設定を保存（ステージングURL、本番URL、GitHub情報）
+- `approve_token`で承認ページへのアクセスを制御（ログイン不要で承認可能）
+- ユーザーとプロジェクトの紐付け（`user_id`）
+- GitHub Actions連携に必要な情報を保持
+
+**使用箇所**:
+- プロジェクト作成・一覧・詳細表示
+- 承認ページでトークンからプロジェクトを特定
+- デプロイ時にGitHub情報を取得
+
+---
+
+### 3. **deploy_logs テーブル** - 必須
+
+**役割**: デプロイ履歴の記録
+
+**必要な理由**:
+- 各デプロイの実行履歴を保存
+- デプロイステータス（pending/running/success/failed）を追跡
+- GitHub Actionsの実行ID（`github_run_id`）を保存して連携
+- デプロイ開始・終了時刻を記録
+- エラー時のログ（`raw_log`）を保存してトラブルシューティング
+
+**使用箇所**:
+- プロジェクト詳細ページでデプロイ履歴を表示
+- GitHub Webhookでデプロイ完了を検知してステータス更新
+- デプロイの成功/失敗を確認
+
+---
+
+### 4. **sessions テーブル** - 必須
+
+**役割**: セッション管理
+
+**必要な理由**:
+- Laravelのセッション管理に必要
+- ログイン状態を維持（ページ遷移後もログイン状態を保持）
+- セキュリティ（CSRFトークン、セッションIDの管理）
+- 複数デバイスでのログイン状態を管理
+
+**使用箇所**:
+- ユーザーがログインしている間、セッション情報を保存
+- ログアウト時にセッションを削除
+
+---
+
+### 5. **cache テーブル** - 推奨（削除可能）
+
+**役割**: データベースキャッシュ
+
+**必要な理由**:
+- Laravelの`Cache::store('database')`を使用する場合に必要
+- パフォーマンス向上（頻繁にアクセスするデータをキャッシュ）
+- 設定のキャッシュ（`config:cache`）
+
+**削除可能な場合**:
+- ファイルキャッシュ（`CACHE_DRIVER=file`）を使用している場合
+- RedisやMemcachedを使用している場合
+
+**現在の使用状況**: Laravelの標準機能で使用される可能性があるため、残しておくことを推奨
+
+---
+
+## テーブル間の関係
+
+```
+users (1) ──< (多) projects (1) ──< (多) deploy_logs
+  │
+  └── sessions (1対多: 1ユーザーが複数セッションを持つ可能性)
+```
+
+- **users → projects**: 1ユーザーが複数のプロジェクトを作成可能
+- **projects → deploy_logs**: 1プロジェクトが複数のデプロイ履歴を持つ
+- **users → sessions**: 1ユーザーが複数のセッション（複数デバイス）を持つ可能性
+
+## テーブル必要性まとめ
+
+| テーブル | 必要性 | 理由 |
+|---------|--------|------|
+| **users** | 必須 | ユーザー認証とプロジェクト所有権の管理 |
+| **projects** | 必須 | プロジェクト設定と承認トークンの管理 |
+| **deploy_logs** | 必須 | デプロイ履歴とステータスの追跡 |
+| **sessions** | 必須 | ログイン状態の維持 |
+| **cache** | 推奨 | パフォーマンス向上（削除可能） |
+
 ## 認証フロー
 
-### Google OAuth認証
+### GitHub OAuth認証
 
-1. ユーザーが「Googleでログイン」ボタンをクリック
-2. `/auth/google`にリダイレクト（`GoogleController@redirect`）
-3. Google OAuth認証画面にリダイレクト
-4. ユーザーがGoogleアカウントで認証
-5. `/auth/google/callback`にコールバック（`GoogleController@callback`）
-6. Googleからユーザー情報を取得
-7. 既存ユーザーの場合: `google_id`と`avatar`を更新
+1. ユーザーが「GitHubでログイン」ボタンをクリック
+2. `/auth/github`にリダイレクト（`GitHubController@redirect`）
+3. GitHub OAuth認証画面にリダイレクト
+4. ユーザーがGitHubアカウントで認証
+5. `/auth/github/callback`にコールバック（`GitHubController@callback`）
+6. GitHubからユーザー情報とアクセストークンを取得
+7. 既存ユーザーの場合: `github_id`, `github_username`, `github_token`, `avatar`を更新
 8. 新規ユーザーの場合: ユーザーを作成（`email_verified_at`を自動設定）
 9. セッションにログイン情報を保存
 10. ダッシュボードにリダイレクト
@@ -207,13 +336,15 @@ Laravel標準のキャッシュ管理用テーブル
    ↓
 9. DeployLog レコードを作成（status: pending）
    ↓
-10. GitHub Actions API に workflow_dispatch リクエスト
+10. プロジェクト所有者のGitHubトークンを復号
     ↓
-11. GitHub Actions がデプロイを実行
+11. GitHub Actions API に workflow_dispatch リクエスト
     ↓
-12. GitHub Webhook でデプロイ完了を検知
+12. GitHub Actions がデプロイを実行
     ↓
-13. DeployLog を更新（status: success/failed）
+13. GitHub Webhook でデプロイ完了を検知
+    ↓
+14. DeployLog を更新（status: success/failed）
 ```
 
 ## API仕様
@@ -230,8 +361,11 @@ Laravel標準のキャッシュ管理用テーブル
 | GET | `/projects/{project}` | ProjectController@show | プロジェクト詳細 | 必要 |
 | GET | `/approve/{token}` | ApproveController@show | 承認ページ | 不要 |
 | POST | `/approve/{token}` | ApproveController@approve | 承認実行 | 不要 |
-| GET | `/auth/google` | GoogleController@redirect | Google認証開始 | 不要 |
-| GET | `/auth/google/callback` | GoogleController@callback | Google認証コールバック | 不要 |
+| GET | `/auth/github` | GitHubController@redirect | GitHub認証開始 | 不要 |
+| GET | `/auth/github/callback` | GitHubController@callback | GitHub認証コールバック | 不要 |
+| GET | `/api/github/repositories` | ProjectController@getRepositories | リポジトリ一覧取得 | 必要 |
+| GET | `/api/github/workflows` | ProjectController@getWorkflows | ワークフロー一覧取得 | 必要 |
+| GET | `/api/github/branches` | ProjectController@getBranches | ブランチ一覧取得 | 必要 |
 
 ### API Routes
 
@@ -263,7 +397,7 @@ Laravel標準のキャッシュ管理用テーブル
 - Composer
 - Node.js (v18以上推奨)
 - MySQL 5.7以上
-- GitHub Personal Access Token（`workflow_dispatch`権限が必要）
+- GitHub OAuth App
 
 ### 1. リポジトリのクローン
 
@@ -292,7 +426,7 @@ php artisan key:generate
 `.env`ファイルを編集して以下を設定：
 
 ```env
-APP_NAME=ApproveDeploy
+APP_NAME=Quicknee
 APP_URL=http://localhost:8000
 
 DB_CONNECTION=mysql
@@ -302,13 +436,10 @@ DB_DATABASE=approve_deployment
 DB_USERNAME=root
 DB_PASSWORD=
 
-# GitHub設定
-GITHUB_TOKEN=your_github_personal_access_token
-
-# Google OAuth設定
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
+# GitHub OAuth設定
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
+GITHUB_REDIRECT_URI=http://localhost:8000/auth/github/callback
 ```
 
 ### 4. データベースのセットアップ
@@ -341,32 +472,23 @@ php artisan serve
 
 | 変数名 | 説明 | 例 |
 |--------|------|-----|
-| `APP_NAME` | アプリケーション名 | ApproveDeploy |
+| `APP_NAME` | アプリケーション名 | Quicknee |
 | `APP_URL` | アプリケーションURL | http://localhost:8000 |
 | `DB_*` | データベース接続情報 | - |
-| `GITHUB_TOKEN` | GitHub Personal Access Token | ghp_xxxxx |
-| `GOOGLE_CLIENT_ID` | Google OAuth Client ID | xxxxx.apps.googleusercontent.com |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret | GOCSPX-xxxxx |
-| `GOOGLE_REDIRECT_URI` | Google OAuth リダイレクトURI | http://localhost:8000/auth/google/callback |
+| `GITHUB_CLIENT_ID` | GitHub OAuth Client ID | Iv1.xxxxx |
+| `GITHUB_CLIENT_SECRET` | GitHub OAuth Client Secret | xxxxx |
+| `GITHUB_REDIRECT_URI` | GitHub OAuth リダイレクトURI | http://localhost:8000/auth/github/callback |
 
-### GitHub Personal Access Token の取得方法
+### GitHub OAuth App の作成方法
 
 1. GitHubにログイン
-2. Settings → Developer settings → Personal access tokens → Tokens (classic)
-3. "Generate new token"をクリック
-4. 以下のスコープを選択:
-   - `repo` (Full control of private repositories)
-   - `workflow` (Update GitHub Action workflows)
-5. トークンを生成してコピー
-
-### Google OAuth設定
-
-1. [Google Cloud Console](https://console.cloud.google.com/)にアクセス
-2. プロジェクトを作成
-3. APIとサービス → 認証情報
-4. OAuth 2.0 クライアントIDを作成
-5. 承認済みのJavaScript生成元: `http://localhost:8000`
-6. 承認済みのリダイレクトURI: `http://localhost:8000/auth/google/callback`
+2. Settings → Developer settings → OAuth Apps
+3. "New OAuth App"をクリック
+4. 以下を入力:
+   - Application name: Quicknee (任意)
+   - Homepage URL: http://localhost:8000
+   - Authorization callback URL: http://localhost:8000/auth/github/callback
+5. Client IDとClient Secretを取得
 
 ## ディレクトリ構造
 
@@ -376,7 +498,7 @@ approve-deployment/
 │   ├── Http/
 │   │   ├── Controllers/
 │   │   │   ├── Auth/
-│   │   │   │   ├── GoogleController.php      # Google OAuth認証
+│   │   │   │   ├── GitHubController.php      # GitHub OAuth認証
 │   │   │   │   └── AuthenticatedSessionController.php
 │   │   │   ├── ApproveController.php        # 承認ページ
 │   │   │   ├── DeployController.php         # デプロイトリガー

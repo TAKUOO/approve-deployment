@@ -18,28 +18,20 @@ defineProps({
     <Head title="プロフィール" />
 
     <AuthenticatedLayout>
-        <template #header>
-            <h2
-                class="text-xl font-semibold leading-tight text-gray-800"
-            >
-                プロフィール
-            </h2>
-        </template>
-
         <div class="py-12">
-            <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
+            <div class="mx-auto space-y-6 max-w-3xl sm:px-6 lg:px-8">
                 <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8"
+                    class="p-4 bg-white border border-gray-200 sm:rounded-lg sm:p-8"
                 >
                     <UpdateProfileInformationForm
                         :must-verify-email="mustVerifyEmail"
                         :status="status"
-                        class="max-w-xl"
+                        class="max-w"
                     />
                 </div>
 
                 <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8"
+                    class="p-4 bg-white border border-gray-200 sm:rounded-lg sm:p-8"
                 >
                     <DeleteUserForm class="max-w-xl" />
                 </div>
