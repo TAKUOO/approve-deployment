@@ -33,7 +33,7 @@ const submit = () => {
 
 <template>
     <GuestLayout>
-        <Head title="Reset Password" />
+        <Head title="パスワード再設定 - AutoRelease" />
 
         <form @submit.prevent="submit">
             <div>

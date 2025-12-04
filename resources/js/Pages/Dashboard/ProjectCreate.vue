@@ -1,9 +1,11 @@
 <template>
+    <Head title="プロジェクト作成 - AutoRelease" />
+    
     <AuthenticatedLayout>
-        <div class="py-12">
+        <div class="py-12 bg-indigo-50 min-h-screen">
             <div class="mx-auto max-w-2xl sm:px-6 lg:px-8">
-                <div class="overflow-hidden bg-white">
-                    <div class="text-gray-900">
+                <div class="bg-white rounded-2xl shadow-xl">
+                    <div class="p-8 text-gray-900">
                         <!-- 一覧に戻るボタン -->
                         <div v-if="hasProjects" class="mb-4">
                             <Link :href="route('projects.index')" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900">
@@ -381,6 +383,11 @@
                         </form>
                     </div>
                 </div>
+                
+                <!-- フッター -->
+                <div class="mt-8">
+                    <AppFooter />
+                </div>
             </div>
         </div>
 
@@ -431,8 +438,9 @@
 
 <script setup>
 import { useForm } from '@inertiajs/vue3';
-import { Link } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AppFooter from '@/Components/AppFooter.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';

@@ -272,6 +272,7 @@ class ProjectController extends Controller
             'name' => $name,
             'user_id' => Auth::id(),
             'approve_token' => $approveToken,
+            'approve_token_expires_at' => now()->addDays(7), // 7日間有効
             'github_branch' => $validated['github_branch'] ?? 'main',
         ]);
 

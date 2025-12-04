@@ -41,7 +41,7 @@ const closeModal = () => {
 <template>
     <section class="space-y-6">
         <header>
-            <h2 class="text-lg font-medium text-gray-900">
+            <h2 class="text-lg font-bold text-gray-900">
                 アカウント削除
             </h2>
 
@@ -76,7 +76,7 @@ const closeModal = () => {
                         ref="passwordInput"
                         v-model="form.password"
                         type="password"
-                        class="mt-1 block w-3/4"
+                        class="block mt-1 w-3/4"
                         placeholder="パスワード"
                         @keyup.enter="deleteUser"
                     />
@@ -84,7 +84,7 @@ const closeModal = () => {
                     <InputError :message="form.errors.password" class="mt-2" />
                 </div>
 
-                <div class="mt-6 flex justify-end">
+                <div class="flex justify-end mt-6">
                     <SecondaryButton @click="closeModal">
                         キャンセル
                     </SecondaryButton>

@@ -19,7 +19,7 @@ GitHubログイン機能を使用するには、GitHub側でOAuth Appを登録�
 
 #### Application name（アプリケーション名）
 ```
-Quicknee
+AutoRelease
 ```
 または任意の名前
 

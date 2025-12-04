@@ -1,4 +1,9 @@
 <template>
+    <Head>
+        <title>承認ステータス - AutoRelease</title>
+        <meta name="robots" content="noindex, nofollow">
+    </Head>
+    
     <div class="flex justify-center px-4 py-12 min-h-screen bg-indigo-50 sm:px-6 lg:px-8">
         <div class="p-8 space-y-8 w-full max-w-4xl bg-white rounded-2xl">
             <div>
@@ -13,148 +18,98 @@
             <!-- デプロイログ詳細 -->
             <div class="mt-8 space-y-6">
                 <!-- ステータス表示 -->
-                <div class="p-6 rounded-lg border-2" :class="statusClass">
-                    <div class="flex items-center gap-3">
-                        <div v-if="deployLog.status === 'running'" class="flex-shrink-0">
-                            <svg class="w-6 h-6 text-blue-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                            </svg>
-                        </div>
-                        <div v-else-if="deployLog.status === 'success'" class="flex-shrink-0">
-                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                        </div>
-                        <div v-else-if="deployLog.status === 'failed'" class="flex-shrink-0">
-                            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </div>
-                        <div v-else class="flex-shrink-0">
-                            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <div class="flex-1">
-                            <h3 class="text-lg font-semibold" :class="statusTextClass">
-                                {{ statusMessage }}
-                            </h3>
-                            <p v-if="deployLog.status === 'running'" class="mt-1 text-sm text-gray-600">
-                                しばらくお待ちください。完了次第、自動的に更新されます。
-                            </p>
-                            <div v-if="deployLog.status === 'running' && (elapsedTime || estimatedTime)" class="mt-3 space-y-1">
-                                <p v-if="elapsedTime" class="text-sm text-gray-600">
-                                    経過時間: <span class="font-medium">{{ elapsedTime }}</span>
-                                </p>
-                                <p v-if="estimatedTime" class="text-sm text-gray-600">
-                                    予想完了時刻: <span class="font-medium">{{ estimatedTime }}</span>
-                                </p>
-                                <p v-if="averageDurationSeconds" class="text-xs text-gray-500">
-                                    過去の平均所要時間: 約{{ formatDuration(averageDurationSeconds) }}
-                                </p>
-                            </div>
-                            <p v-else-if="deployLog.status === 'success'" class="mt-1 text-sm text-gray-600">
-                                サイトの更新が完了しました。本番環境に反映されています。
-                            </p>
-                            <p v-else-if="deployLog.status === 'failed'" class="mt-1 text-sm text-gray-600">
-                                サイトの更新に失敗しました。管理者にお問い合わせください。
-                            </p>
-                        </div>
+                <div class="p-6 text-center rounded-lg border-2" :class="statusClass">
+                    <h3 class="text-lg font-semibold" :class="statusTextClass">
+                        {{ statusMessage }}
+                    </h3>
+                    <p v-if="deployLogData.status === 'running'" class="mt-1 text-sm text-gray-600">
+                        しばらくお待ちください。完了次第、自動的に更新されます。
+                    </p>
+                    <div v-if="deployLogData.status === 'running' && (elapsedTime || estimatedTime)" class="flex gap-3 justify-center items-center mt-3 text-xs text-gray-600">
+                        <p v-if="elapsedTime">
+                            経過時間: <span class="font-medium">{{ elapsedTime }}</span>
+                        </p>
+                        <p v-if="estimatedTime">
+                            予想完了時刻: <span class="font-medium">{{ estimatedTime }}</span>
+                        </p>
+                        <p v-if="averageDurationSeconds" class="text-gray-500">
+                            過去の平均所要時間: 約{{ formatDurationFromSeconds(averageDurationSeconds) }}
+                        </p>
                     </div>
+                    <p v-else-if="deployLogData.status === 'success'" class="mt-1 text-sm text-gray-600">
+                        サイトの更新が完了しました。本番環境に反映されています。
+                    </p>
+                    <p v-else-if="deployLogData.status === 'failed'" class="mt-1 text-sm text-gray-600">
+                        サイトの更新に失敗しました。管理者にお問い合わせください。
+                    </p>
                 </div>
 
                 <!-- デプロイログ詳細情報 -->
-                <div class="p-6 bg-gray-50 rounded-lg border border-gray-200">
-                    <h3 class="mb-4 text-lg font-semibold text-gray-900">デプロイ情報</h3>
-                    <dl class="space-y-3">
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">ステータス</dt>
-                            <dd class="mt-1">
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full" :class="statusBadgeClass">
-                                    {{ statusLabel }}
-                                </span>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">開始日時</dt>
-                            <dd class="mt-1 text-sm text-gray-900">
-                                {{ formatDateTime(deployLog.started_at) }}
-                            </dd>
-                        </div>
-                        <div v-if="deployLog.finished_at">
-                            <dt class="text-sm font-medium text-gray-500">終了日時</dt>
-                            <dd class="mt-1 text-sm text-gray-900">
-                                {{ formatDateTime(deployLog.finished_at) }}
-                            </dd>
-                        </div>
-                        <div v-if="deployLog.finished_at">
-                            <dt class="text-sm font-medium text-gray-500">所要時間</dt>
-                            <dd class="mt-1 text-sm text-gray-900">
-                                {{ formatDuration(deployLog.started_at, deployLog.finished_at) }}
-                            </dd>
-                        </div>
-                        <div v-else-if="deployLog.started_at">
-                            <dt class="text-sm font-medium text-gray-500">経過時間</dt>
-                            <dd class="mt-1 text-sm text-gray-900">
-                                {{ formatElapsedTime(deployLog.started_at) }}
-                            </dd>
-                        </div>
-                        <div v-if="deployLog.approval_message">
-                            <dt class="text-sm font-medium text-gray-500">承認時に共有した内容</dt>
-                            <dd class="mt-1 p-3 text-sm text-gray-700 bg-white rounded border border-gray-200 whitespace-pre-line">
-                                {{ deployLog.approval_message.message }}
-                            </dd>
-                        </div>
-                    </dl>
-                </div>
-
-                <!-- 本番URLへのリンク（成功時のみ表示） -->
-                <div v-if="deployLog.status === 'success'" class="p-6 bg-green-50 rounded-lg border border-green-200">
-                    <div class="flex items-center gap-3">
-                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-green-800">
-                                更新されたサイトを確認する
-                            </p>
-                            <a 
-                                :href="project.production_url" 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                class="mt-2 inline-block text-sm text-green-700 underline hover:text-green-900"
-                            >
-                                {{ project.production_url }}
-                            </a>
-                        </div>
+                <div class="bg-gray-100 rounded-2xl border border-gray-200">
+                    <div class="flex justify-between items-center p-4 border-b border-gray-200">
+                        <h3 class="font-bold text-gray-700 text-md">デプロイ情報</h3>
+                    </div>
+                    <div class="p-4">
+                        <dl class="space-y-3">
+                            <div>
+                                <dd class="flex gap-3 items-center text-xs font-bold text-gray-500">
+                                    <!-- ステータスアイコン -->
+                                    <div v-if="deployLogData.status === 'success'" class="flex flex-shrink-0 justify-center items-center w-6 h-6 bg-green-500 rounded-full">
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                    <div v-else-if="deployLogData.status === 'failed'" class="flex flex-shrink-0 justify-center items-center w-6 h-6 bg-red-500 rounded-full">
+                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </div>
+                                    <div v-else-if="deployLogData.status === 'running'" class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-orange-500"></div>
+                                    <div v-else class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-500"></div>
+                                    
+                                    <p>開始: {{ formatDateTime(deployLogData.started_at) }}</p>
+                                    <p v-if="deployLogData.finished_at">終了: {{ formatDateTime(deployLogData.finished_at) }}</p>
+                                    <p v-if="deployLogData.finished_at">所要時間: {{ formatDuration(deployLogData.started_at, deployLogData.finished_at) }}</p>
+                                    <p v-else-if="deployLogData.started_at">経過時間: {{ formatElapsedTime(deployLogData.started_at) }}</p>
+                                </dd>
+                            </div>
+                            <div v-if="deployLogData.approval_message">
+                                <dt class="flex justify-between items-center text-sm font-medium text-gray-500">
+                                    <span>詳細内容</span>
+                                    <button
+                                        @click="toggleApprovalMessageExpansion"
+                                        class="flex gap-1 items-center text-xs font-bold text-gray-500 transition-colors hover:text-gray-700"
+                                    >
+                                        <span>詳細</span>
+                                        <svg 
+                                            class="w-4 h-4 transition-transform"
+                                            :class="{ 'rotate-90': isApprovalMessageExpanded }"
+                                            fill="none" 
+                                            stroke="currentColor" 
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </button>
+                                </dt>
+                                <dd v-if="isApprovalMessageExpanded" class="p-3 mt-1 text-sm text-gray-700 whitespace-pre-line bg-white rounded-2xl border border-gray-200">
+                                    {{ deployLogData.approval_message.message }}
+                                </dd>
+                            </div>
+                        </dl>
                     </div>
                 </div>
             </div>
 
-            <footer class="space-y-2 text-xs text-center text-gray-500">
-                <!-- サービスロゴ（フッター上） -->
-                <div class="pt-8 mt-12 border-t border-gray-200">
-                    <div class="flex justify-center mb-10">
-                        <a href="/" class="text-3xl font-bold tracking-wide transition text-slate-900 hover:text-slate-700">
-                            Quicknee
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="flex flex-wrap gap-4 justify-center text-sm text-gray-600">
-                    <span>運営元：Quicknee</span>
-                    <a href="/terms" class="underline hover:text-gray-900">利用規約</a>
-                    <a href="/privacy" class="underline hover:text-gray-900">プライバシーポリシー</a>
-                </div>
-                <div>&copy; {{ new Date().getFullYear() }} Quicknee. All rights reserved.</div>
-            </footer>
+            <AppFooter :show-logo="true" />
         </div>
     </div>
 </template>
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
+import AppFooter from '@/Components/AppFooter.vue';
 
 const props = defineProps({
     project: Object,
@@ -165,7 +120,13 @@ const props = defineProps({
 
 const deployLogData = ref(props.deployLog);
 const averageDurationSeconds = ref(props.averageDurationSeconds);
+const isApprovalMessageExpanded = ref(true); // デフォルトで開いた状態
 let pollInterval = null;
+
+// 承認メッセージの開閉を切り替え
+const toggleApprovalMessageExpansion = () => {
+    isApprovalMessageExpanded.value = !isApprovalMessageExpanded.value;
+};
 
 // ステータスに応じたクラスとメッセージ
 const statusClass = computed(() => {
@@ -279,7 +240,7 @@ const elapsedTime = computed(() => {
     const start = new Date(deployLogData.value.started_at);
     const now = new Date();
     const diffSeconds = Math.floor((now - start) / 1000);
-    return formatDuration(diffSeconds);
+    return formatDurationFromSeconds(diffSeconds);
 });
 
 // 予想完了時刻を計算
@@ -297,21 +258,10 @@ const estimatedTime = computed(() => {
     });
 });
 
-// 秒数を分・秒の形式に変換
-const formatDuration = (seconds) => {
-    if (!seconds) return '-';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    if (mins > 0) {
-        return `${mins}分${secs}秒`;
-    }
-    return `${secs}秒`;
-};
-
 // ステータスをポーリングで更新
 const pollStatus = async () => {
     try {
-        const response = await fetch(`/api/deploy-logs/${deployLogData.value.id}`, {
+        const response = await fetch(`/api/deploy-logs/${deployLogData.value.id}?token=${props.token}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
@@ -360,9 +310,13 @@ let pollCount = 0;
 const MAX_POLL_COUNT = 600; // 最大30分（3秒 × 600回）
 
 onMounted(() => {
-    // 実行中の場合のみポーリングを開始
+    // 実行中または待機中の場合はポーリングを開始
+    // 成功や失敗の場合でも、念のため最初の1回はポーリングを実行して最新状態を確認
     if (deployLogData.value.status === 'running' || deployLogData.value.status === 'pending') {
         console.log('Starting poll for deploy log:', deployLogData.value.id, 'Status:', deployLogData.value.status);
+        
+        // 即座に1回実行
+        pollStatus();
         
         pollInterval = setInterval(() => {
             pollCount++;
@@ -395,7 +349,9 @@ onMounted(() => {
             }
         }, 1000);
     } else {
-        console.log('Deploy already finished, no poll needed. Status:', deployLogData.value.status);
+        // 成功や失敗の場合でも、念のため最初の1回はポーリングを実行して最新状態を確認
+        console.log('Deploy status is', deployLogData.value.status, ', checking once for latest status');
+        pollStatus();
     }
 });
 

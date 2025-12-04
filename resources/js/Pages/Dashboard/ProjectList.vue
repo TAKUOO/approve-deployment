@@ -1,4 +1,6 @@
 <template>
+    <Head title="プロジェクト一覧 - AutoRelease" />
+    
     <AuthenticatedLayout>
         <div class="flex h-[calc(100vh-4rem)]">
             <!-- 左サイドバー（固定） -->
@@ -8,7 +10,7 @@
                     <div class="flex justify-between items-center">
                         <h2 class="text-sm font-semibold text-gray-900">Projects</h2>
                     <Link :href="route('projects.create')">
-                            <button class="flex gap-1 items-center px-2 py-1 text-xs font-medium text-white bg-green-600 rounded-md border border-transparent transition duration-150 ease-in-out hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            <button class="flex gap-1 items-center px-2 py-1 text-xs font-medium text-white bg-indigo-600 rounded-md border border-transparent transition duration-150 ease-in-out hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                 </svg>
@@ -44,23 +46,15 @@
             </div>
 
             <!-- 右メインコンテンツエリア -->
-            <div class="overflow-y-auto flex-1">
+            <div class="overflow-y-auto flex-1 bg-indigo-50">
                 <div v-if="currentProject" class="p-6 mx-auto max-w-3xl">
                     <div>
-                        <div class="text-gray-900">
+                        <div class="bg-white rounded-2xl shadow-xl">
+                        <div class="p-6 text-gray-900 border-b border-gray-200">
                             <!-- プロジェクト名（タイトル）とアクションボタン -->
                             <div class="flex justify-between items-center mb-2">
-                                <h1 class="text-xl font-bold text-gray-500">{{ currentProject.name }}</h1>
-                                <div class="flex gap-2">
-                                    <button
-                                        @click="showGuide"
-                                        class="p-2 text-gray-400 rounded-md transition-colors hover:text-indigo-600 hover:bg-indigo-50"
-                                        title="使い方ガイドを見る"
-                                    >
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </button>
+                                <h1 class="text-xl font-bold text-gray-700">{{ currentProject.name }}</h1>
+                                <div class="flex gap-1">
                                     <Link :href="route('projects.edit', currentProject.id)" class="p-2 text-gray-500 rounded-md transition-colors hover:text-indigo-600 hover:bg-indigo-50" title="編集">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -90,9 +84,10 @@
                                     {{ currentProject.staging_url }}
                                 </a>
                             </div>
+                        </div>
 
-                            <!-- GitHub組織未選択の警告 -->
-                            <div v-if="!currentProject.github_owner" class="p-4 mb-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <!-- GitHub組織未選択の警告 -->
+                        <div v-if="!currentProject.github_owner" class="p-4 mb-4 bg-yellow-50 rounded-lg border border-yellow-200">
                                 <div class="flex items-start">
                                     <svg class="flex-shrink-0 mt-0.5 w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -114,10 +109,10 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                        </div>
 
-                            <!-- GitHubリポジトリ未選択の警告 -->
-                            <div v-if="!currentProject.github_repo" class="p-4 mb-6 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <!-- GitHubリポジトリ未選択の警告 -->
+                        <div v-if="!currentProject.github_repo" class="p-4 mb-6 bg-yellow-50 rounded-lg border border-yellow-200">
                                 <div class="flex items-start">
                                     <svg class="flex-shrink-0 mt-0.5 w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -139,16 +134,27 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                        </div>
 
-                            <!-- 改善内容入力と承認URL生成 -->
-                            <div 
-                                ref="approvalSection"
-                                class="pt-6 mt-6 border-t border-gray-200"
-                                :class="{ 'opacity-50 pointer-events-none': !currentProject.github_owner || !currentProject.github_repo }"
-                            >
-                                <h2 class="mb-2 text-lg font-bold text-gray-800">承認URLの作成</h2>
-                                <p class="mb-6 text-sm text-gray-500">改善内容をまとめて承認URLを生成し、クライアントに共有しましょう。</p>
+                        <!-- 改善内容入力と承認URL生成 -->
+                        <div 
+                            ref="approvalSection"
+                            class="px-4 py-4"
+                            :class="{ 'opacity-50 pointer-events-none': !currentProject.github_owner || !currentProject.github_repo }"
+                        >
+                                <div class="flex gap-2 items-center">
+                                    <h2 class="text-lg font-bold text-gray-800">承認URLの作成</h2>
+                                    <button
+                                        @click="showGuide"
+                                        class="p-2 text-gray-400 rounded-md transition-colors hover:text-indigo-600 hover:bg-indigo-50"
+                                        title="使い方ガイドを見る"
+                                    >
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p class="mb-4 text-sm text-gray-500">改善内容をまとめて承認URLを生成し、クライアントに共有しましょう。</p>
                                 <div v-if="!currentProject.github_owner || !currentProject.github_repo" class="p-3 mb-3 bg-white rounded-md border border-yellow-200">
                                     <p class="text-sm text-yellow-700">
                                         <span v-if="!currentProject.github_owner && !currentProject.github_repo">
@@ -162,11 +168,8 @@
                                         </span>
                                     </p>
                                 </div>
-                                <div class="px-2 py-3 space-y-3 bg-blue-50 rounded-2xl border border-blue-100">
+                                <div class="space-y-3">
                                     <div class="mb-6">
-                                        <label class="block mb-2 text-sm font-bold text-gray-700">
-                                            改善内容
-                                        </label>
                                         <MdEditor
                                             v-model="approvalMessage"
                                             :preview="true"
@@ -196,10 +199,11 @@
                                         </button>
                                     </div>
                                 </div>
-                            </div>
+                        </div>
+                        </div>
 
-                            <!-- サクセスメッセージ（画面下からフェードイン） -->
-                            <Transition
+                        <!-- サクセスメッセージ（画面下からフェードイン） -->
+                        <Transition
                                 enter-active-class="transition duration-300 ease-out"
                                 enter-from-class="opacity-0 transform translate-y-full"
                                 enter-to-class="opacity-100 transform translate-y-0"
@@ -225,7 +229,7 @@
                                             </button>
                                         </div>
                                         <div class="flex relative gap-2 items-center px-4 py-2 bg-white rounded-xl border border-indigo-200">
-                                            <span class="flex-1 text-sm text-gray-900 truncate">{{ generatedApprovalUrl }}</span>
+                                            <a :href="generatedApprovalUrl" target="_blank" class="flex-1 text-sm text-blue-600 underline truncate hover:text-blue-800">{{ generatedApprovalUrl }}</a>
                                             <button
                                                 @click="copyGeneratedApprovalUrl"
                                                 class="flex-shrink-0 p-1 text-gray-600 rounded hover:bg-gray-100"
@@ -241,43 +245,77 @@
                                         </div>
                                     </div>
                                 </div>
-                            </Transition>
+                        </Transition>
 
-                            <div class="mt-8">
-                                <div class="flex justify-between items-center mb-4">
-                                    <h3 class="text-lg font-medium text-gray-900">リリースログ</h3>
-                                    <p class="text-sm text-gray-600">
+                        <div class="mt-8 bg-white rounded-2xl">
+                                <div class="flex justify-between items-center p-4 border-b border-gray-200">
+                                    <h3 class="font-bold text-gray-700 text-md">リリースログ</h3>
+                                    <p class="text-xs font-bold text-gray-600">
                                         ブランチ：<span class="font-medium">{{ currentProject.github_branch }}</span>
                                     </p>
                                 </div>
                                 <div v-if="!currentProject.deploy_logs || currentProject.deploy_logs.length === 0" class="text-gray-500">
                                     リリースログがありません
                                 </div>
-                                <div v-else class="space-y-2">
+                                <div v-else>
                                     <div
                                         v-for="log in currentProject.deploy_logs"
                                         :key="log.id"
-                                        class="p-4 rounded border"
+                                        class="p-4 border-b border-gray-200 last-of-type:border-none"
                                     >
                                         <div class="flex justify-between items-start">
                                             <div class="flex-1">
-                                                <p class="font-medium">ステータス: {{ log.status }}</p>
-                                                <div class="flex gap-4 text-sm text-gray-600">
+                                                <div class="flex gap-3 items-center text-xs font-bold text-gray-500">
+                                                    <!-- ステータスアイコン -->
+                                                    <div v-if="log.status === 'success'" class="flex flex-shrink-0 justify-center items-center w-6 h-6 bg-green-500 rounded-full">
+                                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    </div>
+                                                    <div v-else-if="log.status === 'failed'" class="flex flex-shrink-0 justify-center items-center w-6 h-6 bg-red-500 rounded-full">
+                                                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </div>
+                                                    <div v-else-if="log.status === 'running'" class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-orange-500"></div>
+                                                    <div v-else class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-gray-500"></div>
+                                                    
                                                     <p>開始: {{ formatDateTime(log.started_at) }}</p>
                                                     <p v-if="log.finished_at">終了: {{ formatDateTime(log.finished_at) }}</p>
                                                     <p v-if="log.finished_at">所要時間: {{ formatDuration(log.started_at, log.finished_at) }}</p>
                                                     <p v-else-if="log.started_at">経過時間: {{ formatElapsedTime(log.started_at) }}</p>
+                                                    
+                                                    <!-- 詳細ボタン（右端に配置） -->
+                                                    <button
+                                                        v-if="log.approval_message"
+                                                        @click="toggleLogExpansion(log.id)"
+                                                        class="flex gap-1 items-center ml-auto text-xs font-bold text-gray-500 transition-colors hover:text-gray-700"
+                                                    >
+                                                        <span>詳細</span>
+                                                        <svg 
+                                                            class="w-4 h-4 transition-transform"
+                                                            :class="{ 'rotate-90': expandedLogs[log.id] }"
+                                                            fill="none" 
+                                                            stroke="currentColor" 
+                                                            viewBox="0 0 24 24"
+                                                        >
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                                        </svg>
+                                                    </button>
                                                 </div>
-                                                <div v-if="log.approval_message" class="p-3 mt-3 bg-gray-50 rounded border border-gray-200">
-                                                    <p class="mb-2 text-sm font-medium text-gray-700">承認時に共有した内容:</p>
+                                                <div v-if="log.approval_message && expandedLogs[log.id]" class="p-4 mt-2 bg-white rounded-2xl">
                                                     <div class="text-sm text-gray-600 whitespace-pre-line">{{ log.approval_message.message }}</div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
                         </div>
+                    </div>
+                    
+                    <!-- フッター -->
+                    <div class="mt-8">
+                        <AppFooter />
                     </div>
                 </div>
                 <div v-else class="flex justify-center items-center h-full">
@@ -367,8 +405,9 @@
 
 <script setup>
 import { ref, computed, onMounted, nextTick, Transition } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AppFooter from '@/Components/AppFooter.vue';
 import { MdEditor } from 'md-editor-v3';
 import 'md-editor-v3/lib/style.css';
 import 'md-editor-v3/lib/preview.css';
@@ -423,6 +462,13 @@ const currentStep = ref(0);
 const approvalSection = ref(null);
 const generateButton = ref(null);
 const generatedUrlSection = ref(null);
+
+// リリースログの開閉状態管理
+const expandedLogs = ref({});
+
+const toggleLogExpansion = (logId) => {
+    expandedLogs.value[logId] = !expandedLogs.value[logId];
+};
 
 const guideSteps = [
     {

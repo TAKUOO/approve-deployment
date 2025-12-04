@@ -1,4 +1,9 @@
 <template>
+    <Head>
+        <title>サイト更新の承認 - AutoRelease</title>
+        <meta name="robots" content="noindex, nofollow">
+    </Head>
+    
     <div class="flex justify-center px-4 py-12 min-h-screen bg-indigo-50 sm:px-6 lg:px-8">
         <div class="p-8 space-y-12 w-full max-w-4xl bg-white rounded-2xl">
             <div>
@@ -8,6 +13,22 @@
                 <p class="mt-4 text-sm text-center text-gray-600">
                     変更内容を確認して、実際のサイト（公開中のサイト）に反映するかどうかを承認できます。
                 </p>
+                
+                <!-- 重要な注意書き -->
+                <div class="p-4 mt-6 bg-yellow-50 rounded-md border-l-4 border-yellow-400">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-yellow-800">
+                                重要：このURLは7日間のみ有効です。承認後、本番環境（公開中のサイト）に自動的に変更が反映されます。
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="mt-8 space-y-16">
@@ -43,37 +64,21 @@
                             </PrimaryButton>
                         </div>
                     </form>
-                    <p class="mt-8 text-xs font-semibold text-center text-indigo-600">※ボタンをクリックすると、自動的に実際のサイト（公開中のサイト）に変更が反映されます</p>
                 </div>
             </div>
 
-            <footer class="space-y-2 text-xs text-center text-gray-500">
-
-                          <!-- サービスロゴ（フッター上） -->
-            <div class="pt-8 mt-12 border-t border-gray-200">
-                <div class="flex justify-center mb-10">
-                    <a href="/" class="text-3xl font-bold tracking-wide transition text-slate-900 hover:text-slate-700">
-                        Quicknee
-                    </a>
-                </div>
-            </div>
-            
-                <div class="flex flex-wrap gap-4 justify-center text-sm text-gray-600">
-                    <span>運営元：Quicknee</span>
-                    <a href="/terms" class="underline hover:text-gray-900">利用規約</a>
-                    <a href="/privacy" class="underline hover:text-gray-900">プライバシーポリシー</a>
-                </div>
-                <div>&copy; {{ new Date().getFullYear() }} Quicknee. All rights reserved.</div>
-            </footer>
+            <AppFooter :show-logo="true" />
         </div>
     </div>
 </template>
 
 <script setup>
 import { computed } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
+import AppFooter from '@/Components/AppFooter.vue';
 import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import 'github-markdown-css/github-markdown-light.css';
 
 const props = defineProps({
@@ -124,7 +129,8 @@ const formattedMessage = computed(() => {
         return `${indent}<a href="${fullUrl}" target="_blank" class="text-blue-600 underline hover:text-blue-800">${stagingUrl}${path}</a>`;
     });
 
-    return marked.parse(message);
+    const html = marked.parse(message);
+    return DOMPurify.sanitize(html); // XSS対策
 });
 
 const submit = () => {

@@ -14,7 +14,12 @@ class ApproveController extends Controller
 {
     public function show(Request $request, string $token): Response
     {
-        $project = Project::where('approve_token', $token)->firstOrFail();
+        $project = Project::where('approve_token', $token)
+            ->where(function ($query) {
+                $query->whereNull('approve_token_expires_at')
+                      ->orWhere('approve_token_expires_at', '>', now());
+            })
+            ->firstOrFail();
         
         $approvalMessage = null;
         if ($request->has('msg')) {
@@ -23,8 +28,14 @@ class ApproveController extends Controller
                 ->first();
         }
 
+        // 承認ページに必要な情報のみを渡す（GitHub情報は除外）
         return Inertia::render('Approve', [
-            'project' => $project,
+            'project' => [
+                'id' => $project->id,
+                'name' => $project->name,
+                'staging_url' => $project->staging_url,
+                'production_url' => $project->production_url,
+            ],
             'token' => $token,
             'approvalMessage' => $approvalMessage,
         ]);
@@ -32,14 +43,19 @@ class ApproveController extends Controller
 
     public function approve(Request $request, string $token)
     {
-        $project = Project::where('approve_token', $token)->firstOrFail();
+        $project = Project::where('approve_token', $token)
+            ->where(function ($query) {
+                $query->whereNull('approve_token_expires_at')
+                      ->orWhere('approve_token_expires_at', '>', now());
+            })
+            ->firstOrFail();
 
-        // レート制限チェック（1時間に10回まで）
+        // レート制限チェック（1時間に5回まで）
         $recentApprovals = Approval::where('project_id', $project->id)
             ->where('approved_at', '>', now()->subHour())
             ->count();
 
-        if ($recentApprovals >= 10) {
+        if ($recentApprovals >= 5) {
             Log::warning('Approval rate limit exceeded', [
                 'project_id' => $project->id,
                 'ip_address' => $request->ip(),
@@ -94,7 +110,12 @@ class ApproveController extends Controller
 
     public function status(Request $request, string $token, $deployLog)
     {
-        $project = Project::where('approve_token', $token)->firstOrFail();
+        $project = Project::where('approve_token', $token)
+            ->where(function ($query) {
+                $query->whereNull('approve_token_expires_at')
+                      ->orWhere('approve_token_expires_at', '>', now());
+            })
+            ->firstOrFail();
         
         // デプロイログを取得（プロジェクトに紐づいているか確認）
         $deployLog = \App\Models\DeployLog::where('id', $deployLog)
@@ -113,8 +134,13 @@ class ApproveController extends Controller
             })
             ->avg();
 
+        // 承認ステータスページに必要な情報のみを渡す（GitHub情報は除外）
         return Inertia::render('ApproveStatus', [
-            'project' => $project,
+            'project' => [
+                'id' => $project->id,
+                'name' => $project->name,
+                'production_url' => $project->production_url,
+            ],
             'token' => $token,
             'deployLog' => $deployLog,
             'averageDurationSeconds' => $averageDuration ? (int) $averageDuration : null,

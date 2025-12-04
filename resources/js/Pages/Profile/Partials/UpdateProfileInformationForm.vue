@@ -25,7 +25,7 @@ const form = useForm({
 <template>
     <section>
         <header>
-            <h2 class="text-lg font-medium text-gray-900">
+            <h2 class="text-lg font-bold text-gray-900">
                 プロフィール情報
             </h2>
 
@@ -44,7 +44,7 @@ const form = useForm({
                 <TextInput
                     id="name"
                     type="text"
-                    class="mt-1 block w-full"
+                    class="block mt-1 w-full"
                     v-model="form.name"
                     required
                     autofocus
@@ -60,7 +60,7 @@ const form = useForm({
                 <TextInput
                     id="email"
                     type="email"
-                    class="mt-1 block w-full"
+                    class="block mt-1 w-full"
                     v-model="form.email"
                     required
                     autocomplete="username"
@@ -76,7 +76,7 @@ const form = useForm({
                         :href="route('verification.send')"
                         method="post"
                         as="button"
-                        class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        class="text-sm text-gray-600 underline rounded-md hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
                         確認メールを再送信する
                     </Link>
@@ -90,7 +90,7 @@ const form = useForm({
                 </div>
             </div>
 
-            <div class="flex items-center gap-4">
+            <div class="flex gap-4 items-center">
                 <PrimaryButton :disabled="form.processing">保存</PrimaryButton>
 
                 <Transition

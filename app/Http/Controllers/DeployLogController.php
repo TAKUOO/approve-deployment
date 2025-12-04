@@ -3,12 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Models\DeployLog;
+use App\Models\Project;
 use Illuminate\Http\Request;
 
 class DeployLogController extends Controller
 {
     public function show(Request $request, DeployLog $deployLog)
     {
+        // 承認トークンで保護
+        $token = $request->query('token');
+        if (!$token) {
+            return response()->json(['error' => 'Token required'], 401);
+        }
+        
+        $project = Project::where('approve_token', $token)
+            ->where(function ($query) {
+                $query->whereNull('approve_token_expires_at')
+                      ->orWhere('approve_token_expires_at', '>', now());
+            })
+            ->first();
+        if (!$project || $deployLog->project_id !== $project->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+        
         // デプロイログと関連データを取得
         $deployLog->load('approvalMessage', 'project');
 

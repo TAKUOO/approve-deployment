@@ -1,4 +1,6 @@
 <template>
+    <Head title="プロジェクト編集 - AutoRelease" />
+    
     <AuthenticatedLayout>
         <div class="py-12">
             <div class="mx-auto max-w-3xl sm:px-6 lg:px-8">
@@ -143,6 +145,11 @@
                         </form>
                     </div>
                 </div>
+                
+                <!-- フッター -->
+                <div class="mt-8">
+                    <AppFooter />
+                </div>
             </div>
         </div>
     </AuthenticatedLayout>
@@ -150,8 +157,9 @@
 
 <script setup>
 import { useForm } from '@inertiajs/vue3';
-import { Link } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AppFooter from '@/Components/AppFooter.vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';

@@ -46,7 +46,7 @@ const open = ref(false);
 
 <template>
     <div class="relative">
-        <div @click="open = !open">
+        <div @click.stop="open = !open">
             <slot name="trigger" />
         </div>
 
@@ -69,8 +69,7 @@ const open = ref(false);
                 v-show="open"
                 class="absolute z-50 mt-2 rounded-md shadow-lg"
                 :class="[widthClass, alignmentClasses]"
-                style="display: none"
-                @click="open = false"
+                @click.stop
             >
                 <div
                     class="rounded-md ring-1 ring-black ring-opacity-5"

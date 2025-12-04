@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import Modal from '@/Components/Modal.vue';
+import AppFooter from '@/Components/AppFooter.vue';
 
 defineProps({
     canLogin: {
@@ -33,22 +34,37 @@ const features = [
         title: '承認キャンバス',
         description: 'テスト環境へのアクセスと承認ボタンだけを並べたシンプルなビューを生成し、クライアントが迷わず承認できます。',
         detail: '承認URLは自動生成・自動失効。承認と同時に本番アップが走ります。',
-        icon: 'sparkles',
-        accent: 'from-indigo-200 via-violet-100 to-cyan-200',
+        icon: 'note',
+        bgGradient: 'from-blue-700 via-indigo-600 to-cyan-700',
+        shadowColor: 'shadow-blue-800/60',
+        ringColor: 'ring-blue-700/50',
+        textColor: 'text-white',
+        detailColor: 'text-slate-200',
+        iconBg: 'bg-slate-700',
     },
     {
         title: 'GitHub Actions連携',
-        description: 'Quickneeからworkflow_dispatchを呼び出し、SSH/FTP/Envoyなど好みの手法で本番に反映します。',
-        detail: 'Secrets/環境変数をQuickneeから安全に注入。ロールバック手順もワンクリック。',
-        icon: 'layers',
-        accent: 'from-blue-200 via-sky-100 to-emerald-200',
+        description: 'AutoReleaseからworkflow_dispatchを呼び出し、SSH/FTP/Envoyなど好みの手法で本番に反映します。',
+        detail: 'Secrets/環境変数をAutoReleaseから安全に注入。ロールバック手順もワンクリック。',
+        icon: 'github',
+        bgGradient: 'from-slate-800 via-purple-900 to-slate-700',
+        shadowColor: 'shadow-purple-900/60',
+        ringColor: 'ring-purple-800/50',
+        textColor: 'text-white',
+        detailColor: 'text-slate-200',
+        iconBg: 'bg-slate-700',
     },
     {
         title: '履歴管理',
         description: '承認とデプロイの結果を時系列で保存し、いつ誰がボタンを押したかをすぐに振り返れます。',
         detail: 'CSVとしてダウンロードできる履歴ログで、案件ごとの進捗を共有できます。',
-        icon: 'shield',
-        accent: 'from-purple-200 via-pink-100 to-indigo-200',
+        icon: 'timeline',
+        bgGradient: 'from-pink-700 via-purple-700 to-indigo-700',
+        shadowColor: 'shadow-pink-800/60',
+        ringColor: 'ring-pink-700/50',
+        textColor: 'text-white',
+        detailColor: 'text-slate-200',
+        iconBg: 'bg-slate-700',
     },
 ];
 
@@ -56,7 +72,7 @@ const workflowSteps = [
     {
         title: '1. Pull Request',
         summary: 'GitHubでレビューが完了',
-        detail: 'mainブランチへのマージ待ち。Quickneeがテスト環境への承認URLを自動生成します。',
+        detail: 'mainブランチへのマージ待ち。AutoReleaseがテスト環境への承認URLを自動生成します。',
     },
     {
         title: '2. クライアント承認',
@@ -71,13 +87,13 @@ const workflowSteps = [
     {
         title: '4. 履歴で確認',
         summary: '承認/デプロイ履歴',
-        detail: '完了後はQuickneeの履歴画面から承認者と実行結果を振り返れます。',
+        detail: '完了後はAutoReleaseの履歴画面から承認者と実行結果を振り返れます。',
     },
 ];
 
 const faqs = [
     {
-        question: 'Quickneeはどんなワークフローに向いていますか？',
+        question: 'AutoReleaseはどんなワークフローに向いていますか？',
         answer:
             'GitHubでコードレビュー→クライアント承認→本番反映という一連の流れを自動化したいWeb制作チームに最適です。静的サイト・WordPress・Laravel・Next.jsなどフレームワークを問いません。',
     },
@@ -89,12 +105,12 @@ const faqs = [
     {
         question: 'サーバー環境は限定されますか？',
         answer:
-            'GitHub Actionsの中でSSH/FTP/rsync/Envoyなど好きな手段を指定できるため、レンタルサーバーからクラウドまで幅広く対応します。Quicknee側はサーバーを持たず、コードも管理しません。',
+            'GitHub Actionsの中でSSH/FTP/rsync/Envoyなど好きな手段を指定できるため、レンタルサーバーからクラウドまで幅広く対応します。AutoRelease側はサーバーを持たず、コードも管理しません。',
     },
     {
         question: '利用にあたって推奨される環境はありますか？',
         answer:
-            'GitHub Actionsでworkflow_dispatchが使えるGitHubリポジトリと、テスト環境（ステージング）を用意していることが前提です。QuickneeからはGitHub ActionsのAPIを呼び出すため、CI/CDをGitHub Actionsで構築しているチームに最適です。',
+            'GitHub Actionsでworkflow_dispatchが使えるGitHubリポジトリと、テスト環境（ステージング）を用意していることが前提です。AutoReleaseからはGitHub ActionsのAPIを呼び出すため、CI/CDをGitHub Actionsで構築しているチームに最適です。',
     },
     {
         question: '承認やデプロイの履歴はどれくらい保存されますか？',
@@ -110,7 +126,7 @@ const faqs = [
 </script>
 
 <template>
-    <Head title="WEBデザイナー向けデプロイ自動化サービス" />
+    <Head title="WEBデザイナー向けリリース自動化システム - AutoRelease" />
 
     <div class="overflow-hidden relative min-h-screen bg-gradient-to-br from-slate-100 via-slate-200 to-indigo-200/50 text-slate-900">
         <div class="absolute inset-0 pointer-events-none">
@@ -123,13 +139,14 @@ const faqs = [
             <header class="flex flex-wrap gap-6 justify-between items-center mx-auto mt-6 w-full max-w-6xl">
                 <div class="flex gap-4 items-center">
                     <div>
-                        <p class="text-3xl font-bold tracking-wide text-slate-900">Quicknee</p>
+                        <img src="/images/logo.png" alt="AutoRelease" class="object-contain h-10" />
                     </div>
                 </div>
 
                 <nav class="flex flex-wrap gap-6 items-center font-semibold text-md text-slate-600">
                     <a class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex" href="#features">機能</a>
                     <a class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex" href="#workflow">ワークフロー</a>
+                    <a class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex" href="#security">セキュリティ</a>
                     <a class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex" href="#faq">FAQ</a>
                     <Link :href="route('docs')" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">ドキュメント</Link>
 
@@ -159,7 +176,7 @@ const faqs = [
                             <div>
                                 <h1 class="text-4xl font-semibold tracking-tight leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
                                     <span class="block mb-5">WEBデザイナー向け</span>
-                                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-sky-400 to-purple-500">デプロイ自動化サービス</span>
+                                    <span class="block text-transparent whitespace-nowrap bg-clip-text bg-gradient-to-r from-indigo-500 via-sky-400 to-purple-500">リリース自動化システム</span>
                                 </h1>
                                 <p class="mt-6 text-lg leading-relaxed text-slate-600">
                                     クライアントがテスト環境を確認し、承認ボタンを押すだけで本番環境へ自動的にアップされます。Slackで催促する、手作業でアップロードする、といった二重作業をなくします。
@@ -221,33 +238,28 @@ const faqs = [
                         <div class="space-y-3 text-center">
                             <p class="text-xs uppercase tracking-[0.3em] text-indigo-500">Capabilities</p>
                             <h2 class="text-3xl font-semibold text-slate-900">更新時の二重作業を抑え、無駄な時間を排除</h2>
-                            <p class="text-slate-600">Quickneeは、テスト→承認→本番アップを一本化し、同じ作業を繰り返さないための仕組みを標準搭載しています。</p>
+                            <p class="text-slate-600">AutoReleaseは、テスト→承認→本番アップを一本化し、同じ作業を繰り返さないための仕組みを標準搭載しています。</p>
                         </div>
                         <div class="grid gap-8 md:grid-cols-3">
                             <article
                                 v-for="feature in features"
                                 :key="feature.title"
-                                class="relative overflow-hidden rounded-[28px] border border-white/70 bg-gradient-to-br from-white via-white to-indigo-50/70 p-8 shadow-2xl shadow-indigo-100/80 ring-1 ring-indigo-100/80"
+                                class="relative overflow-hidden rounded-[28px] border border-white/50 bg-gradient-to-br p-8 shadow-2xl ring-1"
+                                :class="[feature.bgGradient, feature.shadowColor, feature.ringColor]"
                             >
-                                <div class="absolute inset-0 bg-gradient-to-br opacity-90 mix-blend-multiply" :class="feature.accent" aria-hidden="true"></div>
                                 <div class="relative space-y-4">
-                                    <span class="inline-flex justify-center items-center w-12 h-12 bg-white rounded-2xl shadow-inner shadow-slate-100">
-                                        <svg v-if="feature.icon === 'sparkles'" class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2zM16 5l1 3 3 1-3 1-1 3-1-3-3-1 3-1zM19 15l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" />
-                                        </svg>
-                                        <svg v-else-if="feature.icon === 'layers'" class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3l8 4-8 4-8-4 8-4zm0 8l8 4-8 4-8-4 8-4z" />
-                                        </svg>
-                                        <svg v-else-if="feature.icon === 'shield'" class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3l8 4v5c0 5.25-3.438 9.795-8 11-4.562-1.205-8-5.75-8-11V7l8-4z" />
-                                        </svg>
-                                        <svg v-else class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 12V6m4 6V6m-7 6v6m11-6v6M3 3h18" />
-                                        </svg>
-                                    </span>
-                                    <h3 class="text-2xl font-semibold text-slate-900">{{ feature.title }}</h3>
-                                    <p class="text-slate-600">{{ feature.description }}</p>
-                                    <p class="text-sm text-slate-500">{{ feature.detail }}</p>
+                                    <!-- メモのアイコン（承認キャンバス） -->
+                                    <img v-if="feature.icon === 'note'" src="/images/note-icon.png" alt="承認キャンバス" class="object-contain w-16 h-16" />
+                                    <!-- GitHub Octocatアイコン -->
+                                    <img v-else-if="feature.icon === 'github'" src="/images/github-icon.png" alt="GitHub Actions連携" class="object-contain w-16 h-16" />
+                                    <!-- タイムツリーアイコン -->
+                                    <img v-else-if="feature.icon === 'timeline'" src="/images/timeline-icon.png" alt="履歴管理" class="object-contain w-16 h-16" />
+                                    <svg v-else class="w-16 h-16 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 12V6m4 6V6m-7 6v6m11-6v6M3 3h18" />
+                                    </svg>
+                                    <h3 class="text-2xl font-semibold" :class="feature.textColor">{{ feature.title }}</h3>
+                                    <p :class="feature.textColor === 'text-white' ? 'text-slate-100' : 'text-slate-600'">{{ feature.description }}</p>
+                                    <p class="text-sm" :class="feature.detailColor">{{ feature.detail }}</p>
                                 </div>
                             </article>
                         </div>
@@ -259,7 +271,7 @@ const faqs = [
                         <div class="space-y-6">
                             <p class="text-xs uppercase tracking-[0.3em] text-indigo-500">Workflow</p>
                             <h2 class="text-3xl font-semibold text-slate-900">4ステップで承認〜自動デプロイ</h2>
-                            <p class="text-slate-600">QuickneeはGitHub Actionsと連動し、Pull Requestから承認、デプロイ実行までを一気通貫でトラッキングします。</p>
+                            <p class="text-slate-600">AutoReleaseはGitHub Actionsと連動し、Pull Requestから承認、デプロイ実行までを一気通貫でトラッキングします。</p>
                             <div class="space-y-4">
                                 <div
                                     v-for="step in workflowSteps"
@@ -279,7 +291,7 @@ const faqs = [
                         <div class="relative overflow-hidden rounded-[32px] border border-indigo-100 bg-indigo-100 p-8">
                             <div class="mb-6 space-y-2">
                                 <p class="text-sm text-indigo-500">Live status</p>
-                                <p class="text-2xl font-semibold text-slate-900">Quicknee Bot</p>
+                                <p class="text-2xl font-semibold text-slate-900">AutoRelease Bot</p>
                                 <p class="text-sm text-slate-500">github-actions · production</p>
                             </div>
                             <div class="space-y-6 text-sm text-slate-600">
@@ -301,6 +313,106 @@ const faqs = [
                                         <span>Deploy ETA</span>
                                         <span class="text-slate-900">00:45</span>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="security" class="relative px-6 py-20">
+                    <div class="relative mx-auto space-y-10 max-w-6xl">
+                        <div class="text-center">
+                            <p class="text-xs uppercase tracking-[0.3em] text-indigo-500">Security</p>
+                            <h2 class="mt-2 text-3xl font-semibold text-slate-900">セキュリティ対策</h2>
+                            <p class="mt-4 text-slate-600">クライアントワークでも安心してご利用いただけるよう、多層的なセキュリティ対策を実装しています。</p>
+                        </div>
+
+                        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            <div class="p-6 bg-white rounded-2xl border shadow-sm border-slate-200">
+                                <div class="flex gap-3 items-center mb-4">
+                                    <div class="flex justify-center items-center w-10 h-10 bg-indigo-100 rounded-xl">
+                                        <svg class="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-slate-900">有効期限付きトークン</h3>
+                                </div>
+                                <p class="text-sm text-slate-600">承認URLは64文字の強力なトークンで保護され、7日間のみ有効です。期限切れ後は自動的に無効化されます。</p>
+                            </div>
+
+                            <div class="p-6 bg-white rounded-2xl border shadow-sm border-slate-200">
+                                <div class="flex gap-3 items-center mb-4">
+                                    <div class="flex justify-center items-center w-10 h-10 bg-green-100 rounded-xl">
+                                        <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-slate-900">トークンベース認証</h3>
+                                </div>
+                                <p class="text-sm text-slate-600">デプロイログAPIは承認トークンによる認証で保護されています。トークンなしでは情報にアクセスできません。</p>
+                            </div>
+
+                            <div class="p-6 bg-white rounded-2xl border shadow-sm border-slate-200">
+                                <div class="flex gap-3 items-center mb-4">
+                                    <div class="flex justify-center items-center w-10 h-10 bg-yellow-100 rounded-xl">
+                                        <svg class="w-6 h-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-slate-900">レート制限</h3>
+                                </div>
+                                <p class="text-sm text-slate-600">承認操作は1時間に5回まで、ページアクセスは1分間に30回までに制限されています。不正なアクセスを防止します。</p>
+                            </div>
+
+                            <div class="p-6 bg-white rounded-2xl border shadow-sm border-slate-200">
+                                <div class="flex gap-3 items-center mb-4">
+                                    <div class="flex justify-center items-center w-10 h-10 bg-purple-100 rounded-xl">
+                                        <svg class="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-slate-900">XSS対策</h3>
+                                </div>
+                                <p class="text-sm text-slate-600">承認メッセージの表示にはDOMPurifyによるサニタイズ処理を実装し、悪意のあるスクリプトの実行を防止しています。</p>
+                            </div>
+
+                            <div class="p-6 bg-white rounded-2xl border shadow-sm border-slate-200">
+                                <div class="flex gap-3 items-center mb-4">
+                                    <div class="flex justify-center items-center w-10 h-10 bg-blue-100 rounded-xl">
+                                        <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-slate-900">検索エンジン対策</h3>
+                                </div>
+                                <p class="text-sm text-slate-600">承認ページはnoindex設定とrobots.txtで検索エンジンからのインデックスを防止し、URLの漏洩リスクを低減しています。</p>
+                            </div>
+
+                            <div class="p-6 bg-white rounded-2xl border shadow-sm border-slate-200">
+                                <div class="flex gap-3 items-center mb-4">
+                                    <div class="flex justify-center items-center w-10 h-10 bg-red-100 rounded-xl">
+                                        <svg class="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-slate-900">情報の非公開化</h3>
+                                </div>
+                                <p class="text-sm text-slate-600">承認ページではGitHubリポジトリ情報などの機密情報を非表示にし、必要最小限の情報のみを表示しています。</p>
+                            </div>
+                        </div>
+
+                        <div class="p-8 mt-8 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-200">
+                            <div class="flex gap-4 items-start">
+                                <div class="flex-shrink-0">
+                                    <svg class="w-8 h-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="mb-2 text-xl font-semibold text-slate-900">クライアントワークでも安心</h3>
+                                    <p class="text-slate-700">
+                                        AutoReleaseは、クライアントワークで使用されることを前提に設計されています。承認URLの有効期限管理、トークンベースの認証、レート制限など、多層的なセキュリティ対策により、機密情報の保護と不正アクセスの防止を実現しています。GitHubトークンは暗号化して保存され、承認ページでは必要最小限の情報のみが表示されます。
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -362,21 +474,14 @@ const faqs = [
                 </section>
             </main>
 
-            <footer class="px-6 py-10 space-y-2 text-xs text-center text-slate-500">
-                <div class="flex flex-wrap gap-4 justify-center text-sm text-slate-600">
-                    <span>運営元：Quicknee</span>
-                    <a href="/terms" class="underline hover:text-slate-900">利用規約</a>
-                    <a href="/privacy" class="underline hover:text-slate-900">プライバシーポリシー</a>
-                </div>
-                <div>&copy; {{ new Date().getFullYear() }} Quicknee. All rights reserved.</div>
-            </footer>
+            <AppFooter color-scheme="slate" padding="large" />
         </div>
 
         <Modal :show="showLoginModal" @close="closeLoginModal" max-width="md">
             <div class="p-8 bg-white rounded-3xl text-slate-900">
                 <div class="mb-6 text-center">
                     <h2 class="mt-2 text-2xl font-semibold">GitHubアカウントでログイン</h2>
-                    <p class="mt-3 text-sm font-medium text-slate-500">QuickneeはWEBデザイナー向けデプロイ自動化サービスです。承認→自動デプロイのワークフローを60秒でセットアップできます。</p>
+                    <p class="mt-3 text-sm font-medium text-slate-500">AutoReleaseはWEBデザイナー向けのリリース自動化システムです。承認ボタンで自動的にサーバーへアップするワークフローを60秒でセットアップできます。</p>
                 </div>
                 <a
                     :href="route('github.login')"

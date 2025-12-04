@@ -14,6 +14,7 @@ class Project extends Model
         'staging_url',
         'production_url',
         'approve_token',
+        'approve_token_expires_at',
         'github_owner',
         'github_repo',
         'github_workflow_id',
@@ -28,7 +29,7 @@ class Project extends Model
 
     public function deployLogs(): HasMany
     {
-        return $this->hasMany(DeployLog::class);
+        return $this->hasMany(DeployLog::class)->latest('created_at');
     }
 
     public function approvals(): HasMany
