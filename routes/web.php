@@ -6,6 +6,11 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
+    // ログイン済みの場合はプロジェクト一覧にリダイレクト
+    if (auth()->check()) {
+        return redirect()->route('projects.index');
+    }
+    
     return Inertia::render('Welcome', [
         'canLogin' => true, // GitHubログインは常に利用可能
         'canRegister' => false, // GitHubログインのみのため false

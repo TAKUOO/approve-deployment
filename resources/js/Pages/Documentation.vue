@@ -8,37 +8,7 @@
         </div>
 
         <div class="flex relative z-10 flex-col min-h-screen">
-            <header class="flex flex-wrap gap-6 justify-between items-center mx-auto mt-6 w-full max-w-6xl">
-                <div class="flex gap-4 items-center">
-                    <Link href="/">
-                        <img src="/images/logo.png" alt="AutoRelease" class="object-contain h-10" />
-                    </Link>
-                </div>
-
-                <nav class="flex flex-wrap gap-6 items-center font-semibold text-md text-slate-600">
-                    <Link href="/" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">ホーム</Link>
-                    <Link href="/#features" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">機能</Link>
-                    <Link href="/#workflow" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">ワークフロー</Link>
-                    <Link href="/#faq" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">FAQ</Link>
-
-                    <Link
-                        v-if="authUser"
-                        href="/projects"
-                        class="px-5 py-2 rounded-full border transition border-slate-200 text-slate-700 hover:border-slate-400 hover:text-slate-900"
-                    >
-                        プロジェクト一覧へ
-                    </Link>
-
-                    <template v-else>
-                        <Link
-                            href="/auth/github"
-                            class="px-6 py-2 font-semibold text-white bg-indigo-600 rounded-full shadow-lg transition shadow-indigo-200 hover:opacity-90"
-                        >
-                            ログイン
-                        </Link>
-                    </template>
-                </nav>
-            </header>
+            <AppHeader variant="docs" />
 
             <main class="flex-1">
                 <div class="px-6 py-12 mx-auto max-w-4xl">
@@ -92,7 +62,7 @@
                                     <li><strong>プロジェクト名</strong>: 任意のプロジェクト名</li>
                                     <li><strong>テストURL</strong>: クライアントが確認するテスト環境のURL（例: https://staging.example.com）</li>
                                     <li><strong>本番URL</strong>: 実際に公開されている本番環境のURL（例: https://example.com）</li>
-                                    <li><strong>デプロイ先パス</strong>: FTPサーバー上のデプロイ先ディレクトリパス（例: /public_html/ または /rubydesign.jp/public_html/wp-content/themes/rubydesign2020/）</li>
+                                    <li><strong>デプロイ先パス</strong>: FTPサーバー上のデプロイ先ディレクトリパス（例: /public_html/ または /example.com/public_html/wp-content/themes/mytheme/）</li>
                                 </ul>
 
                                 <h3 class="mt-6 mb-3 text-xl font-semibold text-slate-900">2.2 GitHub情報の設定</h3>
@@ -119,7 +89,7 @@
                                 <h3 class="mb-3 text-xl font-semibold text-slate-900">3.1 FTPデプロイの場合</h3>
                                 <div class="p-4 mb-4 rounded-lg bg-slate-50">
                                     <ul class="space-y-2 list-disc list-inside text-slate-700">
-                                        <li><strong>FTP_SERVER</strong>: FTPサーバーのアドレス（例: sv10201.xserver.jp）</li>
+                                        <li><strong>FTP_SERVER</strong>: FTPサーバーのアドレス（例: ftp.example.com）</li>
                                         <li><strong>FTP_USERNAME</strong>: FTPユーザー名（例: example.com）</li>
                                         <li><strong>FTP_PASSWORD</strong>: FTPパスワード</li>
                                     </ul>
@@ -202,8 +172,8 @@ jobs:
                                     FTPクライアントまたはファイルマネージャーで、FTPサーバーのルートディレクトリを確認します：
                                 </p>
                                 <ul class="mb-4 space-y-2 list-disc list-inside text-slate-600">
-                                    <li>FTPサーバーのルートが<code class="px-2 py-1 rounded bg-slate-100">/</code>から始まる場合: <code class="px-2 py-1 rounded bg-slate-100">/rubydesign.jp/public_html/wp-content/themes/rubydesign2020/</code></li>
-                                    <li>FTPサーバーのルートが<code class="px-2 py-1 rounded bg-slate-100">/rubydesign.jp/</code>から始まる場合: <code class="px-2 py-1 rounded bg-slate-100">/public_html/wp-content/themes/rubydesign2020/</code></li>
+                                    <li>FTPサーバーのルートが<code class="px-2 py-1 rounded bg-slate-100">/</code>から始まる場合: <code class="px-2 py-1 rounded bg-slate-100">/example.com/public_html/wp-content/themes/mytheme/</code></li>
+                                    <li>FTPサーバーのルートが<code class="px-2 py-1 rounded bg-slate-100">/example.com/</code>から始まる場合: <code class="px-2 py-1 rounded bg-slate-100">/public_html/wp-content/themes/mytheme/</code></li>
                                 </ul>
 
                                 <h3 class="mb-3 text-xl font-semibold text-slate-900">5.2 よくあるパス例</h3>
@@ -211,7 +181,7 @@ jobs:
                                     <ul class="space-y-2 list-disc list-inside text-slate-700">
                                         <li>通常のサイト: <code class="px-2 py-1 bg-white rounded">/public_html/</code></li>
                                         <li>WordPressテーマ: <code class="px-2 py-1 bg-white rounded">/public_html/wp-content/themes/テーマ名/</code></li>
-                                        <li>Xserverの場合: <code class="px-2 py-1 bg-white rounded">/rubydesign.jp/public_html/wp-content/themes/rubydesign2020/</code></li>
+                                        <li>共有サーバーの場合: <code class="px-2 py-1 bg-white rounded">/example.com/public_html/wp-content/themes/mytheme/</code></li>
                                     </ul>
                                 </div>
 
@@ -312,11 +282,8 @@ jobs:
 </template>
 
 <script setup>
-import { Head, Link, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { Head, Link } from '@inertiajs/vue3';
+import AppHeader from '@/Components/AppHeader.vue';
 import AppFooter from '@/Components/AppFooter.vue';
-
-const page = usePage();
-const authUser = computed(() => page.props.auth?.user);
 </script>
 

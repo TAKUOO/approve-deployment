@@ -1,10 +1,7 @@
 <script setup>
-import { Head, Link, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { Head, Link } from '@inertiajs/vue3';
+import AppHeader from '@/Components/AppHeader.vue';
 import AppFooter from '@/Components/AppFooter.vue';
-
-const page = usePage();
-const authUser = computed(() => page.props.auth?.user);
 const lastUpdated = '2024年5月30日';
 const goBack = () => window.history.back();
 
@@ -92,38 +89,7 @@ const policySections = [
         </div>
 
         <div class="flex relative z-10 flex-col min-h-screen">
-            <header class="flex flex-wrap gap-6 justify-between items-center mx-auto mt-6 w-full max-w-6xl">
-                <div class="flex gap-4 items-center">
-                    <Link href="/">
-                        <img src="/images/logo.png" alt="AutoRelease" class="h-10 object-contain" />
-                    </Link>
-                </div>
-
-                <nav class="flex flex-wrap gap-6 items-center font-semibold text-md text-slate-600">
-                    <Link href="/" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">ホーム</Link>
-                    <Link href="/#features" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">機能</Link>
-                    <Link href="/#workflow" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">ワークフロー</Link>
-                    <Link href="/#faq" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">FAQ</Link>
-                    <Link href="/docs" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">ドキュメント</Link>
-
-                    <Link
-                        v-if="authUser"
-                        href="/projects"
-                        class="px-5 py-2 rounded-full border transition border-slate-200 text-slate-700 hover:border-slate-400 hover:text-slate-900"
-                    >
-                        プロジェクト一覧へ
-                    </Link>
-
-                    <template v-else>
-                        <Link
-                            href="/auth/github"
-                            class="px-6 py-2 font-semibold text-white bg-indigo-600 rounded-full shadow-lg transition shadow-indigo-200 hover:opacity-90"
-                        >
-                            ログイン
-                        </Link>
-                    </template>
-                </nav>
-            </header>
+            <AppHeader />
 
             <main class="flex-1">
                     <div class="mx-auto max-w-5xl px-6 py-12">

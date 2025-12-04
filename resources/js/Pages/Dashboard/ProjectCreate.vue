@@ -114,7 +114,7 @@
                                             v-if="activeTooltip === 'server_dir'"
                                             class="absolute left-0 z-10 p-3 mt-2 w-64 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
                                         >
-                                            FTPサーバー上のデプロイ先ディレクトリパスを入力してください。例: /public_html/ または /home/example.com/public_html/wp-content/themes/rubydesign2020
+                                            FTPサーバー上のデプロイ先ディレクトリパスを入力してください。例: /public_html/ または /home/example.com/public_html/wp-content/themes/mytheme/
                                         </div>
                                     </div>
                                     <TextInput

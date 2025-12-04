@@ -60,7 +60,7 @@
                                         placeholder="/public_html/"
                                     />
                                     <p class="mt-1 text-sm text-gray-500">
-                                        FTPサーバー上のデプロイ先ディレクトリパスを入力してください。例: /public_html/ または /home/example.com/public_html/wp-content/themes/rubydesign2020
+                                        FTPサーバー上のデプロイ先ディレクトリパスを入力してください。例: /public_html/ または /home/example.com/public_html/wp-content/themes/mytheme/
                                     </p>
                                     <InputError class="mt-2" :message="form.errors.server_dir" />
                                 </div>
