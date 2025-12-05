@@ -1,5 +1,27 @@
 #!/bin/bash
 
+# 作業ディレクトリを確認
+echo "=== Debug Information ==="
+echo "Current directory: $(pwd)"
+echo "Listing /app directory:"
+ls -la /app/ 2>&1 | head -20 || echo "Failed to list /app"
+echo ""
+echo "Checking bootstrap directory:"
+ls -la /app/bootstrap/ 2>&1 || echo "bootstrap directory not found"
+echo ""
+echo "Checking bootstrap/app.php:"
+ls -la /app/bootstrap/app.php 2>&1 || echo "bootstrap/app.php not found"
+echo ""
+echo "APP_KEY is set: $([ -n "$APP_KEY" ] && echo "yes (length: ${#APP_KEY})" || echo "no")"
+echo "========================"
+echo ""
+
+# 作業ディレクトリを/appに変更
+cd /app || {
+    echo "ERROR: Failed to change to /app directory"
+    exit 1
+}
+
 # パッケージディスカバリーを実行（composer install後の処理）
 php artisan package:discover --ansi || echo "Warning: package:discover failed"
 
