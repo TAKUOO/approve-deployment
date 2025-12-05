@@ -33,6 +33,11 @@ else
     # マイグレーション実行
     php artisan migrate --force || true
     
+    # キャッシュをクリアしてから再キャッシュ
+    php artisan config:clear || echo "Warning: config:clear failed"
+    php artisan route:clear || echo "Warning: route:clear failed"
+    php artisan view:clear || echo "Warning: view:clear failed"
+    
     # キャッシュコマンド実行（エラーが発生しても続行）
     php artisan config:cache || echo "Warning: config:cache failed"
     php artisan route:cache || echo "Warning: route:cache failed"
