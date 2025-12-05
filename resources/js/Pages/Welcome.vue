@@ -1,6 +1,6 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import AppHeader from '@/Components/AppHeader.vue';
 import AppFooter from '@/Components/AppFooter.vue';
 
@@ -56,6 +56,31 @@ const structuredDataJson = computed(() => {
             ratingCount: '1',
         },
     });
+});
+
+// JSON-LD構造化データを動的に追加
+let jsonLdScript = null;
+
+onMounted(() => {
+    // 既存のJSON-LDスクリプトを削除（再マウント時の重複を防ぐ）
+    const existingScript = document.querySelector('script[type="application/ld+json"][data-autorelease]');
+    if (existingScript) {
+        existingScript.remove();
+    }
+
+    // 新しいJSON-LDスクリプトを作成
+    jsonLdScript = document.createElement('script');
+    jsonLdScript.type = 'application/ld+json';
+    jsonLdScript.setAttribute('data-autorelease', 'true');
+    jsonLdScript.textContent = structuredDataJson.value;
+    document.head.appendChild(jsonLdScript);
+});
+
+onBeforeUnmount(() => {
+    // コンポーネントがアンマウントされる際にスクリプトを削除
+    if (jsonLdScript && jsonLdScript.parentNode) {
+        jsonLdScript.parentNode.removeChild(jsonLdScript);
+    }
 });
 
 
@@ -185,9 +210,6 @@ const faqs = [
         <meta name="twitter:description" :content="pageDescription" />
         <meta name="twitter:image" :content="`${siteUrl}/images/logo.png`" />
     </Head>
-
-    <!-- 構造化データ（JSON-LD） -->
-    <script type="application/ld+json" v-html="structuredDataJson"></script>
 
     <div class="overflow-hidden relative min-h-screen bg-gradient-to-br from-slate-100 via-slate-200 to-indigo-200/50 text-slate-900">
         <div class="absolute inset-0 pointer-events-none">
