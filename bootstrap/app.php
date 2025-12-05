@@ -6,11 +6,6 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Inertia\Inertia;
 
 return Application::configure(basePath: dirname(__DIR__))
-    ->withProviders([
-        // ViewServiceProviderをRoutingServiceProviderより前に登録（順序が重要）
-        \Illuminate\View\ViewServiceProvider::class,
-        \Illuminate\Session\SessionServiceProvider::class,
-    ])
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
