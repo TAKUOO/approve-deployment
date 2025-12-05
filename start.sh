@@ -6,6 +6,12 @@ echo "Current directory: $(pwd)"
 echo "Listing /app directory:"
 ls -la /app/ 2>&1 | head -20 || echo "Failed to list /app"
 echo ""
+echo "Checking config directory:"
+ls -la /app/config/ 2>&1 || echo "config directory not found"
+echo ""
+echo "Checking config/view.php:"
+ls -la /app/config/view.php 2>&1 || echo "config/view.php not found"
+echo ""
 echo "Checking bootstrap directory:"
 ls -la /app/bootstrap/ 2>&1 || echo "bootstrap directory not found"
 echo ""
@@ -14,6 +20,13 @@ ls -la /app/bootstrap/app.php 2>&1 || echo "bootstrap/app.php not found"
 echo ""
 echo "APP_KEY is set: $([ -n "$APP_KEY" ] && echo "yes (length: ${#APP_KEY})" || echo "no")"
 echo "========================"
+echo ""
+
+# bootstrap/cacheをクリア
+echo "=== Clearing bootstrap cache ==="
+rm -rf /app/bootstrap/cache/* 2>/dev/null || echo "No cache to clear"
+mkdir -p /app/bootstrap/cache
+echo "Cache cleared"
 echo ""
 
 # 作業ディレクトリを/appに変更
