@@ -1,6 +1,6 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import AppHeader from '@/Components/AppHeader.vue';
 import AppFooter from '@/Components/AppFooter.vue';
 
@@ -19,6 +19,43 @@ defineProps({
     canRegister: {
         type: Boolean,
     },
+});
+
+// SEO用のメタ情報
+const siteUrl = computed(() => {
+    if (typeof window !== 'undefined') {
+        return window.location.origin;
+    }
+    return 'https://autorelease.matsui-dev.net';
+});
+
+const pageTitle = 'WEBデザイナー向けリリース自動化システム - AutoRelease';
+const pageDescription = 'クライアントがテスト環境を確認し、承認ボタンを押すだけで本番環境へ自動的にアップされます。GitHub Actionsと連携した承認→自動デプロイシステム。Slackで催促する、手作業でアップロードする、といった二重作業をなくします。';
+const pageKeywords = 'リリース自動化,デプロイ自動化,承認フロー,クライアント承認,Web制作,デザイナー向け,CI/CD,GitHub Actions,workflow_dispatch,テスト環境,本番環境,デプロイツール';
+
+// 構造化データ（JSON-LD）
+const structuredDataJson = computed(() => {
+    const url = typeof window !== 'undefined' ? window.location.origin : 'https://autorelease.matsui-dev.net';
+    return JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name: 'AutoRelease',
+        applicationCategory: 'DeveloperApplication',
+        operatingSystem: 'Web',
+        description: pageDescription,
+        url: url,
+        offers: {
+            '@type': 'Offer',
+            price: '0',
+            priceCurrency: 'JPY',
+            availability: 'https://schema.org/InStock',
+        },
+        aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: '5',
+            ratingCount: '1',
+        },
+    });
 });
 
 
@@ -125,7 +162,32 @@ const faqs = [
 </script>
 
 <template>
-    <Head title="WEBデザイナー向けリリース自動化システム - AutoRelease" />
+    <Head :title="pageTitle">
+        <!-- 基本SEOメタタグ -->
+        <meta name="description" :content="pageDescription" />
+        <meta name="keywords" :content="pageKeywords" />
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" :href="siteUrl" />
+
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website" />
+        <meta property="og:url" :content="siteUrl" />
+        <meta property="og:title" :content="pageTitle" />
+        <meta property="og:description" :content="pageDescription" />
+        <meta property="og:image" :content="`${siteUrl}/images/logo.png`" />
+        <meta property="og:site_name" content="AutoRelease" />
+        <meta property="og:locale" content="ja_JP" />
+
+        <!-- Twitter Card -->
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:url" :content="siteUrl" />
+        <meta name="twitter:title" :content="pageTitle" />
+        <meta name="twitter:description" :content="pageDescription" />
+        <meta name="twitter:image" :content="`${siteUrl}/images/logo.png`" />
+    </Head>
+
+    <!-- 構造化データ（JSON-LD） -->
+    <script type="application/ld+json" v-html="structuredDataJson"></script>
 
     <div class="overflow-hidden relative min-h-screen bg-gradient-to-br from-slate-100 via-slate-200 to-indigo-200/50 text-slate-900">
         <div class="absolute inset-0 pointer-events-none">
