@@ -25,13 +25,20 @@ cd /app || {
 # パッケージディスカバリーを実行（composer install後の処理）
 php artisan package:discover --ansi || echo "Warning: package:discover failed"
 
+# マイグレーション実行（セッションエラーが発生しても実行できるように、先に実行）
+echo "=== Running Migrations ==="
+php artisan migrate --force || {
+    echo "ERROR: Migration failed!"
+    echo "Migration error details:"
+    php artisan migrate --force 2>&1 || true
+}
+echo "=== Migrations Complete ==="
+echo ""
+
 # 環境変数が設定されているか確認
 if [ -z "$APP_KEY" ]; then
     echo "Warning: APP_KEY is not set. Skipping cache commands."
-    php artisan migrate --force || true
 else
-    # マイグレーション実行
-    php artisan migrate --force || true
     
     # キャッシュをクリア
     php artisan config:clear || echo "Warning: config:clear failed"
