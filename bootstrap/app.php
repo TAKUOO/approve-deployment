@@ -6,6 +6,9 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Inertia\Inertia;
 
 return Application::configure(basePath: dirname(__DIR__))
+    ->withProviders([
+        \Illuminate\Session\SessionServiceProvider::class,
+    ])
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
@@ -92,10 +95,23 @@ return Application::configure(basePath: dirname(__DIR__))
                 ? 'サーバーでエラーが発生しました。しばらくしてから再度お試しください。'
                 : $e->getMessage();
 
-            return Inertia::render('Error', [
-                'status' => 500,
-                'message' => $message,
-            ])->toResponse($request)->setStatusCode(500);
+            // セッションエラーの場合は、Inertiaを使わずに直接HTMLを返す
+            if ($e instanceof \Illuminate\Contracts\Container\BindingResolutionException && 
+                str_contains($e->getMessage(), 'session')) {
+                return response()->view('errors::500', [
+                    'message' => $message,
+                ], 500);
+            }
+
+            try {
+                return Inertia::render('Error', [
+                    'status' => 500,
+                    'message' => $message,
+                ])->toResponse($request)->setStatusCode(500);
+            } catch (\Throwable $renderError) {
+                // Inertiaのレンダリングに失敗した場合は、シンプルなHTMLレスポンスを返す
+                return response('<h1>サーバーエラー</h1><p>' . htmlspecialchars($message) . '</p>', 500);
+            }
         });
     })->create();
 

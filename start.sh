@@ -45,10 +45,11 @@ else
     fi
     
     # キャッシュコマンド実行（エラーが発生しても続行）
-    # 本番環境ではconfig:cacheをスキップして、設定ファイルを直接読み込む
+    # 本番環境ではキャッシュコマンドをスキップして、設定ファイルを直接読み込む
+    # セッションエラーが発生しているため、キャッシュコマンドはスキップ
     # php artisan config:cache || echo "Warning: config:cache failed"
-    php artisan route:cache || echo "Warning: route:cache failed"
-    php artisan view:cache || echo "Warning: view:cache failed"
+    # php artisan route:cache || echo "Warning: route:cache failed"
+    # php artisan view:cache || echo "Warning: view:cache failed"
 fi
 
 # サーバー起動
