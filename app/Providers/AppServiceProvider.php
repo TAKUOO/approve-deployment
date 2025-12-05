@@ -4,8 +4,8 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Session\SessionServiceProvider;
 use Illuminate\View\ViewServiceProvider;
+use Illuminate\Session\SessionServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -14,10 +14,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // セッションサービスプロバイダーを登録
-        $this->app->register(SessionServiceProvider::class);
         // Viewサービスプロバイダーを登録
         $this->app->register(ViewServiceProvider::class);
+        // Sessionサービスプロバイダーを登録
+        $this->app->register(SessionServiceProvider::class);
     }
 
     /**
