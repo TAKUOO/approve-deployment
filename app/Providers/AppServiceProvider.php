@@ -14,10 +14,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Viewサービスプロバイダーを登録
-        $this->app->register(ViewServiceProvider::class);
-        // Sessionサービスプロバイダーを登録
-        $this->app->register(SessionServiceProvider::class);
+        //
     }
 
     /**
