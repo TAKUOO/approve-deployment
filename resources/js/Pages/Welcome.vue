@@ -199,7 +199,9 @@ const faqs = [
         <meta property="og:url" :content="siteUrl" />
         <meta property="og:title" :content="pageTitle" />
         <meta property="og:description" :content="pageDescription" />
-        <meta property="og:image" :content="`${siteUrl}/images/logo.png`" />
+        <meta property="og:image" :content="`${siteUrl}/images/ogp.jpg`" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
         <meta property="og:site_name" content="AutoRelease" />
         <meta property="og:locale" content="ja_JP" />
 
@@ -208,7 +210,7 @@ const faqs = [
         <meta name="twitter:url" :content="siteUrl" />
         <meta name="twitter:title" :content="pageTitle" />
         <meta name="twitter:description" :content="pageDescription" />
-        <meta name="twitter:image" :content="`${siteUrl}/images/logo.png`" />
+        <meta name="twitter:image" :content="`${siteUrl}/images/ogp.jpg`" />
     </Head>
 
     <div class="overflow-hidden relative min-h-screen bg-gradient-to-br from-slate-100 via-slate-200 to-indigo-200/50 text-slate-900">
