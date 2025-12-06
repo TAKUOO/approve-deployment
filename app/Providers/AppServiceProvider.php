@@ -2,10 +2,9 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\View\ViewServiceProvider;
-use Illuminate\Session\SessionServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,6 +21,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // 本番環境でHTTPSを強制
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
+
         Vite::prefetch(concurrency: 3);
     }
 }
