@@ -37,6 +37,17 @@ mkdir -p /app/bootstrap/cache
 echo "Cache cleared"
 echo ""
 
+# storageディレクトリを作成
+echo "=== Creating storage directories ==="
+mkdir -p /app/storage/framework/views
+mkdir -p /app/storage/framework/sessions
+mkdir -p /app/storage/framework/cache
+mkdir -p /app/storage/logs
+chmod -R 775 /app/storage 2>/dev/null || echo "Warning: chmod failed"
+echo "Storage directories created"
+ls -la /app/storage/framework/ 2>&1 || echo "Failed to list storage/framework"
+echo ""
+
 # 作業ディレクトリを/appに変更
 cd /app || {
     echo "ERROR: Failed to change to /app directory"
