@@ -57,12 +57,12 @@ cd /app || {
 # パッケージディスカバリーを実行（composer install後の処理）
 php artisan package:discover --ansi || echo "Warning: package:discover failed"
 
-# マイグレーション実行（セッションエラーが発生しても実行できるように、先に実行）
-echo "=== Running Migrations ==="
-php artisan migrate --force || {
+# マイグレーション実行（データベースを完全にリセット）
+echo "=== Running Fresh Migrations (RESET ALL DATA) ==="
+php artisan migrate:fresh --force || {
     echo "ERROR: Migration failed!"
     echo "Migration error details:"
-    php artisan migrate --force 2>&1 || true
+    php artisan migrate:fresh --force 2>&1 || true
 }
 echo "=== Migrations Complete ==="
 echo ""

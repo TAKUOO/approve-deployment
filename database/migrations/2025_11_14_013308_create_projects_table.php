@@ -17,7 +17,9 @@ return new class extends Migration
             $table->string('name');
             $table->string('staging_url');
             $table->string('production_url');
-            $table->string('approve_token');
+            $table->string('approve_token')->unique();
+            $table->timestamp('approve_token_expires_at')->nullable();
+            $table->string('server_dir')->nullable();
             $table->string('github_owner');
             $table->string('github_repo');
             $table->string('github_workflow_id');
