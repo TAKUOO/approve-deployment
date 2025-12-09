@@ -29,11 +29,18 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $ziggy = new \Tightenco\Ziggy\Ziggy;
+        
         return [
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
             ],
+            'ziggy' => function () use ($ziggy, $request) {
+                return array_merge($ziggy->toArray(), [
+                    'location' => $request->url(),
+                ]);
+            },
         ];
     }
 }

@@ -162,7 +162,8 @@ class ProjectController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            throw $e;
+            // 例外を再スローせず、処理を続行する
+            return;
         }
     }
 
@@ -211,7 +212,8 @@ class ProjectController extends Controller
                 'deploy_log_id' => $deployLog->id,
                 'error' => $e->getMessage(),
             ]);
-            throw $e;
+            // 例外を再スローせず、処理を続行する
+            return;
         }
     }
 
