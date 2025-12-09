@@ -34,22 +34,6 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
-            'ziggy' => function () use ($request) {
-                try {
-                    $ziggy = new \Tightenco\Ziggy\Ziggy;
-                    return array_merge($ziggy->toArray(), [
-                        'location' => $request->url(),
-                    ]);
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Failed to generate Ziggy routes', [
-                        'error' => $e->getMessage(),
-                    ]);
-                    return [
-                        'routes' => [],
-                        'location' => $request->url(),
-                    ];
-                }
-            },
         ];
     }
 }
