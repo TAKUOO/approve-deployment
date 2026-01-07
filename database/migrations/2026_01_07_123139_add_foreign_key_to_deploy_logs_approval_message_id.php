@@ -9,14 +9,18 @@ return new class extends Migration
     /**
      * Run the migrations.
      * 
-     * 注意: 外部キー制約は別のマイグレーションで追加します。
-     * これは、approval_messagesテーブルが先に作成される必要があるためです。
+     * approval_messagesテーブルが作成された後に、外部キー制約を追加します。
      */
     public function up(): void
     {
         Schema::table('deploy_logs', function (Blueprint $table) {
-            // カラムだけ追加（外部キー制約なし）
-            $table->unsignedBigInteger('approval_message_id')->nullable()->after('project_id');
+            // approval_message_idカラムが存在し、approval_messagesテーブルが存在する場合のみ外部キーを追加
+            if (Schema::hasColumn('deploy_logs', 'approval_message_id') && Schema::hasTable('approval_messages')) {
+                $table->foreign('approval_message_id')
+                    ->references('id')
+                    ->on('approval_messages')
+                    ->onDelete('set null');
+            }
         });
     }
 
@@ -26,15 +30,13 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('deploy_logs', function (Blueprint $table) {
-            // 外部キーが存在する場合は削除（後続のマイグレーションで追加される可能性があるため）
+            // 外部キー制約を削除
             if (Schema::hasColumn('deploy_logs', 'approval_message_id')) {
-                // 外部キー制約を削除（存在する場合）
                 try {
                     $table->dropForeign(['approval_message_id']);
                 } catch (\Exception $e) {
                     // 外部キーが存在しない場合は無視
                 }
-                $table->dropColumn('approval_message_id');
             }
         });
     }

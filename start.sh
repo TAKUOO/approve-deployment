@@ -154,5 +154,7 @@ echo "Server will be accessible at http://0.0.0.0:$PORT"
 echo ""
 
 # サーバーを起動（execでプロセスを置き換える）
-exec php -S 0.0.0.0:$PORT -t public
+# execを使用することで、このプロセスがPHPサーバーに置き換えられ、
+# Railwayがサーバーの状態を監視できるようになります
+exec php -S 0.0.0.0:$PORT -t public 2>&1
 
