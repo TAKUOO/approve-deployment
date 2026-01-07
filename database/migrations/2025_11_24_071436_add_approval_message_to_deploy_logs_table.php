@@ -14,13 +14,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('deploy_logs', function (Blueprint $table) {
-            // カラムだけ追加（外部キー制約なし）
-            // after()を削除して、MySQLのバージョン依存を避ける
-            if (!Schema::hasColumn('deploy_logs', 'approval_message_id')) {
+        // カラムが存在しない場合のみ追加
+        if (!Schema::hasColumn('deploy_logs', 'approval_message_id')) {
+            Schema::table('deploy_logs', function (Blueprint $table) {
+                // カラムだけ追加（外部キー制約なし）
+                // after()を削除して、MySQLのバージョン依存を避ける
                 $table->unsignedBigInteger('approval_message_id')->nullable();
-            }
-        });
+            });
+        }
     }
 
     /**
