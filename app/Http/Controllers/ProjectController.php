@@ -611,30 +611,87 @@ class ProjectController extends Controller
 
     public function generateApprovalUrl(Request $request, Project $project)
     {
-        // プロジェクトの所有権を確認
-        if ($project->user_id !== Auth::id()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+        try {
+            // プロジェクトの所有権を確認
+            if ($project->user_id !== Auth::id()) {
+                Log::warning('Unauthorized approval URL generation attempt', [
+                    'project_id' => $project->id,
+                    'user_id' => Auth::id(),
+                    'ip_address' => $request->ip(),
+                ]);
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+
+            $validated = $request->validate([
+                'message' => 'required|string|max:5000',
+            ]);
+
+            // メッセージを保存
+            try {
+                $approvalMessage = \App\Models\ApprovalMessage::create([
+                    'project_id' => $project->id,
+                    'message' => $validated['message'],
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to create ApprovalMessage', [
+                    'project_id' => $project->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+                return response()->json([
+                    'error' => '承認メッセージの保存に失敗しました',
+                    'details' => $e->getMessage(),
+                ], 500);
+            }
+
+            // 承認URLを生成（短いIDを含める）
+            try {
+                $approvalUrl = route('approve.show', [
+                    'token' => $project->approve_token,
+                    'msg' => $approvalMessage->id,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to generate approval URL', [
+                    'project_id' => $project->id,
+                    'approve_token' => $project->approve_token,
+                    'message_id' => $approvalMessage->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+                return response()->json([
+                    'error' => '承認URLの生成に失敗しました',
+                    'details' => $e->getMessage(),
+                ], 500);
+            }
+
+            Log::info('Approval URL generated successfully', [
+                'project_id' => $project->id,
+                'message_id' => $approvalMessage->id,
+            ]);
+
+            return response()->json([
+                'approval_url' => $approvalUrl,
+                'message_id' => $approvalMessage->id,
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation error in generateApprovalUrl', [
+                'project_id' => $project->id,
+                'errors' => $e->errors(),
+            ]);
+            return response()->json([
+                'error' => 'バリデーションエラー',
+                'details' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Unexpected error in generateApprovalUrl', [
+                'project_id' => $project->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'error' => '承認URLの生成中に予期せぬエラーが発生しました',
+                'details' => $e->getMessage(),
+            ], 500);
         }
-
-        $validated = $request->validate([
-            'message' => 'required|string|max:5000',
-        ]);
-
-        // メッセージを保存
-        $approvalMessage = \App\Models\ApprovalMessage::create([
-            'project_id' => $project->id,
-            'message' => $validated['message'],
-        ]);
-
-        // 承認URLを生成（短いIDを含める）
-        $approvalUrl = route('approve.show', [
-            'token' => $project->approve_token,
-            'msg' => $approvalMessage->id,
-        ]);
-
-        return response()->json([
-            'approval_url' => $approvalUrl,
-            'message_id' => $approvalMessage->id,
-        ]);
     }
 }
