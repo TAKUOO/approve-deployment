@@ -13,24 +13,44 @@ class ProjectController extends Controller
 {
     public function index()
     {
-        $projects = Project::where('user_id', Auth::id())
-            ->with(['deployLogs.approvalMessage'])
-            ->latest()
-            ->get();
+        try {
+            // approval_messagesテーブルが存在するか確認
+            $hasApprovalMessagesTable = \Illuminate\Support\Facades\Schema::hasTable('approval_messages');
+            
+            $query = Project::where('user_id', Auth::id());
+            
+            // approval_messagesテーブルが存在する場合のみEager Loading
+            if ($hasApprovalMessagesTable) {
+                $query->with(['deployLogs.approvalMessage']);
+            } else {
+                // テーブルが存在しない場合はdeployLogsのみ読み込む
+                $query->with(['deployLogs']);
+            }
+            
+            $projects = $query->latest()->get();
 
-        // プロジェクトがない場合は作成画面にリダイレクト
-        if ($projects->isEmpty()) {
-            return redirect()->route('projects.create');
+            // プロジェクトがない場合は作成画面にリダイレクト
+            if ($projects->isEmpty()) {
+                return redirect()->route('projects.create');
+            }
+
+            // デフォルトで最初のプロジェクトを選択
+            $selectedProject = $projects->first();
+
+            // GitHub API同期はフロントエンドで非同期実行（ページロードをブロックしない）
+            return Inertia::render('Dashboard/ProjectList', [
+                'projects' => $projects,
+                'selectedProject' => $selectedProject,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('ProjectController@index error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
+            // エラーが発生した場合はプロジェクト作成画面にリダイレクト
+            return redirect()->route('projects.create')->with('error', 'プロジェクト一覧の読み込みに失敗しました。');
         }
-
-        // デフォルトで最初のプロジェクトを選択
-        $selectedProject = $projects->first();
-
-        // GitHub API同期はフロントエンドで非同期実行（ページロードをブロックしない）
-        return Inertia::render('Dashboard/ProjectList', [
-            'projects' => $projects,
-            'selectedProject' => $selectedProject,
-        ]);
     }
 
     private function findAndSetGitHubRunId(\App\Models\DeployLog $deployLog)

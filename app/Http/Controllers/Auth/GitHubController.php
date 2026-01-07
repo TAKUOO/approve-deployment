@@ -49,7 +49,8 @@ class GitHubController extends Controller
 
             Auth::login($user);
 
-            return redirect()->intended(route('projects.index', absolute: false));
+            // intended()の代わりに直接リダイレクト（セッションの問題を回避）
+            return redirect()->route('projects.index');
         } catch (\Exception $e) {
             \Log::error('GitHub OAuth callback error', [
                 'message' => $e->getMessage(),
