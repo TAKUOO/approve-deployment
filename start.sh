@@ -59,12 +59,40 @@ php artisan package:discover --ansi || echo "Warning: package:discover failed"
 
 # マイグレーション実行
 echo "=== Running Migrations ==="
-php artisan migrate --force || {
-    echo "ERROR: Migration failed!"
-    echo "Migration error details:"
-    php artisan migrate --force 2>&1 || true
-}
-echo "=== Migrations Complete ==="
+echo "Database environment variables:"
+echo "  DB_CONNECTION: ${DB_CONNECTION:-not set}"
+echo "  DB_HOST: ${DB_HOST:-not set}"
+echo "  DB_PORT: ${DB_PORT:-not set}"
+echo "  DB_DATABASE: ${DB_DATABASE:-not set}"
+echo "  DB_USERNAME: ${DB_USERNAME:-not set}"
+echo "  DB_PASSWORD: ${DB_PASSWORD:+set (length: ${#DB_PASSWORD})}"
+echo ""
+
+echo "Migration status before:"
+php artisan migrate:status 2>&1 || echo "Warning: migrate:status failed (this is OK if migrations table doesn't exist yet)"
+echo ""
+
+echo "Executing migrations..."
+MIGRATION_OUTPUT=$(php artisan migrate --force 2>&1)
+MIGRATION_EXIT_CODE=$?
+
+if [ $MIGRATION_EXIT_CODE -eq 0 ]; then
+    echo "$MIGRATION_OUTPUT"
+    echo ""
+    echo "=== Migrations Complete Successfully ==="
+    echo "Migration status after:"
+    php artisan migrate:status 2>&1 || echo "Warning: migrate:status failed"
+else
+    echo "=== ERROR: Migration failed! ==="
+    echo "Exit code: $MIGRATION_EXIT_CODE"
+    echo "Migration output:"
+    echo "$MIGRATION_OUTPUT"
+    echo ""
+    echo "Attempting to check database connection..."
+    php artisan tinker --execute="try { DB::connection()->getPdo(); echo 'Database connection: OK'; } catch (Exception \$e) { echo 'Database connection failed: ' . \$e->getMessage(); }" 2>&1 || echo "Database connection check failed"
+    echo ""
+    echo "WARNING: Continuing despite migration errors..."
+fi
 echo ""
 
 # 環境変数が設定されているか確認
