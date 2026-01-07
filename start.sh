@@ -120,5 +120,39 @@ else
 fi
 
 # サーバー起動
+echo "=== Starting PHP Server ==="
+echo "PORT: ${PORT:-not set}"
+echo "Working directory: $(pwd)"
+echo "Public directory exists: $([ -d public ] && echo "yes" || echo "no")"
+echo ""
+
+# PORT環境変数が設定されているか確認
+if [ -z "$PORT" ]; then
+    echo "ERROR: PORT environment variable is not set!"
+    echo "Railway should set this automatically. Exiting..."
+    exit 1
+fi
+
+# publicディレクトリが存在するか確認
+if [ ! -d "public" ]; then
+    echo "ERROR: public directory not found!"
+    echo "Current directory contents:"
+    ls -la
+    exit 1
+fi
+
+# public/index.phpが存在するか確認
+if [ ! -f "public/index.php" ]; then
+    echo "ERROR: public/index.php not found!"
+    echo "Public directory contents:"
+    ls -la public/
+    exit 1
+fi
+
+echo "Starting PHP built-in server on 0.0.0.0:$PORT..."
+echo "Server will be accessible at http://0.0.0.0:$PORT"
+echo ""
+
+# サーバーを起動（execでプロセスを置き換える）
 exec php -S 0.0.0.0:$PORT -t public
 
