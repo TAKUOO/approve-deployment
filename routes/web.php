@@ -54,6 +54,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/github/repositories', [\App\Http\Controllers\ProjectController::class, 'getRepositories'])->name('api.github.repositories');
     Route::get('/api/github/workflows', [\App\Http\Controllers\ProjectController::class, 'getWorkflows'])->name('api.github.workflows');
     Route::get('/api/github/branches', [\App\Http\Controllers\ProjectController::class, 'getBranches'])->name('api.github.branches');
+    
+    // Deploy Log Sync
+    Route::post('/api/deploy-logs/sync', [\App\Http\Controllers\ProjectController::class, 'syncDeployLogs'])->name('api.deploy-logs.sync');
 });
 
 // 承認ページ（ログイン不要、レート制限付き）

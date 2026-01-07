@@ -111,12 +111,12 @@ else
         php artisan config:publish session || echo "Warning: config:publish session failed"
     fi
     
-    # キャッシュコマンド実行（エラーが発生しても続行）
-    # 本番環境ではキャッシュコマンドをスキップして、設定ファイルを直接読み込む
-    # セッションエラーが発生しているため、キャッシュコマンドはスキップ
-    # php artisan config:cache || echo "Warning: config:cache failed"
-    # php artisan route:cache || echo "Warning: route:cache failed"
-    # php artisan view:cache || echo "Warning: view:cache failed"
+    # キャッシュコマンド実行（パフォーマンス向上のため）
+    echo "=== Caching Configuration ==="
+    php artisan config:cache || echo "Warning: config:cache failed"
+    php artisan route:cache || echo "Warning: route:cache failed"
+    php artisan view:cache || echo "Warning: view:cache failed"
+    echo "=== Caching Complete ==="
 fi
 
 # サーバー起動

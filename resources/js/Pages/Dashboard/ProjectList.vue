@@ -929,6 +929,48 @@ const previousStep = () => {
     }
 };
 
+// デプロイログの同期処理（非同期実行）
+const syncDeployLogs = async () => {
+    try {
+        // 実行中または保留中のデプロイログがあるプロジェクトIDを取得
+        const projectIds = props.projects
+            .filter(project => {
+                return project.deploy_logs && project.deploy_logs.some(
+                    log => log.status === 'running' || log.status === 'pending'
+                );
+            })
+            .map(project => project.id);
+
+        if (projectIds.length === 0) {
+            return; // 同期する必要がない
+        }
+
+        const response = await axios.post(route('api.deploy-logs.sync'), {
+            project_ids: projectIds,
+        });
+
+        if (response.data && response.data.synced_logs) {
+            // 同期されたログの情報をログに出力（デバッグ用）
+            console.log('Deploy logs synced:', response.data.synced_logs);
+            
+            // ページを再読み込みして最新の状態を取得（必要に応じて）
+            // ただし、頻繁に再読み込みするとUXが悪いので、必要に応じてInertia.reload()を使用
+            if (response.data.synced_logs.length > 0) {
+                // ステータスが変更された可能性があるので、少し遅延してから再読み込み
+                setTimeout(() => {
+                    router.reload({ only: ['projects', 'selectedProject'] });
+                }, 2000);
+            }
+        }
+    } catch (error) {
+        console.error('Failed to sync deploy logs:', error);
+        // エラーは無視（ページロードをブロックしない）
+    }
+};
+
+// デプロイログ同期用のインターバルID
+let syncInterval = null;
+
 onMounted(() => {
     // デフォルトで最初のプロジェクトを選択
     if (props.selectedProject) {
@@ -945,6 +987,24 @@ onMounted(() => {
             }, 1000);
         }
     });
+
+    // デプロイログの同期を非同期で実行（ページロードをブロックしない）
+    setTimeout(() => {
+        syncDeployLogs();
+    }, 500); // ページ読み込み後500ms後に実行
+
+    // 定期的にデプロイログを同期（30秒ごと）
+    syncInterval = setInterval(() => {
+        syncDeployLogs();
+    }, 30000);
+});
+
+// コンポーネントがアンマウントされたらインターバルをクリア
+onUnmounted(() => {
+    if (syncInterval) {
+        clearInterval(syncInterval);
+        syncInterval = null;
+    }
 });
 
 const currentProject = computed(() => {

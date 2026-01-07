@@ -23,42 +23,10 @@ class ProjectController extends Controller
             return redirect()->route('projects.create');
         }
 
-        // 実行中のデプロイログのステータスをGitHub Actions APIから同期
-        foreach ($projects as $project) {
-            foreach ($project->deployLogs as $deployLog) {
-                if (($deployLog->status === 'running' || $deployLog->status === 'pending')) {
-                    try {
-                        // github_run_idがない場合、まず検索して設定
-                        if (!$deployLog->github_run_id) {
-                            $this->findAndSetGitHubRunId($deployLog);
-                            $deployLog->refresh();
-                        }
-                        
-                        // github_run_idがある場合、ステータスを同期
-                        if ($deployLog->github_run_id) {
-                            $this->syncDeployLogStatus($deployLog);
-                            $deployLog->refresh();
-                        }
-                    } catch (\Exception $e) {
-                        \Illuminate\Support\Facades\Log::warning('Failed to sync deploy log', [
-                            'deploy_log_id' => $deployLog->id,
-                            'github_run_id' => $deployLog->github_run_id,
-                            'error' => $e->getMessage(),
-                        ]);
-                    }
-                }
-            }
-        }
-
-        // 再取得
-        $projects = Project::where('user_id', Auth::id())
-            ->with(['deployLogs.approvalMessage'])
-            ->latest()
-            ->get();
-
         // デフォルトで最初のプロジェクトを選択
         $selectedProject = $projects->first();
 
+        // GitHub API同期はフロントエンドで非同期実行（ページロードをブロックしない）
         return Inertia::render('Dashboard/ProjectList', [
             'projects' => $projects,
             'selectedProject' => $selectedProject,
@@ -693,5 +661,73 @@ class ProjectController extends Controller
                 'details' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * デプロイログのステータスをGitHub APIから同期
+     */
+    public function syncDeployLogs(Request $request)
+    {
+        $user = Auth::user();
+        
+        if (!$user->github_token) {
+            return response()->json(['error' => 'GitHub token not found'], 401);
+        }
+
+        $projectIds = $request->input('project_ids', []);
+        
+        if (empty($projectIds)) {
+            return response()->json(['error' => 'Project IDs are required'], 400);
+        }
+
+        $projects = Project::where('user_id', Auth::id())
+            ->whereIn('id', $projectIds)
+            ->with(['deployLogs' => function ($query) {
+                $query->whereIn('status', ['running', 'pending']);
+            }])
+            ->get();
+
+        $syncedLogs = [];
+        $errors = [];
+
+        foreach ($projects as $project) {
+            foreach ($project->deployLogs as $deployLog) {
+                try {
+                    // github_run_idがない場合、まず検索して設定
+                    if (!$deployLog->github_run_id) {
+                        $this->findAndSetGitHubRunId($deployLog);
+                        $deployLog->refresh();
+                    }
+                    
+                    // github_run_idがある場合、ステータスを同期
+                    if ($deployLog->github_run_id) {
+                        $this->syncDeployLogStatus($deployLog);
+                        $deployLog->refresh();
+                    }
+
+                    $syncedLogs[] = [
+                        'id' => $deployLog->id,
+                        'status' => $deployLog->status,
+                        'github_run_id' => $deployLog->github_run_id,
+                        'finished_at' => $deployLog->finished_at,
+                    ];
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::warning('Failed to sync deploy log', [
+                        'deploy_log_id' => $deployLog->id,
+                        'github_run_id' => $deployLog->github_run_id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    $errors[] = [
+                        'deploy_log_id' => $deployLog->id,
+                        'error' => $e->getMessage(),
+                    ];
+                }
+            }
+        }
+
+        return response()->json([
+            'synced_logs' => $syncedLogs,
+            'errors' => $errors,
+        ]);
     }
 }
