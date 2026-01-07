@@ -55,18 +55,6 @@
                             <div class="flex justify-between items-center mb-2">
                                 <div class="flex gap-2 items-center">
                                     <h1 class="text-xl font-bold text-gray-700">{{ currentProject.name }}</h1>
-                                    <a
-                                        :href="route('docs')"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-500 bg-gray-100 rounded-md transition-colors hover:text-gray-700 hover:bg-gray-200"
-                                        title="使い方を見る"
-                                    >
-                                        <svg class="mr-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        使い方を見る
-                                    </a>
                                 </div>
                                 <div class="flex gap-1">
                                     <button

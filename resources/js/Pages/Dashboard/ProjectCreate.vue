@@ -20,10 +20,8 @@
                         <div class="mb-8">
                             <div class="flex gap-3 items-center mb-2">
                                 <h1 class="text-2xl font-semibold text-gray-900">プロジェクトを作成する</h1>
-                                <a
-                                    :href="route('docs')"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                <button
+                                    @click="showDocsModal = true"
                                     class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-500 bg-gray-100 rounded-md transition-colors hover:text-gray-700 hover:bg-gray-200"
                                     title="使い方を見る"
                                 >
@@ -31,7 +29,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                     使い方を見る
-                                </a>
+                                </button>
                             </div>
                             <p class="text-gray-600">
                                 クライアントが確認するプロジェクトを登録しましょう。プロジェクト作成後、詳細画面で改善内容を入力して承認URLを生成し、クライアントに共有できます。クライアントが承認すると、自動的に本番環境にデプロイされます。
@@ -451,6 +449,9 @@
                 </div>
             </div>
         </Modal>
+
+        <!-- ドキュメントモーダル -->
+        <DocumentationModal :show="showDocsModal" @close="showDocsModal = false" />
     </AuthenticatedLayout>
 </template>
 
@@ -464,6 +465,7 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Modal from '@/Components/Modal.vue';
+import DocumentationModal from '@/Components/DocumentationModal.vue';
 import { ref, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 
@@ -489,6 +491,7 @@ const organizations = ref([]);
 const repositories = ref([]);
 const workflows = ref([]);
 const branches = ref([]);
+const showDocsModal = ref(false);
 const selectedOrganization = ref('');
 const selectedRepository = ref(null);
 const selectedTemplate = ref('ftp');
