@@ -14,14 +14,29 @@ class ProjectController extends Controller
     public function index()
     {
         try {
-            // approval_messagesテーブルが存在するか確認
-            $hasApprovalMessagesTable = \Illuminate\Support\Facades\Schema::hasTable('approval_messages');
-            
             $query = Project::where('user_id', Auth::id());
+            
+            // approval_messagesテーブルが存在するか確認（エラーを無視）
+            $hasApprovalMessagesTable = false;
+            try {
+                $hasApprovalMessagesTable = \Illuminate\Support\Facades\Schema::hasTable('approval_messages');
+            } catch (\Exception $e) {
+                \Log::warning('Failed to check approval_messages table', [
+                    'error' => $e->getMessage(),
+                ]);
+            }
             
             // approval_messagesテーブルが存在する場合のみEager Loading
             if ($hasApprovalMessagesTable) {
-                $query->with(['deployLogs.approvalMessage']);
+                try {
+                    $query->with(['deployLogs.approvalMessage']);
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to eager load approvalMessage', [
+                        'error' => $e->getMessage(),
+                    ]);
+                    // リレーションの読み込みに失敗した場合はdeployLogsのみ読み込む
+                    $query->with(['deployLogs']);
+                }
             } else {
                 // テーブルが存在しない場合はdeployLogsのみ読み込む
                 $query->with(['deployLogs']);
@@ -46,6 +61,7 @@ class ProjectController extends Controller
             \Log::error('ProjectController@index error', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
+                'user_id' => Auth::id(),
             ]);
             
             // エラーが発生した場合はプロジェクト作成画面にリダイレクト
