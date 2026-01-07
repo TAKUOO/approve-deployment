@@ -91,7 +91,9 @@ else
     echo "Attempting to check database connection..."
     php artisan tinker --execute="try { DB::connection()->getPdo(); echo 'Database connection: OK'; } catch (Exception \$e) { echo 'Database connection failed: ' . \$e->getMessage(); }" 2>&1 || echo "Database connection check failed"
     echo ""
-    echo "WARNING: Continuing despite migration errors..."
+    echo "FATAL ERROR: Migration failed. Server will not start."
+    echo "Please check the migration errors above and fix them before deploying."
+    exit 1
 fi
 echo ""
 

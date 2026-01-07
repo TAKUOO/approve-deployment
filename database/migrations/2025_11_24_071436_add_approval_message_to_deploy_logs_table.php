@@ -16,7 +16,10 @@ return new class extends Migration
     {
         Schema::table('deploy_logs', function (Blueprint $table) {
             // カラムだけ追加（外部キー制約なし）
-            $table->unsignedBigInteger('approval_message_id')->nullable()->after('project_id');
+            // after()を削除して、MySQLのバージョン依存を避ける
+            if (!Schema::hasColumn('deploy_logs', 'approval_message_id')) {
+                $table->unsignedBigInteger('approval_message_id')->nullable();
+            }
         });
     }
 
