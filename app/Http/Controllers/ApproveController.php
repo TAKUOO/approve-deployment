@@ -50,12 +50,12 @@ class ApproveController extends Controller
             })
             ->firstOrFail();
 
-        // レート制限チェック（1時間に5回まで）
+        // レート制限チェック（10分間に30回まで）
         $recentApprovals = Approval::where('project_id', $project->id)
-            ->where('approved_at', '>', now()->subHour())
+            ->where('approved_at', '>', now()->subMinutes(10))
             ->count();
 
-        if ($recentApprovals >= 5) {
+        if ($recentApprovals >= 30) {
             Log::warning('Approval rate limit exceeded', [
                 'project_id' => $project->id,
                 'ip_address' => $request->ip(),
@@ -81,31 +81,37 @@ class ApproveController extends Controller
         $deployController = new \App\Http\Controllers\DeployController();
         $response = $deployController->trigger($request, $project, $approvalMessageId);
 
-        if ($response->getStatusCode() === 200) {
-            $responseData = json_decode($response->getContent(), true);
-            $deployLogId = $responseData['deploy_log_id'] ?? null;
+        // レスポンスからdeploy_log_idを取得（成功・失敗どちらの場合でも）
+        $responseData = json_decode($response->getContent(), true);
+        $deployLogId = $responseData['deploy_log_id'] ?? null;
 
+        if ($response->getStatusCode() === 200) {
             Log::info('Deployment approved', [
                 'project_id' => $project->id,
                 'project_name' => $project->name,
                 'ip_address' => $request->ip(),
                 'deploy_log_id' => $deployLogId,
             ]);
-
-            // 承認後のステータスページにリダイレクト
-            if ($deployLogId) {
-                return redirect()->route('approve.status', ['token' => $token, 'deployLog' => $deployLogId]);
-            }
-
-            return redirect()->route('approve.show', $token)->with('success', 'サイトの更新を開始しました');
+        } else {
+            Log::error('Deployment trigger failed', [
+                'project_id' => $project->id,
+                'ip_address' => $request->ip(),
+                'deploy_log_id' => $deployLogId,
+                'response_status' => $response->getStatusCode(),
+                'response_body' => $response->getContent(),
+            ]);
         }
 
-        Log::error('Deployment trigger failed', [
-            'project_id' => $project->id,
-            'ip_address' => $request->ip(),
-        ]);
+        // deploy_log_idが取得できた場合は、成功・失敗に関わらずステータスページにリダイレクト
+        if ($deployLogId) {
+            return redirect()->route('approve.status', ['token' => $token, 'deployLog' => $deployLogId]);
+        }
 
-        return redirect()->route('approve.show', $token)->with('error', 'サイトの更新に失敗しました');
+        // deploy_log_idが取得できない場合のみ、承認画面に戻る
+        return redirect()->route('approve.show', $token)
+            ->with('error', $response->getStatusCode() === 200 
+                ? 'サイトの更新を開始しましたが、ステータスを確認できませんでした'
+                : 'サイトの更新に失敗しました');
     }
 
     public function status(Request $request, string $token, $deployLog)

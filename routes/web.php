@@ -58,13 +58,13 @@ Route::middleware('auth')->group(function () {
 
 // 承認ページ（ログイン不要、レート制限付き）
 Route::get('/approve/{token}', [\App\Http\Controllers\ApproveController::class, 'show'])
-    ->middleware('throttle:30,1') // 1分間に30回まで
+    ->middleware('throttle:60,1') // 1分間に60回まで
     ->name('approve.show');
 Route::post('/approve/{token}', [\App\Http\Controllers\ApproveController::class, 'approve'])
-    ->middleware('throttle:5,60') // 1時間に5回まで
+    ->middleware('throttle:30,10') // 10分間に30回まで
     ->name('approve.approve');
 Route::get('/approve/{token}/status/{deployLog}', [\App\Http\Controllers\ApproveController::class, 'status'])
-    ->middleware('throttle:30,1') // 1分間に30回まで
+    ->middleware('throttle:60,1') // 1分間に60回まで
     ->name('approve.status');
 
 require __DIR__.'/auth.php';

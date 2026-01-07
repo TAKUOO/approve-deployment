@@ -71,14 +71,12 @@
                                     <p v-if="deployLogData.finished_at">終了: {{ formatDateTime(deployLogData.finished_at) }}</p>
                                     <p v-if="deployLogData.finished_at">所要時間: {{ formatDuration(deployLogData.started_at, deployLogData.finished_at) }}</p>
                                     <p v-else-if="deployLogData.started_at">経過時間: {{ formatElapsedTime(deployLogData.started_at) }}</p>
-                                </dd>
-                            </div>
-                            <div v-if="deployLogData.approval_message">
-                                <dt class="flex justify-between items-center text-sm font-medium text-gray-500">
-                                    <span>詳細内容</span>
+                                    
+                                    <!-- 詳細ボタン（右端に配置） -->
                                     <button
+                                        v-if="deployLogData.approval_message"
                                         @click="toggleApprovalMessageExpansion"
-                                        class="flex gap-1 items-center text-xs font-bold text-gray-500 transition-colors hover:text-gray-700"
+                                        class="flex gap-1 items-center ml-auto text-xs font-bold text-gray-500 transition-colors hover:text-gray-700"
                                     >
                                         <span>詳細</span>
                                         <svg 
@@ -91,8 +89,10 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                         </svg>
                                     </button>
-                                </dt>
-                                <dd v-if="isApprovalMessageExpanded" class="p-3 mt-1 text-sm text-gray-700 whitespace-pre-line bg-white rounded-2xl border border-gray-200">
+                                </dd>
+                            </div>
+                            <div v-if="deployLogData.approval_message && isApprovalMessageExpanded">
+                                <dd class="p-3 mt-1 text-sm text-gray-700 whitespace-pre-line bg-white rounded-2xl border border-gray-200">
                                     {{ deployLogData.approval_message.message }}
                                 </dd>
                             </div>

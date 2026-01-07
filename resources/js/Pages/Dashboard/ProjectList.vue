@@ -69,11 +69,15 @@
                                     </a>
                                 </div>
                                 <div class="flex gap-1">
-                                    <Link :href="route('projects.edit', currentProject.id)" class="p-2 text-gray-500 rounded-md transition-colors hover:text-indigo-600 hover:bg-indigo-50" title="編集">
+                                    <button
+                                        @click="openEditModal"
+                                        class="p-2 text-gray-500 rounded-md transition-colors hover:text-indigo-600 hover:bg-indigo-50"
+                                        title="編集"
+                                    >
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
-                                    </Link>
+                                    </button>
                                     <button
                                         @click="confirmDelete"
                                         class="p-2 text-gray-500 rounded-md transition-colors hover:text-red-600 hover:bg-red-50"
@@ -414,17 +418,217 @@
                 </div>
             </div>
         </div>
+
+        <!-- 編集モーダル -->
+        <div 
+            v-if="showEditModal"
+            class="flex fixed inset-0 z-50 justify-center items-start overflow-y-auto bg-black bg-opacity-50 p-4"
+            @click.self="closeEditModal"
+        >
+            <div class="relative my-8 mx-auto w-full max-w-3xl bg-white rounded-lg shadow-xl">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900">プロジェクトを編集する</h3>
+                        <button
+                            @click="closeEditModal"
+                            class="p-1 text-gray-400 hover:text-gray-600"
+                        >
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <form @submit.prevent="submitEditForm" class="space-y-6">
+                        <div>
+                            <InputLabel for="edit_staging_url" value="テストURL" />
+                            <TextInput
+                                id="edit_staging_url"
+                                v-model="editForm.staging_url"
+                                type="url"
+                                class="block mt-1 w-full"
+                                placeholder="https://staging.example.com"
+                                required
+                            />
+                            <p class="mt-1 text-sm text-gray-500">
+                                クライアントが確認するテスト環境（ステージング環境）のURLを入力してください。
+                            </p>
+                            <InputError class="mt-2" :message="editForm.errors.staging_url" />
+                        </div>
+
+                        <div>
+                            <InputLabel for="edit_production_url" value="本番URL" />
+                            <TextInput
+                                id="edit_production_url"
+                                v-model="editForm.production_url"
+                                type="url"
+                                class="block mt-1 w-full"
+                                placeholder="https://example.com"
+                                required
+                            />
+                            <p class="mt-1 text-sm text-gray-500">
+                                実際に公開されている本番環境のURLを入力してください。
+                            </p>
+                            <InputError class="mt-2" :message="editForm.errors.production_url" />
+                        </div>
+
+                        <div>
+                            <InputLabel for="edit_server_dir" value="デプロイ先パス" />
+                            <TextInput
+                                id="edit_server_dir"
+                                v-model="editForm.server_dir"
+                                type="text"
+                                class="block mt-1 w-full"
+                                placeholder="/public_html/"
+                            />
+                            <p class="mt-1 text-sm text-gray-500">
+                                サーバー上のデプロイ先ディレクトリパスを入力してください。
+                            </p>
+                            <InputError class="mt-2" :message="editForm.errors.server_dir" />
+                        </div>
+
+                        <div>
+                            <InputLabel for="edit_name" value="プロジェクト名" />
+                            <TextInput
+                                id="edit_name"
+                                v-model="editForm.name"
+                                type="text"
+                                class="block mt-1 w-full"
+                                placeholder="プロジェクト名（任意）"
+                            />
+                            <p class="mt-1 text-sm text-gray-500">
+                                プロジェクト名を入力してください。未入力の場合は、GitHubリポジトリ名が使用されます。
+                            </p>
+                            <InputError class="mt-2" :message="editForm.errors.name" />
+                        </div>
+
+                        <div>
+                            <InputLabel for="edit_organization" value="GitHub 組織" />
+                            <select
+                                id="edit_organization"
+                                v-model="editSelectedOrganization"
+                                @change="onEditOrganizationChange"
+                                class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                required
+                            >
+                                <option value="">組織を選択してください</option>
+                                <option value="personal">個人リポジトリ</option>
+                                <option v-for="org in editOrganizations" :key="org.id" :value="org.login">
+                                    {{ org.login }}
+                                </option>
+                            </select>
+                            <InputError class="mt-2" :message="editForm.errors.github_owner" />
+                        </div>
+
+                        <div v-if="editSelectedOrganization">
+                            <InputLabel for="edit_repository" value="GitHub リポジトリ" />
+                            <select
+                                id="edit_repository"
+                                v-model="editSelectedRepository"
+                                @change="onEditRepositoryChange"
+                                class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                :disabled="editRepositories.length === 0"
+                                required
+                            >
+                                <option :value="null" disabled>
+                                    {{ editRepositories.length === 0 ? 'リポジトリを読み込み中...' : 'リポジトリを選択してください' }}
+                                </option>
+                                <option v-for="repo in editRepositories" :key="repo.id" :value="repo">
+                                    {{ repo.full_name }}
+                                </option>
+                            </select>
+                            <InputError class="mt-2" :message="editForm.errors.github_repo" />
+                        </div>
+
+                        <div v-if="editSelectedRepository">
+                            <div class="flex gap-2 items-center">
+                                <InputLabel for="edit_github_branch" value="GitHub ブランチ" />
+                                <div class="relative">
+                                    <button
+                                        type="button"
+                                        @click.stop="toggleEditTooltip('branch', $event)"
+                                        class="text-gray-400 transition-colors hover:text-gray-600"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </button>
+                                    <div
+                                        v-if="editActiveTooltip === 'branch'"
+                                        class="absolute left-0 z-10 p-3 mt-2 w-80 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
+                                    >
+                                        本番環境にアップロードするブランチ名を入力してください。通常は <code class="px-1 py-0.5 text-xs bg-gray-100 rounded">main</code> を使用します。
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="relative">
+                                <input
+                                    type="text"
+                                    id="edit_github_branch"
+                                    v-model="editForm.github_branch"
+                                    list="edit-branch-list"
+                                    class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    placeholder="main"
+                                    required
+                                />
+                                <datalist id="edit-branch-list">
+                                    <option v-for="branch in editBranches" :key="branch.name" :value="branch.name">
+                                        {{ branch.name }}
+                                    </option>
+                                </datalist>
+                                <p class="mt-1 text-xs text-gray-500">
+                                    本番環境にアップするブランチ名（通常は main）
+                                </p>
+                            </div>
+                            <InputError class="mt-2" :message="editForm.errors.github_branch" />
+                        </div>
+                        <div v-else>
+                            <InputLabel for="edit_github_branch_fallback" value="GitHub ブランチ" />
+                            <TextInput
+                                id="edit_github_branch_fallback"
+                                v-model="editForm.github_branch"
+                                type="text"
+                                class="block mt-1 w-full"
+                                required
+                            />
+                            <p class="mt-1 text-sm text-gray-500">
+                                本番環境にアップするブランチ名（通常は main）
+                            </p>
+                            <InputError class="mt-2" :message="editForm.errors.github_branch" />
+                        </div>
+
+                        <div class="flex justify-end items-center gap-4 pt-4 border-t border-gray-200">
+                            <button
+                                type="button"
+                                @click="closeEditModal"
+                                class="px-4 py-2 text-sm text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+                            >
+                                キャンセル
+                            </button>
+                            <PrimaryButton :class="{ 'opacity-25': editForm.processing }" :disabled="editForm.processing">
+                                更新
+                            </PrimaryButton>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </AuthenticatedLayout>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, Transition } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { ref, computed, onMounted, nextTick, Transition, onUnmounted } from 'vue';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import AppFooter from '@/Components/AppFooter.vue';
+import InputError from '@/Components/InputError.vue';
+import InputLabel from '@/Components/InputLabel.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import TextInput from '@/Components/TextInput.vue';
 import { MdEditor } from 'md-editor-v3';
 import 'md-editor-v3/lib/style.css';
 import 'md-editor-v3/lib/preview.css';
+import axios from 'axios';
 
 const props = defineProps({
     projects: Array,
@@ -482,6 +686,196 @@ const expandedLogs = ref({});
 
 const toggleLogExpansion = (logId) => {
     expandedLogs.value[logId] = !expandedLogs.value[logId];
+};
+
+// 編集モーダル関連
+const showEditModal = ref(false);
+const editForm = useForm({
+    name: '',
+    staging_url: '',
+    production_url: '',
+    server_dir: '/public_html/',
+    github_owner: '',
+    github_repo: '',
+    github_workflow_id: '',
+    github_branch: 'main',
+});
+const editOrganizations = ref([]);
+const editRepositories = ref([]);
+const editBranches = ref([]);
+const editSelectedOrganization = ref('');
+const editSelectedRepository = ref(null);
+const editActiveTooltip = ref(null);
+
+const openEditModal = () => {
+    if (!currentProject.value) return;
+    
+    // フォームに現在のプロジェクト情報を設定
+    editForm.name = currentProject.value.name || '';
+    editForm.staging_url = currentProject.value.staging_url || '';
+    editForm.production_url = currentProject.value.production_url || '';
+    editForm.server_dir = currentProject.value.server_dir || '/public_html/';
+    editForm.github_owner = currentProject.value.github_owner || '';
+    editForm.github_repo = currentProject.value.github_repo || '';
+    editForm.github_workflow_id = currentProject.value.github_workflow_id || '';
+    editForm.github_branch = currentProject.value.github_branch || 'main';
+    
+    editSelectedOrganization.value = currentProject.value.github_owner || '';
+    editSelectedRepository.value = null;
+    editRepositories.value = [];
+    editBranches.value = [];
+    
+    // モーダルを即座に表示
+    showEditModal.value = true;
+    document.addEventListener('click', closeEditTooltip);
+    
+    // データの読み込みは非同期で実行（モーダル表示後に）
+    (async () => {
+        // 組織一覧を取得
+        try {
+            const response = await axios.get(route('api.github.organizations'));
+            if (response.data && Array.isArray(response.data)) {
+                editOrganizations.value = response.data;
+            }
+        } catch (error) {
+            console.error('Failed to fetch organizations:', error);
+            editOrganizations.value = [];
+        }
+        
+        // 既存のプロジェクトの組織が選択されている場合、リポジトリを取得
+        if (editSelectedOrganization.value) {
+            await loadEditRepositories();
+            // 既存のリポジトリが選択されている場合、ブランチも取得
+            if (editSelectedRepository.value) {
+                await onEditRepositoryChange();
+            }
+        }
+    })();
+};
+
+const closeEditModal = () => {
+    showEditModal.value = false;
+    editForm.reset();
+    editForm.clearErrors();
+    document.removeEventListener('click', closeEditTooltip);
+};
+
+const loadEditRepositories = async () => {
+    if (!editSelectedOrganization.value) return;
+
+    try {
+        const response = await axios.get(route('api.github.repositories'), {
+            params: {
+                organization: editSelectedOrganization.value
+            }
+        });
+        
+        if (response.data && Array.isArray(response.data)) {
+            editRepositories.value = response.data;
+            // 既存のリポジトリを選択
+            if (currentProject.value?.github_repo) {
+                const existingRepo = editRepositories.value.find(r => r.name === currentProject.value.github_repo);
+                if (existingRepo) {
+                    editSelectedRepository.value = existingRepo;
+                }
+            }
+        } else {
+            editRepositories.value = [];
+        }
+    } catch (error) {
+        console.error('Failed to fetch repositories:', error);
+        editRepositories.value = [];
+    }
+};
+
+const onEditOrganizationChange = async () => {
+    if (!editSelectedOrganization.value) {
+        editSelectedRepository.value = null;
+        editRepositories.value = [];
+        editForm.github_owner = '';
+        editForm.github_repo = '';
+        return;
+    }
+
+    editSelectedRepository.value = null;
+    editRepositories.value = [];
+    editForm.github_owner = '';
+    editForm.github_repo = '';
+
+    await loadEditRepositories();
+};
+
+const toggleEditTooltip = (tooltipName, event) => {
+    if (event) {
+        event.stopPropagation();
+    }
+    if (editActiveTooltip.value === tooltipName) {
+        editActiveTooltip.value = null;
+    } else {
+        editActiveTooltip.value = tooltipName;
+    }
+};
+
+const closeEditTooltip = () => {
+    editActiveTooltip.value = null;
+};
+
+const onEditRepositoryChange = async () => {
+    if (!editSelectedRepository.value) {
+        editForm.github_owner = '';
+        editForm.github_repo = '';
+        editBranches.value = [];
+        return;
+    }
+
+    editForm.github_owner = editSelectedRepository.value.owner.login;
+    editForm.github_repo = editSelectedRepository.value.name;
+    
+    // ブランチを取得
+    editBranches.value = [];
+    try {
+        const branchesResponse = await axios.get(route('api.github.branches'), {
+            params: {
+                owner: editForm.github_owner,
+                repo: editForm.github_repo
+            }
+        });
+        
+        editBranches.value = branchesResponse.data.branches || [];
+        const defaultBranch = branchesResponse.data.default_branch;
+        
+        // ブランチの自動選択（優先順位: main -> master -> default_branch -> 最初のブランチ）
+        if (editBranches.value && editBranches.value.length > 0) {
+            const mainBranch = editBranches.value.find(b => b.name === 'main');
+            const masterBranch = editBranches.value.find(b => b.name === 'master');
+            const defaultBranchObj = editBranches.value.find(b => b.name === defaultBranch);
+            
+            if (mainBranch) {
+                editForm.github_branch = 'main';
+            } else if (masterBranch) {
+                editForm.github_branch = 'master';
+            } else if (defaultBranchObj) {
+                editForm.github_branch = defaultBranch;
+            } else {
+                editForm.github_branch = editBranches.value[0].name;
+            }
+        }
+    } catch (error) {
+        console.error('Failed to fetch branches:', error);
+        editBranches.value = [];
+    }
+};
+
+const submitEditForm = () => {
+    if (!currentProject.value) return;
+    
+    editForm.patch(route('projects.update', currentProject.value.id), {
+        onSuccess: () => {
+            closeEditModal();
+            // プロジェクト一覧を再読み込み
+            router.reload({ only: ['projects', 'selectedProject'] });
+        }
+    });
 };
 
 const guideSteps = [

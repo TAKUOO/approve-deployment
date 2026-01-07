@@ -365,26 +365,30 @@
                                                 v-if="activeTooltip === 'branch'"
                                                 class="absolute left-0 z-10 p-3 mt-2 w-80 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
                                             >
-                                                デプロイ対象のブランチを選択してください。<code class="px-1 py-0.5 text-xs bg-gray-100 rounded">main</code> または <code class="px-1 py-0.5 text-xs bg-gray-100 rounded">master</code> ブランチが自動的に選択されます。
+                                                本番環境にアップロードするブランチ名を入力してください。通常は <code class="px-1 py-0.5 text-xs bg-gray-100 rounded">main</code> を使用します。
                                             </div>
                                         </div>
                                     </div>
-                                    <select
-                                        id="github_branch"
-                                        v-model="form.github_branch"
-                                        class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                        required
-                                    >
-                                        <option value="" disabled>ブランチを選択してください</option>
-                                        <!-- main/masterブランチのみ表示（存在する場合） -->
-                                        <option 
-                                            v-for="branch in branches" 
-                                            :key="branch.name" 
-                                            :value="branch.name"
-                                        >
-                                            {{ branch.name }}
-                                        </option>
-                                    </select>
+                                    <div class="relative">
+                                        <input
+                                            type="text"
+                                            id="github_branch"
+                                            v-model="form.github_branch"
+                                            list="branch-list"
+                                            class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            placeholder="main"
+                                            required
+                                        />
+                                        <!-- ブランチ候補のdatalist（APIから取得できた場合のみ表示） -->
+                                        <datalist id="branch-list">
+                                            <option v-for="branch in branches" :key="branch.name" :value="branch.name">
+                                                {{ branch.name }}
+                                            </option>
+                                        </datalist>
+                                        <p class="mt-1 text-xs text-gray-500">
+                                            本番環境にアップするブランチ名（通常は main）
+                                        </p>
+                                    </div>
                                     <InputError class="mt-2" :message="form.errors.github_branch" />
                                 </div>
 
@@ -511,18 +515,30 @@ const closeTooltip = () => {
 const workflowTemplates = [
     {
         id: 'ftp',
-        name: 'FTPデプロイ',
-        description: 'レンタルサーバーなど、FTPでアップロードする場合に使用します。',
+        name: 'rsyncデプロイ（推奨）',
+        description: 'rsyncを使用して高速にファイルを同期します。変更されたファイルのみを転送するため、FTPよりも大幅に高速です。',
         secrets: [
-            { name: 'FTP_SERVER', description: 'FTPサーバーのアドレス（例: ftp.example.com）' },
-            { name: 'FTP_USERNAME', description: 'FTPユーザー名（例: example.com）' },
-            { name: 'FTP_PASSWORD', description: 'FTPパスワード' }
+            { name: 'SSH_HOST', description: 'SSHサーバーのアドレス（例: example.com または 123.45.67.89）' },
+            { name: 'SSH_USER', description: 'SSHユーザー名（例: root または ubuntu）' },
+            { name: 'SSH_PORT', description: 'SSHポート番号（オプション、デフォルト: 22）' },
+            { name: 'SSH_PRIVATE_KEY', description: 'SSH秘密鍵（-----BEGIN RSA PRIVATE KEY----- から始まる内容全体）' }
         ],
-        secretsExample: `FTP_SERVER: ftp.example.com
-FTP_USERNAME: example.com
-FTP_PASSWORD: あなたのFTPパスワード
+        secretsExample: `SSH_HOST: example.com
+SSH_USER: root
+SSH_PORT: 22
+SSH_PRIVATE_KEY: |
+  -----BEGIN RSA PRIVATE KEY-----
+  MIIEpAIBAAKCAQEA...
+  (秘密鍵の内容をそのまま貼り付け)
+  -----END RSA PRIVATE KEY-----
 
-※ レンタルサーバーのコントロールパネルで確認できます`,
+※ SSH秘密鍵は以下のコマンドで確認できます:
+  cat ~/.ssh/id_rsa
+
+※ 公開鍵（id_rsa.pub）をサーバー側の
+  ~/.ssh/authorized_keys に追加してください
+
+※ SSH_PORTは省略可能です（デフォルト: 22）`,
         content: `name: Deploy to Production
 
 on:
@@ -543,31 +559,48 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           ref: \${{ github.event.inputs.ref || github.ref }}
-      
-      - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@4.3.0
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          server: \${{ secrets.FTP_SERVER }}
-          username: \${{ secrets.FTP_USERNAME }}
-          password: \${{ secrets.FTP_PASSWORD }}
-          local-dir: ./
-          server-dir: \${{ inputs.server_dir || '/public_html/' }}
+          ssh-private-key: \${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p \${{ secrets.SSH_PORT || 22 }} \\
+            \${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy via rsync
+        run: |
+          rsync -avz --delete \\
+            --exclude='.git' \\
+            --exclude='.gitignore' \\
+            --exclude='node_modules' \\
+            --exclude='.env' \\
+            --exclude='.env.*' \\
+            ./ \\
+            -e "ssh -p \${{ secrets.SSH_PORT || 22 }}" \\
+            \${{ secrets.SSH_USER }}@\${{ secrets.SSH_HOST }}:\${{ inputs.server_dir || '/public_html/' }}
 `
     },
     {
         id: 'ssh',
-        name: 'SSHデプロイ',
-        description: 'VPSや専用サーバーなど、SSHで接続してデプロイする場合に使用します。',
+        name: 'rsyncデプロイ（カスタム）',
+        description: 'rsyncを使用してファイルを同期します。カスタム除外設定や追加コマンドが必要な場合に使用します。',
         secrets: [
             { name: 'SSH_HOST', description: 'SSHサーバーのアドレス（例: example.com または 123.45.67.89）' },
             { name: 'SSH_USER', description: 'SSHユーザー名（例: root または ubuntu）' },
+            { name: 'SSH_PORT', description: 'SSHポート番号（オプション、デフォルト: 22）' },
             { name: 'SSH_PRIVATE_KEY', description: 'SSH秘密鍵（-----BEGIN RSA PRIVATE KEY----- から始まる内容全体）' }
         ],
         secretsExample: `SSH_HOST: example.com
 SSH_USER: root
+SSH_PORT: 22
 SSH_PRIVATE_KEY: |
   -----BEGIN RSA PRIVATE KEY-----
   MIIEpAIBAAKCAQEA...
@@ -578,7 +611,9 @@ SSH_PRIVATE_KEY: |
   cat ~/.ssh/id_rsa
 
 ※ 公開鍵（id_rsa.pub）をサーバー側の
-  ~/.ssh/authorized_keys に追加してください`,
+  ~/.ssh/authorized_keys に追加してください
+
+※ SSH_PORTは省略可能です（デフォルト: 22）`,
         content: `name: Deploy to Production
 
 on:
@@ -589,47 +624,71 @@ on:
         required: true
       deploy_log_id:
         description: 'Deploy Log ID'
-        required: true
+        required: false
+      server_dir:
+        description: 'Server directory path'
+        required: false
+        default: '/public_html/'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@master
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          host: \${{ secrets.SSH_HOST }}
-          username: \${{ secrets.SSH_USER }}
-          key: \${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd /var/www/html
-            git pull origin main
-            # 必要に応じて追加のコマンドを記述
-            # composer install --no-dev
-            # npm run build
+          ref: \${{ github.event.inputs.ref || github.ref }}
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: \${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p \${{ secrets.SSH_PORT || 22 }} \\
+            \${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy via rsync
+        run: |
+          rsync -avz --delete \\
+            --exclude='.git' \\
+            --exclude='.gitignore' \\
+            --exclude='node_modules' \\
+            --exclude='.env' \\
+            --exclude='.env.*' \\
+            ./ \\
+            -e "ssh -p \${{ secrets.SSH_PORT || 22 }}" \\
+            \${{ secrets.SSH_USER }}@\${{ secrets.SSH_HOST }}:\${{ inputs.server_dir || '/public_html/' }}
 `
     },
     {
         id: 'rsync',
-        name: 'rsyncデプロイ',
-        description: 'rsyncを使ってファイルを同期する場合に使用します。',
+        name: 'rsyncデプロイ（標準）',
+        description: 'rsyncを使用して高速にファイルを同期します。変更されたファイルのみを転送するため、デプロイ時間を大幅に短縮できます。',
         secrets: [
-            { name: 'RSYNC_HOST', description: 'rsyncサーバーのアドレス（例: example.com）' },
-            { name: 'RSYNC_USER', description: 'rsyncユーザー名（例: root または ubuntu）' },
-            { name: 'RSYNC_SSH_KEY', description: 'SSH秘密鍵（-----BEGIN RSA PRIVATE KEY----- から始まる内容全体）' }
+            { name: 'SSH_HOST', description: 'SSHサーバーのアドレス（例: example.com または 123.45.67.89）' },
+            { name: 'SSH_USER', description: 'SSHユーザー名（例: root または ubuntu）' },
+            { name: 'SSH_PORT', description: 'SSHポート番号（オプション、デフォルト: 22）' },
+            { name: 'SSH_PRIVATE_KEY', description: 'SSH秘密鍵（-----BEGIN RSA PRIVATE KEY----- から始まる内容全体）' }
         ],
-        secretsExample: `RSYNC_HOST: example.com
-RSYNC_USER: root
-RSYNC_SSH_KEY: |
+        secretsExample: `SSH_HOST: example.com
+SSH_USER: root
+SSH_PORT: 22
+SSH_PRIVATE_KEY: |
   -----BEGIN RSA PRIVATE KEY-----
   MIIEpAIBAAKCAQEA...
   (秘密鍵の内容をそのまま貼り付け)
   -----END RSA PRIVATE KEY-----
 
 ※ SSH秘密鍵は以下のコマンドで確認できます:
-  cat ~/.ssh/id_rsa`,
+  cat ~/.ssh/id_rsa
+
+※ 公開鍵（id_rsa.pub）をサーバー側の
+  ~/.ssh/authorized_keys に追加してください
+
+※ SSH_PORTは省略可能です（デフォルト: 22）`,
         content: `name: Deploy to Production
 
 on:
@@ -640,44 +699,71 @@ on:
         required: true
       deploy_log_id:
         description: 'Deploy Log ID'
-        required: true
+        required: false
+      server_dir:
+        description: 'Server directory path'
+        required: false
+        default: '/public_html/'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
-      - name: Deploy via rsync
-        uses: burnett01/rsync-deployments@6.0
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          switches: -avzr --delete
-          path: ./
-          remote_path: /var/www/html/
-          remote_host: \${{ secrets.RSYNC_HOST }}
-          remote_user: \${{ secrets.RSYNC_USER }}
-          remote_key: \${{ secrets.RSYNC_SSH_KEY }}
+          ref: \${{ github.event.inputs.ref || github.ref }}
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: \${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p \${{ secrets.SSH_PORT || 22 }} \\
+            \${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy via rsync
+        run: |
+          rsync -avz --delete \\
+            --exclude='.git' \\
+            --exclude='.gitignore' \\
+            --exclude='node_modules' \\
+            --exclude='.env' \\
+            --exclude='.env.*' \\
+            ./ \\
+            -e "ssh -p \${{ secrets.SSH_PORT || 22 }}" \\
+            \${{ secrets.SSH_USER }}@\${{ secrets.SSH_HOST }}:\${{ inputs.server_dir || '/public_html/' }}
 `
     },
     {
         id: 'static',
-        name: '静的サイト',
-        description: 'HTML/CSS/JSなどの静的サイトをビルドしてデプロイする場合に使用します。',
+        name: '静的サイト（ビルド + rsync）',
+        description: 'HTML/CSS/JSなどの静的サイトをビルドしてrsyncでデプロイします。変更されたファイルのみを転送するため高速です。',
         secrets: [
-            { name: 'FTP_SERVER', description: 'FTPサーバーのアドレス（FTPでデプロイする場合）' },
-            { name: 'FTP_USERNAME', description: 'FTPユーザー名' },
-            { name: 'FTP_PASSWORD', description: 'FTPパスワード' }
+            { name: 'SSH_HOST', description: 'SSHサーバーのアドレス（例: example.com または 123.45.67.89）' },
+            { name: 'SSH_USER', description: 'SSHユーザー名（例: root または ubuntu）' },
+            { name: 'SSH_PORT', description: 'SSHポート番号（オプション、デフォルト: 22）' },
+            { name: 'SSH_PRIVATE_KEY', description: 'SSH秘密鍵（-----BEGIN RSA PRIVATE KEY----- から始まる内容全体）' }
         ],
-        secretsExample: `※ 静的サイトテンプレートは、ビルド後に
-FTP、SSH、rsyncなど任意の方法でデプロイできます。
+        secretsExample: `SSH_HOST: example.com
+SSH_USER: root
+SSH_PORT: 22
+SSH_PRIVATE_KEY: |
+  -----BEGIN RSA PRIVATE KEY-----
+  MIIEpAIBAAKCAQEA...
+  (秘密鍵の内容をそのまま貼り付け)
+  -----END RSA PRIVATE KEY-----
 
-FTPでデプロイする場合:
-FTP_SERVER: ftp.example.com
-FTP_USERNAME: example.com
-FTP_PASSWORD: あなたのFTPパスワード
+※ SSH秘密鍵は以下のコマンドで確認できます:
+  cat ~/.ssh/id_rsa
 
-SSHでデプロイする場合は、SSH_HOST、SSH_USER、
-SSH_PRIVATE_KEY を設定してください。`,
+※ 公開鍵（id_rsa.pub）をサーバー側の
+  ~/.ssh/authorized_keys に追加してください
+
+※ SSH_PORTは省略可能です（デフォルト: 22）`,
         content: `name: Deploy to Production
 
 on:
@@ -688,14 +774,21 @@ on:
         required: true
       deploy_log_id:
         description: 'Deploy Log ID'
-        required: true
+        required: false
+      server_dir:
+        description: 'Server directory path'
+        required: false
+        default: '/public_html/'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: \${{ github.event.inputs.ref || github.ref }}
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -706,12 +799,29 @@ jobs:
       
       - name: Build
         run: npm run build
-      
-      - name: Deploy
-        # ここにデプロイコマンドを記述
-        # 例: FTP、SSH、rsyncなど
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: \${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add known hosts
         run: |
-          echo "Build completed. Add your deployment commands here."
+          mkdir -p ~/.ssh
+          ssh-keyscan -p \${{ secrets.SSH_PORT || 22 }} \\
+            \${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy via rsync
+        run: |
+          rsync -avz --delete \\
+            --exclude='.git' \\
+            --exclude='.gitignore' \\
+            --exclude='node_modules' \\
+            --exclude='.env' \\
+            --exclude='.env.*' \\
+            ./ \\
+            -e "ssh -p \${{ secrets.SSH_PORT || 22 }}" \\
+            \${{ secrets.SSH_USER }}@\${{ secrets.SSH_HOST }}:\${{ inputs.server_dir || '/public_html/' }}
 `
     }
 ];
@@ -826,22 +936,32 @@ const onRepositoryChange = async () => {
 
         // GitHub APIのレスポンス構造: { total_count: X, workflows: [...] }
         workflows.value = workflowsResponse.data.workflows || [];
-        branches.value = branchesResponse.data || [];
         
-        console.log('Branches fetched:', branches.value);
+        // ブランチを取得（すべてのブランチがソートされて返される）
+        branches.value = branchesResponse.data.branches || [];
+        const defaultBranch = branchesResponse.data.default_branch;
         
         // ワークフローが取得できた場合、最初のワークフローを自動選択
         if (workflows.value && workflows.value.length > 0) {
             form.github_workflow_id = String(workflows.value[0].id);
-            console.log('Auto-selected workflow:', workflows.value[0].name);
         }
         
-        // mainまたはmasterブランチのみを表示（バックエンドでフィルタリング済み）
+        // ブランチの自動選択（優先順位: main -> master -> default_branch -> 最初のブランチ）
         if (branches.value && branches.value.length > 0) {
-            form.github_branch = branches.value[0].name;
-            console.log('Auto-selected branch:', branches.value[0].name);
+            const mainBranch = branches.value.find(b => b.name === 'main');
+            const masterBranch = branches.value.find(b => b.name === 'master');
+            const defaultBranchObj = branches.value.find(b => b.name === defaultBranch);
+            
+            if (mainBranch) {
+                form.github_branch = mainBranch.name;
+            } else if (masterBranch) {
+                form.github_branch = masterBranch.name;
+            } else if (defaultBranchObj) {
+                form.github_branch = defaultBranchObj.name;
+            } else {
+                form.github_branch = branches.value[0].name;
+            }
         } else if (branchesResponse.data && branchesResponse.data.error) {
-            console.error('Branch fetch error:', branchesResponse.data.error);
             alert(`ブランチの取得に失敗しました: ${branchesResponse.data.error}`);
         }
     } catch (error) {

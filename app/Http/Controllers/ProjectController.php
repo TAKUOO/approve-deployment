@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -298,32 +299,57 @@ class ProjectController extends Controller
             abort(403);
         }
 
-        $validated = $request->validate([
-            'name' => 'nullable|string|max:255',
-            'staging_url' => 'required|url',
-            'production_url' => 'required|url',
-            'server_dir' => 'nullable|string|max:255',
-            'github_owner' => 'required|string',
-            'github_repo' => 'required|string',
-            'github_workflow_id' => 'required|string',
-            'github_branch' => 'required|string',
-        ]);
-        
-        // github_branchが空の場合は'main'をデフォルト値として設定
-        if (empty($validated['github_branch'])) {
-            $validated['github_branch'] = 'main';
+        try {
+            $validated = $request->validate([
+                'name' => 'nullable|string|max:255',
+                'staging_url' => 'required|url',
+                'production_url' => 'required|url',
+                'server_dir' => 'nullable|string|max:255',
+                'github_owner' => 'required|string',
+                'github_repo' => 'required|string',
+                'github_workflow_id' => 'required|string',
+                'github_branch' => 'required|string',
+            ]);
+            
+            // github_branchの前後の空白を削除
+            if (isset($validated['github_branch'])) {
+                $validated['github_branch'] = trim($validated['github_branch']);
+            }
+            
+            // github_branchが空の場合は'main'をデフォルト値として設定
+            if (empty($validated['github_branch'])) {
+                $validated['github_branch'] = 'main';
+            }
+
+            // プロジェクト名が未指定の場合は、レポジトリ名を使用
+            $name = $validated['name'] ?? "{$validated['github_owner']}/{$validated['github_repo']}";
+
+            $project->update([
+                ...$validated,
+                'name' => $name,
+                'github_branch' => $validated['github_branch'] ?? 'main',
+            ]);
+
+            Log::info('Project updated', [
+                'project_id' => $project->id,
+                'github_branch' => $validated['github_branch'],
+            ]);
+
+            return redirect()->route('projects.index');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Project update validation failed', [
+                'project_id' => $project->id,
+                'errors' => $e->errors(),
+            ]);
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error('Project update failed', [
+                'project_id' => $project->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e;
         }
-
-        // プロジェクト名が未指定の場合は、レポジトリ名を使用
-        $name = $validated['name'] ?? "{$validated['github_owner']}/{$validated['github_repo']}";
-
-        $project->update([
-            ...$validated,
-            'name' => $name,
-            'github_branch' => $validated['github_branch'] ?? 'main',
-        ]);
-
-        return redirect()->route('projects.index');
     }
 
     public function destroy(Project $project)
@@ -491,32 +517,96 @@ class ProjectController extends Controller
             $defaultBranch = $repoData['default_branch'] ?? null;
         }
 
-        // mainまたはmasterブランチのみを取得
-        // まずmainブランチを試す
-        $mainBranchResponse = \Illuminate\Support\Facades\Http::withToken($token)->get("https://api.github.com/repos/{$owner}/{$repo}/branches/main");
-        if ($mainBranchResponse->successful()) {
-            return response()->json([$mainBranchResponse->json()]);
+        $allBranches = [];
+        $page = 1;
+        $perPage = 100;
+        $hasMainBranch = false;
+
+        // すべてのブランチを取得（ページネーション対応）
+        while (true) {
+            $branchesResponse = \Illuminate\Support\Facades\Http::withToken($token)->get("https://api.github.com/repos/{$owner}/{$repo}/branches", [
+                'per_page' => $perPage,
+                'page' => $page
+            ]);
+            
+            if (!$branchesResponse->successful()) {
+                if ($page === 1) {
+                    return response()->json([
+                        'error' => 'Failed to fetch branches',
+                        'details' => $branchesResponse->body()
+                    ], $branchesResponse->status());
+                }
+                break;
+            }
+            
+            $pageBranches = $branchesResponse->json();
+            if (empty($pageBranches)) {
+                break;
+            }
+            
+            // mainブランチが含まれているかチェック
+            foreach ($pageBranches as $branch) {
+                if ($branch['name'] === 'main') {
+                    $hasMainBranch = true;
+                }
+            }
+            
+            $allBranches = array_merge($allBranches, $pageBranches);
+            
+            // 100件未満の場合は最後のページ
+            if (count($pageBranches) < $perPage) {
+                break;
+            }
+            
+            $page++;
         }
 
-        // mainブランチがない場合はmasterブランチを試す
-        $masterBranchResponse = \Illuminate\Support\Facades\Http::withToken($token)->get("https://api.github.com/repos/{$owner}/{$repo}/branches/master");
-        if ($masterBranchResponse->successful()) {
-            return response()->json([$masterBranchResponse->json()]);
-        }
-
-        // main/masterブランチが存在しない場合は、デフォルトブランチを取得
-        if ($defaultBranch) {
-            $defaultBranchResponse = \Illuminate\Support\Facades\Http::withToken($token)->get("https://api.github.com/repos/{$owner}/{$repo}/branches/{$defaultBranch}");
-            if ($defaultBranchResponse->successful()) {
-                return response()->json([$defaultBranchResponse->json()]);
+        // mainブランチが見つからない場合、直接取得を試みる
+        if (!$hasMainBranch) {
+            $mainBranchResponse = \Illuminate\Support\Facades\Http::withToken($token)->get("https://api.github.com/repos/{$owner}/{$repo}/branches/main");
+            if ($mainBranchResponse->successful()) {
+                $mainBranch = $mainBranchResponse->json();
+                // 既に存在しないか確認してから追加
+                $exists = false;
+                foreach ($allBranches as $branch) {
+                    if ($branch['name'] === 'main') {
+                        $exists = true;
+                        break;
+                    }
+                }
+                if (!$exists) {
+                    $allBranches[] = $mainBranch;
+                    Log::info('Main branch found via direct API call', [
+                        'owner' => $owner,
+                        'repo' => $repo,
+                        'branch_name' => $mainBranch['name']
+                    ]);
+                }
+            } else {
+                Log::warning('Main branch direct API call failed', [
+                    'owner' => $owner,
+                    'repo' => $repo,
+                    'status' => $mainBranchResponse->status(),
+                    'body' => $mainBranchResponse->body()
+                ]);
             }
         }
 
-        // どれも取得できない場合はエラー
+        // ブランチをソート：main -> master -> default_branch -> その他（アルファベット順）
+        $sortedBranches = collect($allBranches)->sortBy(function ($branch) use ($defaultBranch) {
+            $name = $branch['name'];
+            if ($name === 'main') return '0_main';
+            if ($name === 'master') return '1_master';
+            if ($name === $defaultBranch) return '2_' . $name;
+            return '3_' . $name;
+        })->values()->all();
+
+        // すべてのブランチを返す（フロントエンドで選択可能に）
         return response()->json([
-            'error' => 'main or master branch not found',
-            'default_branch' => $defaultBranch
-        ], 404);
+            'branches' => $sortedBranches,
+            'default_branch' => $defaultBranch,
+            'total_count' => count($sortedBranches)
+        ]);
     }
 
     public function generateApprovalUrl(Request $request, Project $project)

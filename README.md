@@ -557,22 +557,59 @@ on:
         required: true
       deploy_log_id:
         description: 'Deploy Log ID'
-        required: true
+        required: false
+      server_dir:
+        description: 'Server directory path'
+        required: false
+        default: '/public_html/'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
-      - name: Deploy to production
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add known hosts
         run: |
-          echo "Deploying project ${{ github.event.inputs.project_id }}"
-          # ここにデプロイコマンドを記述
-          # 例: SSH接続してデプロイスクリプトを実行
-          # 例: rsyncでファイルをアップロード
-          # 例: FTPでファイルをアップロード
+          mkdir -p ~/.ssh
+          ssh-keyscan -p ${{ secrets.SSH_PORT || 22 }} \
+            ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy via rsync
+        run: |
+          rsync -avz --delete \
+            --exclude='.git' \
+            --exclude='.gitignore' \
+            --exclude='node_modules' \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            ./ \
+            -e "ssh -p ${{ secrets.SSH_PORT || 22 }}" \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ inputs.server_dir || '/public_html/' }}
 ```
+
+### GitHub Secretsの設定
+
+GitHubリポジトリの Settings → Secrets and variables → Actions で以下を設定：
+
+- `SSH_HOST`: SSHサーバーのアドレス（例: example.com）
+- `SSH_USER`: SSHユーザー名（例: root）
+- `SSH_PORT`: SSHポート番号（オプション、デフォルト: 22）
+- `SSH_PRIVATE_KEY`: SSH秘密鍵（-----BEGIN RSA PRIVATE KEY----- から始まる内容全体）
+
+### rsyncの利点
+
+- **高速**: 変更されたファイルのみを転送するため、FTPと比べてデプロイ時間を大幅に短縮
+- **効率的**: 差分転送により、大量のファイルがあるプロジェクトでも数分で完了
+- **信頼性**: 転送の再開が可能で、ネットワークエラーにも強い
 
 ## GitHub Webhook設定
 

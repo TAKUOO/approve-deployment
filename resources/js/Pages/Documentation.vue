@@ -42,7 +42,7 @@
                                 <ul class="mb-4 space-y-2 list-disc list-inside text-slate-600">
                                     <li>GitHubアカウント</li>
                                     <li>GitHub Actionsが使用できるリポジトリ</li>
-                                    <li>テスト環境（ステージング環境）と本番環境のFTPサーバー情報</li>
+                                    <li>テスト環境（ステージング環境）と本番環境のSSHサーバー情報（SSH接続が可能なサーバー）</li>
                                 </ul>
                                 <p class="text-slate-600">
                                     まずはGitHubアカウントでログインし、プロジェクトを作成しましょう。
@@ -62,7 +62,7 @@
                                     <li><strong>プロジェクト名</strong>: 任意のプロジェクト名</li>
                                     <li><strong>テストURL</strong>: クライアントが確認するテスト環境のURL（例: https://staging.example.com）</li>
                                     <li><strong>本番URL</strong>: 実際に公開されている本番環境のURL（例: https://example.com）</li>
-                                    <li><strong>デプロイ先パス</strong>: FTPサーバー上のデプロイ先ディレクトリパス（例: /public_html/ または /example.com/public_html/wp-content/themes/mytheme/）</li>
+                                    <li><strong>デプロイ先パス</strong>: サーバー上のデプロイ先ディレクトリパス（例: /public_html/ または /example.com/public_html/wp-content/themes/mytheme/）</li>
                                 </ul>
 
                                 <h3 class="mt-6 mb-3 text-xl font-semibold text-slate-900">2.2 GitHub情報の設定</h3>
@@ -86,12 +86,13 @@
                                     GitHubリポジトリのSettings → Secrets and variables → Actionsで、以下のSecretsを設定します：
                                 </p>
 
-                                <h3 class="mb-3 text-xl font-semibold text-slate-900">3.1 FTPデプロイの場合</h3>
+                                <h3 class="mb-3 text-xl font-semibold text-slate-900">3.1 rsyncデプロイの場合（推奨）</h3>
                                 <div class="p-4 mb-4 rounded-lg bg-slate-50">
                                     <ul class="space-y-2 list-disc list-inside text-slate-700">
-                                        <li><strong>FTP_SERVER</strong>: FTPサーバーのアドレス（例: ftp.example.com）</li>
-                                        <li><strong>FTP_USERNAME</strong>: FTPユーザー名（例: example.com）</li>
-                                        <li><strong>FTP_PASSWORD</strong>: FTPパスワード</li>
+                                        <li><strong>SSH_HOST</strong>: SSHサーバーのアドレス（例: example.com または 123.45.67.89）</li>
+                                        <li><strong>SSH_USER</strong>: SSHユーザー名（例: root または ubuntu）</li>
+                                        <li><strong>SSH_PORT</strong>: SSHポート番号（オプション、デフォルト: 22）</li>
+                                        <li><strong>SSH_PRIVATE_KEY</strong>: SSH秘密鍵（-----BEGIN RSA PRIVATE KEY----- から始まる内容全体）</li>
                                     </ul>
                                 </div>
 
@@ -100,13 +101,69 @@
                                     <li>GitHubリポジトリの「Settings」タブを開く</li>
                                     <li>左メニューの「Secrets and variables」→「Actions」をクリック</li>
                                     <li>「New repository secret」ボタンをクリック</li>
-                                    <li>Nameに「FTP_SERVER」、SecretにFTPサーバーアドレスを入力して「Add secret」をクリック</li>
-                                    <li>同様に「FTP_USERNAME」と「FTP_PASSWORD」も追加（合計3つのSecrets）</li>
+                                    <li>Nameに「SSH_HOST」、SecretにSSHサーバーアドレスを入力して「Add secret」をクリック</li>
+                                    <li>同様に「SSH_USER」と「SSH_PRIVATE_KEY」も追加（SSH_PORTはオプション）</li>
                                 </ol>
+
+                                <h4 class="mb-2 text-lg font-semibold text-slate-900">SSH秘密鍵の取得方法</h4>
+                                <div class="p-4 mb-4 rounded-lg bg-slate-50">
+                                    <p class="mb-2 text-slate-700">
+                                        SSH秘密鍵は以下のコマンドで確認できます：
+                                    </p>
+                                    <div class="relative group">
+                                        <pre class="p-3 pr-12 text-sm bg-slate-900 text-slate-100 rounded"><code>{{ sshKeyCommand }}</code></pre>
+                                        <button
+                                            @click="copyToClipboard(sshKeyCommand, 'ssh-key')"
+                                            class="absolute top-2 right-2 p-2 text-slate-400 transition-colors bg-slate-800 rounded hover:text-slate-100 hover:bg-slate-700"
+                                            :title="copiedCodeId === 'ssh-key' ? 'コピーしました！' : 'コピー'"
+                                        >
+                                            <svg v-if="copiedCodeId !== 'ssh-key'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                            </svg>
+                                            <svg v-else class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <p class="mt-2 text-sm text-slate-600">
+                                        秘密鍵の内容全体（-----BEGIN RSA PRIVATE KEY----- から -----END RSA PRIVATE KEY----- まで）をコピーして、GitHub Secretsの「SSH_PRIVATE_KEY」に設定してください。
+                                    </p>
+                                </div>
+
+                                <h4 class="mb-2 text-lg font-semibold text-slate-900">サーバー側の設定</h4>
+                                <div class="p-4 mb-4 rounded-lg bg-slate-50">
+                                    <p class="mb-2 text-slate-700">
+                                        公開鍵（id_rsa.pub）をサーバー側の <code class="px-1 py-0.5 bg-white rounded">~/.ssh/authorized_keys</code> に追加してください。
+                                    </p>
+                                    <div class="relative group">
+                                        <pre class="p-3 pr-12 text-sm bg-slate-900 text-slate-100 rounded"><code>{{ sshPubKeyCommand }}</code></pre>
+                                        <button
+                                            @click="copyToClipboard(sshPubKeyCommand, 'ssh-pub-key')"
+                                            class="absolute top-2 right-2 p-2 text-slate-400 transition-colors bg-slate-800 rounded hover:text-slate-100 hover:bg-slate-700"
+                                            :title="copiedCodeId === 'ssh-pub-key' ? 'コピーしました！' : 'コピー'"
+                                        >
+                                            <svg v-if="copiedCodeId !== 'ssh-pub-key'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                            </svg>
+                                            <svg v-else class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <p class="mt-2 text-sm text-slate-600">
+                                        出力された公開鍵の内容をサーバー側の <code class="px-1 py-0.5 bg-white rounded">~/.ssh/authorized_keys</code> に追加します。
+                                    </p>
+                                </div>
+
+                                <div class="p-4 mb-4 bg-blue-50 rounded-lg border border-blue-200">
+                                    <p class="text-sm text-blue-800">
+                                        <strong>rsyncの利点:</strong> rsyncは変更されたファイルのみを転送するため、FTPと比べてデプロイ時間を大幅に短縮できます。特に大量のファイルがあるプロジェクトでは、数分から数十分の時間短縮が期待できます。
+                                    </p>
+                                </div>
 
                                 <div class="p-4 mb-4 bg-yellow-50 rounded-lg border border-yellow-200">
                                     <p class="text-sm text-yellow-800">
-                                        <strong>注意:</strong> Secrets名は大文字小文字を含めて正確に入力してください（FTP_SERVER、FTP_USERNAME、FTP_PASSWORD）。各Secretは個別に追加する必要があります。
+                                        <strong>注意:</strong> Secrets名は大文字小文字を含めて正確に入力してください（SSH_HOST、SSH_USER、SSH_PRIVATE_KEY）。各Secretは個別に追加する必要があります。SSH_PORTは省略可能で、デフォルトは22です。
                                     </p>
                                 </div>
                             </div>
@@ -120,37 +177,22 @@
                                     GitHubリポジトリの<code class="px-2 py-1 rounded bg-slate-100">.github/workflows/deploy.yml</code>に、以下のワークフローファイルを配置します：
                                 </p>
 
-                                <div class="overflow-x-auto p-4 mb-4 rounded-lg bg-slate-900" v-pre>
-                                    <pre class="text-sm text-slate-100"><code>name: Deploy to Production
-
-on:
-  workflow_dispatch:
-    inputs:
-      project_id:
-        description: 'Project ID'
-        required: true
-      deploy_log_id:
-        description: 'Deploy Log ID'
-        required: false
-      server_dir:
-        description: 'Server directory path'
-        required: false
-        default: '/public_html/'
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@4.3.0
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./
-          server-dir: ${{ inputs.server_dir || '/public_html/' }}</code></pre>
+                                <div class="relative group">
+                                    <div class="overflow-x-auto p-4 pr-12 mb-4 rounded-lg bg-slate-900">
+                                        <pre class="text-sm text-slate-100"><code v-html="escapeHtml(workflowYaml)"></code></pre>
+                                    </div>
+                                    <button
+                                        @click="copyToClipboard(workflowYaml, 'workflow')"
+                                        class="absolute top-4 right-4 p-2 text-slate-400 transition-colors bg-slate-800 rounded hover:text-slate-100 hover:bg-slate-700"
+                                        :title="copiedCodeId === 'workflow' ? 'コピーしました！' : 'コピー'"
+                                    >
+                                        <svg v-if="copiedCodeId !== 'workflow'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                        <svg v-else class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </button>
                                 </div>
 
                                 <p class="mb-4 text-slate-600">
@@ -169,12 +211,32 @@ jobs:
 
                                 <h3 class="mb-3 text-xl font-semibold text-slate-900">5.1 パスの確認方法</h3>
                                 <p class="mb-4 text-slate-600">
-                                    FTPクライアントまたはファイルマネージャーで、FTPサーバーのルートディレクトリを確認します：
+                                    SSHでサーバーに接続し、デプロイ先のディレクトリパスを確認します：
                                 </p>
                                 <ul class="mb-4 space-y-2 list-disc list-inside text-slate-600">
-                                    <li>FTPサーバーのルートが<code class="px-2 py-1 rounded bg-slate-100">/</code>から始まる場合: <code class="px-2 py-1 rounded bg-slate-100">/example.com/public_html/wp-content/themes/mytheme/</code></li>
-                                    <li>FTPサーバーのルートが<code class="px-2 py-1 rounded bg-slate-100">/example.com/</code>から始まる場合: <code class="px-2 py-1 rounded bg-slate-100">/public_html/wp-content/themes/mytheme/</code></li>
+                                    <li>サーバーのルートが<code class="px-2 py-1 rounded bg-slate-100">/</code>から始まる場合: <code class="px-2 py-1 rounded bg-slate-100">/example.com/public_html/wp-content/themes/mytheme/</code></li>
+                                    <li>サーバーのルートが<code class="px-2 py-1 rounded bg-slate-100">/example.com/</code>から始まる場合: <code class="px-2 py-1 rounded bg-slate-100">/public_html/wp-content/themes/mytheme/</code></li>
                                 </ul>
+                                <div class="p-4 mb-4 rounded-lg bg-slate-50">
+                                    <p class="mb-2 text-sm text-slate-700">
+                                        SSHでサーバーに接続してパスを確認する例：
+                                    </p>
+                                    <div class="relative group">
+                                        <pre class="p-3 pr-12 text-sm bg-slate-900 text-slate-100 rounded"><code>{{ sshPathCommand }}</code></pre>
+                                        <button
+                                            @click="copyToClipboard(sshPathCommand, 'ssh-path')"
+                                            class="absolute top-2 right-2 p-2 text-slate-400 transition-colors bg-slate-800 rounded hover:text-slate-100 hover:bg-slate-700"
+                                            :title="copiedCodeId === 'ssh-path' ? 'コピーしました！' : 'コピー'"
+                                        >
+                                            <svg v-if="copiedCodeId !== 'ssh-path'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                            </svg>
+                                            <svg v-else class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
 
                                 <h3 class="mb-3 text-xl font-semibold text-slate-900">5.2 よくあるパス例</h3>
                                 <div class="p-4 mb-4 rounded-lg bg-slate-50">
@@ -231,12 +293,12 @@ jobs:
 
                                 <div class="mb-4 space-y-4">
                                     <div class="p-4 bg-red-50 rounded-lg border border-red-200">
-                                        <h4 class="mb-2 font-semibold text-red-900">エラー: Input required and not supplied: server</h4>
+                                        <h4 class="mb-2 font-semibold text-red-900">エラー: Permission denied (publickey)</h4>
                                         <p class="mb-2 text-sm text-red-800">
-                                            <strong>原因:</strong> GitHub Secretsの<code class="px-1 py-0.5 bg-red-100 rounded">FTP_SERVER</code>が設定されていない、または名前が間違っています。
+                                            <strong>原因:</strong> GitHub Secretsの<code class="px-1 py-0.5 bg-red-100 rounded">SSH_PRIVATE_KEY</code>が設定されていない、または公開鍵がサーバー側の<code class="px-1 py-0.5 bg-red-100 rounded">~/.ssh/authorized_keys</code>に追加されていません。
                                         </p>
                                         <p class="text-sm text-red-800">
-                                            <strong>解決方法:</strong> GitHub Secretsで<code class="px-1 py-0.5 bg-red-100 rounded">FTP_SERVER</code>、<code class="px-1 py-0.5 bg-red-100 rounded">FTP_USERNAME</code>、<code class="px-1 py-0.5 bg-red-100 rounded">FTP_PASSWORD</code>が正しく設定されているか確認してください。
+                                            <strong>解決方法:</strong> GitHub Secretsで<code class="px-1 py-0.5 bg-red-100 rounded">SSH_HOST</code>、<code class="px-1 py-0.5 bg-red-100 rounded">SSH_USER</code>、<code class="px-1 py-0.5 bg-red-100 rounded">SSH_PRIVATE_KEY</code>が正しく設定されているか確認してください。また、公開鍵（id_rsa.pub）がサーバー側の<code class="px-1 py-0.5 bg-red-100 rounded">~/.ssh/authorized_keys</code>に追加されているか確認してください。
                                         </p>
                                     </div>
 
@@ -253,10 +315,10 @@ jobs:
                                     <div class="p-4 bg-red-50 rounded-lg border border-red-200">
                                         <h4 class="mb-2 font-semibold text-red-900">デプロイは成功したが、本番環境に反映されない</h4>
                                         <p class="mb-2 text-sm text-red-800">
-                                            <strong>原因:</strong> GitHub SecretsのFTPサーバー設定が本番環境を指していない、またはデプロイ先パスが間違っています。
+                                            <strong>原因:</strong> GitHub SecretsのSSHサーバー設定が本番環境を指していない、またはデプロイ先パスが間違っています。
                                         </p>
                                         <p class="text-sm text-red-800">
-                                            <strong>解決方法:</strong> GitHub SecretsのFTPサーバー情報が本番環境のものか確認し、デプロイ先パスが本番環境の正しいパスか確認してください。
+                                            <strong>解決方法:</strong> GitHub SecretsのSSHサーバー情報（SSH_HOST、SSH_USER）が本番環境のものか確認し、デプロイ先パスが本番環境の正しいパスか確認してください。
                                         </p>
                                     </div>
 
@@ -283,7 +345,95 @@ jobs:
 
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import AppHeader from '@/Components/AppHeader.vue';
 import AppFooter from '@/Components/AppFooter.vue';
+
+const copiedCodeId = ref(null);
+
+const copyToClipboard = async (text, codeId) => {
+    try {
+        await navigator.clipboard.writeText(text);
+        copiedCodeId.value = codeId;
+        setTimeout(() => {
+            copiedCodeId.value = null;
+        }, 2000);
+    } catch (err) {
+        console.error('コピーに失敗しました:', err);
+        // フォールバック: テキストエリアを使用
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        copiedCodeId.value = codeId;
+        setTimeout(() => {
+            copiedCodeId.value = null;
+        }, 2000);
+    }
+};
+
+const escapeHtml = (text) => {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+};
+
+// ワークフローファイルの内容（${{をエスケープ）
+const workflowYaml = `name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_id:
+        description: 'Project ID'
+        required: true
+      deploy_log_id:
+        description: 'Deploy Log ID'
+        required: false
+      server_dir:
+        description: 'Server directory path'
+        required: false
+        default: '/public_html/'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: \${{\` github.event.inputs.ref || github.ref \`}}
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: \${{\` secrets.SSH_PRIVATE_KEY \`}}
+
+      - name: Add known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p \${{\` secrets.SSH_PORT || 22 \`}} \\
+            \${{\` secrets.SSH_HOST \`}} >> ~/.ssh/known_hosts
+
+      - name: Deploy via rsync
+        run: |
+          rsync -avz --delete \\
+            --exclude='.git' \\
+            --exclude='.gitignore' \\
+            --exclude='node_modules' \\
+            --exclude='.env' \\
+            --exclude='.env.*' \\
+            ./ \\
+            -e "ssh -p \${{\` secrets.SSH_PORT || 22 \`}}" \\
+            \${{\` secrets.SSH_USER \`}}@\${{\` secrets.SSH_HOST \`}}:\${{\` inputs.server_dir || '/public_html/' \`}}`.replace(/\$\{\{`/g, '${{').replace(/`\}\}/g, '}}');
+
+const sshKeyCommand = 'cat ~/.ssh/id_rsa';
+const sshPubKeyCommand = 'cat ~/.ssh/id_rsa.pub';
+const sshPathCommand = `ssh user@example.com
+pwd  # 現在のディレクトリを確認
+cd /path/to/deploy/directory
+pwd  # デプロイ先のパスを確認`;
 </script>
 

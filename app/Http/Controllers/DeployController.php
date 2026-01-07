@@ -70,21 +70,38 @@ class DeployController extends Controller
                     'deploy_log_id' => $deployLog->id,
                 ]);
             } else {
+                $errorBody = $response->body();
+                $errorStatus = $response->status();
+                
+                Log::error('Deployment trigger failed - GitHub API error', [
+                    'project_id' => $project->id,
+                    'deploy_log_id' => $deployLog->id,
+                    'github_owner' => $project->github_owner,
+                    'github_repo' => $project->github_repo,
+                    'github_workflow_id' => $project->github_workflow_id,
+                    'github_branch' => $project->github_branch,
+                    'status_code' => $errorStatus,
+                    'response_body' => $errorBody,
+                ]);
+
                 $deployLog->update([
                     'status' => 'failed',
                     'finished_at' => now(),
-                    'raw_log' => $response->body(),
+                    'raw_log' => $errorBody,
                 ]);
 
                 return response()->json([
                     'error' => 'Failed to trigger deployment',
-                    'details' => $response->body(),
+                    'details' => $errorBody,
+                    'deploy_log_id' => $deployLog->id, // エラー時でもdeploy_log_idを返す
                 ], 500);
             }
         } catch (\Exception $e) {
-            Log::error('Deployment trigger failed', [
+            Log::error('Deployment trigger failed - Exception', [
                 'project_id' => $project->id,
+                'deploy_log_id' => $deployLog->id,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
             $deployLog->update([
@@ -96,6 +113,7 @@ class DeployController extends Controller
             return response()->json([
                 'error' => 'Failed to trigger deployment',
                 'details' => $e->getMessage(),
+                'deploy_log_id' => $deployLog->id, // エラー時でもdeploy_log_idを返す
             ], 500);
         }
     }

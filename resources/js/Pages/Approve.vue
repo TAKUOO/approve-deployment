@@ -93,11 +93,16 @@ const form = useForm({
 
 const processing = false;
 
-marked.setOptions({
+// カスタムレンダラーを作成してすべてのリンクを別タブで開く
+marked.use({
     gfm: true,
     breaks: true,
-    headerIds: false,
-    mangle: false,
+    renderer: {
+        link({ href, title, text }) {
+            const titleAttr = title ? ` title="${title}"` : '';
+            return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-800">${text}</a>`;
+        },
+    },
 });
 
 // メッセージをフォーマット（改善ページURLを自動リンク化 + GitHub風マークダウン）
@@ -130,7 +135,10 @@ const formattedMessage = computed(() => {
     });
 
     const html = marked.parse(message);
-    return DOMPurify.sanitize(html); // XSS対策
+    // DOMPurifyでtarget="_blank"とrel="noopener noreferrer"を許可
+    return DOMPurify.sanitize(html, {
+        ADD_ATTR: ['target', 'rel'],
+    }); // XSS対策
 });
 
 const submit = () => {

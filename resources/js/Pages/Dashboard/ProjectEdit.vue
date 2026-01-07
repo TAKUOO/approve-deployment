@@ -135,7 +135,50 @@
                                     <InputError class="mt-2" :message="form.errors.github_repo" />
                                 </div>
 
-                                <div>
+                                <div v-if="selectedRepository">
+                                    <div class="flex gap-2 items-center">
+                                        <InputLabel for="github_branch" value="GitHub ブランチ" />
+                                        <div class="relative">
+                                            <button
+                                                type="button"
+                                                @click.stop="toggleTooltip('branch', $event)"
+                                                class="text-gray-400 transition-colors hover:text-gray-600"
+                                            >
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            </button>
+                                            <div
+                                                v-if="activeTooltip === 'branch'"
+                                                class="absolute left-0 z-10 p-3 mt-2 w-80 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
+                                            >
+                                                本番環境にアップロードするブランチ名を入力してください。通常は <code class="px-1 py-0.5 text-xs bg-gray-100 rounded">main</code> を使用します。
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="relative">
+                                        <input
+                                            type="text"
+                                            id="github_branch"
+                                            v-model="form.github_branch"
+                                            list="branch-list"
+                                            class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            placeholder="main"
+                                            required
+                                        />
+                                        <!-- ブランチ候補のdatalist（APIから取得できた場合のみ表示） -->
+                                        <datalist id="branch-list">
+                                            <option v-for="branch in branches" :key="branch.name" :value="branch.name">
+                                                {{ branch.name }}
+                                            </option>
+                                        </datalist>
+                                        <p class="mt-1 text-xs text-gray-500">
+                                            本番環境にアップするブランチ名（通常は main）
+                                        </p>
+                                    </div>
+                                    <InputError class="mt-2" :message="form.errors.github_branch" />
+                                </div>
+                                <div v-else>
                                     <InputLabel for="github_branch" value="GitHub ブランチ" />
                                     <TextInput
                                         id="github_branch"
@@ -145,7 +188,7 @@
                                         required
                                     />
                                     <p class="mt-1 text-sm text-gray-500">
-                                        デプロイ対象のブランチを入力してください。例: main, master
+                                        本番環境にアップするブランチ名（通常は main）
                                     </p>
                                     <InputError class="mt-2" :message="form.errors.github_branch" />
                                 </div>
@@ -181,7 +224,7 @@ import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 
 const props = defineProps({
@@ -195,13 +238,16 @@ const form = useForm({
     server_dir: props.project.server_dir || '/public_html/',
     github_owner: props.project.github_owner || '',
     github_repo: props.project.github_repo || '',
+    github_workflow_id: props.project.github_workflow_id || '',
     github_branch: props.project.github_branch || 'main',
 });
 
 const organizations = ref([]);
 const repositories = ref([]);
+const branches = ref([]);
 const selectedOrganization = ref(props.project.github_owner || '');
 const selectedRepository = ref(null);
+const activeTooltip = ref(null);
 
 onMounted(async () => {
     // 組織一覧を取得
@@ -218,7 +264,18 @@ onMounted(async () => {
     // 既存のプロジェクトの組織が選択されている場合、リポジトリを取得
     if (selectedOrganization.value) {
         await loadRepositories();
+        // 既存のリポジトリが選択されている場合、ブランチも取得
+        if (selectedRepository.value) {
+            await onRepositoryChange();
+        }
     }
+    
+    // ツールチップをクリック外で閉じる
+    document.addEventListener('click', closeTooltip);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('click', closeTooltip);
 });
 
 const loadRepositories = async () => {
@@ -266,15 +323,66 @@ const onOrganizationChange = async () => {
     await loadRepositories();
 };
 
-const onRepositoryChange = () => {
+const toggleTooltip = (tooltipName, event) => {
+    if (event) {
+        event.stopPropagation();
+    }
+    if (activeTooltip.value === tooltipName) {
+        activeTooltip.value = null;
+    } else {
+        activeTooltip.value = tooltipName;
+    }
+};
+
+const closeTooltip = () => {
+    activeTooltip.value = null;
+};
+
+const onRepositoryChange = async () => {
     if (!selectedRepository.value) {
         form.github_owner = '';
         form.github_repo = '';
+        branches.value = [];
         return;
     }
 
     form.github_owner = selectedRepository.value.owner.login;
     form.github_repo = selectedRepository.value.name;
+    
+    // ブランチを取得
+    branches.value = [];
+    try {
+        const branchesResponse = await axios.get(route('api.github.branches'), {
+            params: {
+                owner: form.github_owner,
+                repo: form.github_repo
+            }
+        });
+        
+        // ブランチを取得（すべてのブランチがソートされて返される）
+        branches.value = branchesResponse.data.branches || [];
+        const defaultBranch = branchesResponse.data.default_branch;
+        
+        // ブランチの自動選択（優先順位: main -> master -> default_branch -> 最初のブランチ）
+        if (branches.value && branches.value.length > 0) {
+            const mainBranch = branches.value.find(b => b.name === 'main');
+            const masterBranch = branches.value.find(b => b.name === 'master');
+            const defaultBranchObj = branches.value.find(b => b.name === defaultBranch);
+            
+            if (mainBranch) {
+                form.github_branch = 'main';
+            } else if (masterBranch) {
+                form.github_branch = 'master';
+            } else if (defaultBranchObj) {
+                form.github_branch = defaultBranch;
+            } else {
+                form.github_branch = branches.value[0].name;
+            }
+        }
+    } catch (error) {
+        console.error('Failed to fetch branches:', error);
+        branches.value = [];
+    }
 };
 
 const submit = () => {
