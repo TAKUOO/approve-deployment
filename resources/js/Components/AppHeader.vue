@@ -44,7 +44,7 @@ defineProps({
                 <a class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex" href="#workflow">ワークフロー</a>
                 <a class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex" href="#security">セキュリティ</a>
                 <a class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex" href="#faq">FAQ</a>
-                <Link :href="route('docs')" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">ドキュメント</Link>
+                <a :href="route('docs')" target="_blank" rel="noopener noreferrer" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">ドキュメント</a>
             </template>
 
             <!-- ドキュメントページ用のナビゲーション -->
@@ -58,7 +58,7 @@ defineProps({
             <!-- その他のページ用のナビゲーション -->
             <template v-else>
                 <Link href="/" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">ホーム</Link>
-                <Link :href="route('docs')" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">ドキュメント</Link>
+                <a :href="route('docs')" target="_blank" rel="noopener noreferrer" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">ドキュメント</a>
             </template>
 
             <Link

@@ -51,7 +51,12 @@ class GitHubController extends Controller
 
             return redirect()->intended(route('projects.index', absolute: false));
         } catch (\Exception $e) {
-            return redirect()->route('login')->with('error', 'GitHubログインに失敗しました。');
+            \Log::error('GitHub OAuth callback error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
+            return redirect('/')->with('error', 'GitHubログインに失敗しました: ' . $e->getMessage());
         }
     }
 }
