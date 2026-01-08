@@ -174,9 +174,9 @@ const faqs = [
             <AppHeader ref="headerRef" variant="default" />
 
             <main class="flex-1">
-                <section class="px-4 pt-24 pb-12 sm:px-6 sm:pt-32 md:pt-40 lg:pt-16 lg:pb-26">
+                <section class="px-4 pt-12 pb-12 sm:px-6 sm:pt-32 md:pt-40 lg:pt-16 lg:pb-26">
                     <div class="mx-auto grid max-w-6xl gap-8 sm:gap-12 lg:grid-cols-[0.85fr_1.15fr] items-center">
-                        <div class="space-y-6 text-center sm:space-y-8 lg:space-y-8 lg:text-left">
+                        <div class="space-y-4 text-center sm:space-y-8 lg:space-y-6 lg:text-left">
                             <div>
                                 <div class="flex justify-center mb-4 lg:justify-start">
                                     <span class="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-100 rounded-full border border-indigo-200 sm:px-4 sm:py-2 sm:text-sm">
