@@ -120,7 +120,7 @@ const props = defineProps({
 
 const deployLogData = ref(props.deployLog);
 const averageDurationSeconds = ref(props.averageDurationSeconds);
-const isApprovalMessageExpanded = ref(true); // デフォルトで開いた状態
+const isApprovalMessageExpanded = ref(false); // デフォルトで閉じた状態
 let pollInterval = null;
 
 // 承認メッセージの開閉を切り替え

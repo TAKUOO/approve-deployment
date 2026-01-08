@@ -399,7 +399,7 @@ const faqs = [
                                     </div>
                                     <h3 class="text-lg font-semibold text-slate-900">有効期限付きトークン</h3>
                                 </div>
-                                <p class="text-sm text-slate-600">承認URLは64文字の強力なトークンで保護され、7日間のみ有効です。期限切れ後は自動的に無効化されます。</p>
+                                <p class="text-sm text-slate-600">承認URLは64文字の強力なトークンで保護され、5日間のみ有効です。期限切れ後は自動的に無効化されます。</p>
                             </div>
 
                             <div class="p-6 bg-white rounded-2xl border shadow-sm border-slate-200">

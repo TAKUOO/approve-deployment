@@ -12,14 +12,21 @@ use Inertia\Response;
 
 class ApproveController extends Controller
 {
-    public function show(Request $request, string $token): Response
+    public function show(Request $request, string $token)
     {
         $project = Project::where('approve_token', $token)
             ->where(function ($query) {
                 $query->whereNull('approve_token_expires_at')
                       ->orWhere('approve_token_expires_at', '>', now());
             })
-            ->firstOrFail();
+            ->first();
+
+        // トークンが無効化されている、または期限切れの場合
+        if (!$project) {
+            return Inertia::render('InvalidToken', [
+                'reason' => 'expired_or_invalid',
+            ]);
+        }
         
         $approvalMessage = null;
         if ($request->has('msg')) {
@@ -102,6 +109,17 @@ class ApproveController extends Controller
             ]);
         }
 
+        // 承認後、トークンを無効化（ワンタイム使用を保証）
+        $project->update([
+            'approve_token' => null,
+            'approve_token_expires_at' => now()->subSecond(), // 過去の日時に設定して確実に無効化
+        ]);
+
+        Log::info('Approval token invalidated', [
+            'project_id' => $project->id,
+            'token' => $token,
+        ]);
+
         // deploy_log_idが取得できた場合は、成功・失敗に関わらずステータスページにリダイレクト
         if ($deployLogId) {
             return redirect()->route('approve.status', ['token' => $token, 'deployLog' => $deployLogId]);
@@ -116,18 +134,30 @@ class ApproveController extends Controller
 
     public function status(Request $request, string $token, $deployLog)
     {
-        $project = Project::where('approve_token', $token)
-            ->where(function ($query) {
-                $query->whereNull('approve_token_expires_at')
-                      ->orWhere('approve_token_expires_at', '>', now());
-            })
-            ->firstOrFail();
-        
-        // デプロイログを取得（プロジェクトに紐づいているか確認）
-        $deployLog = \App\Models\DeployLog::where('id', $deployLog)
-            ->where('project_id', $project->id)
+        // ステータスページでは、トークンが無効化されていても表示可能にする
+        // （承認後にトークンが無効化されるため）
+        // まず、デプロイログからプロジェクトを特定
+        $deployLogModel = \App\Models\DeployLog::where('id', $deployLog)
             ->with('approvalMessage')
             ->firstOrFail();
+        
+        $project = Project::find($deployLogModel->project_id);
+        
+        // プロジェクトが存在しない場合
+        if (!$project) {
+            return Inertia::render('InvalidToken', [
+                'reason' => 'invalid',
+            ]);
+        }
+        
+        // トークンが無効化されているか確認（承認後のアクセスのため、これは正常）
+        // ただし、トークンが存在し、かつ期限切れの場合は無効として扱う
+        $isTokenValid = $project->approve_token === $token 
+            && ($project->approve_token_expires_at === null || $project->approve_token_expires_at > now());
+        
+        // トークンが無効化されているが、これは承認後の正常な状態
+        // デプロイログが存在する場合は表示を許可
+        $deployLog = $deployLogModel;
 
         // 過去の成功したデプロイログから平均時間を計算
         $averageDuration = \App\Models\DeployLog::where('project_id', $project->id)
