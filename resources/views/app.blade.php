@@ -31,6 +31,25 @@
         <meta name="twitter:description" content="{{ $ogDescription }}" />
         <meta name="twitter:image" content="{{ $ogImage }}" />
 
+        <!-- JSON-LD構造化データ -->
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "AutoRelease",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Web",
+            "description": "{{ $ogDescription }}",
+            "url": "{{ $appUrl }}",
+            "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "JPY",
+                "availability": "https://schema.org/InStock"
+            }
+        }
+        </script>
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />

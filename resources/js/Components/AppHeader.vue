@@ -30,14 +30,14 @@ defineProps({
 </script>
 
 <template>
-    <header class="flex flex-wrap gap-6 justify-between items-center mx-auto mt-6 w-full max-w-6xl">
-        <div class="flex gap-4 items-center">
+    <header class="flex flex-wrap gap-4 sm:gap-6 justify-between items-center mx-auto mt-4 sm:mt-6 px-4 sm:px-6 lg:px-8 w-full max-w-6xl">
+        <div class="flex gap-3 sm:gap-4 items-center">
             <Link href="/">
-                <img src="/images/logo.png" alt="AutoRelease" class="object-contain h-10" />
+                <img src="/images/logo.png" alt="AutoRelease" class="object-contain h-8 sm:h-9 lg:h-10" />
             </Link>
         </div>
 
-        <nav class="flex flex-wrap gap-6 items-center font-semibold text-md text-slate-600">
+        <nav class="flex flex-wrap gap-4 sm:gap-6 items-center font-semibold text-sm sm:text-md text-slate-600">
             <!-- Welcomeページ用のナビゲーション -->
             <template v-if="variant === 'default'">
                 <a class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex" href="#features">機能</a>
@@ -64,7 +64,7 @@ defineProps({
             <Link
                 v-if="authUser"
                 :href="route('projects.index')"
-                class="px-5 py-2 rounded-full border transition border-slate-200 text-slate-700 hover:border-slate-400 hover:text-slate-900"
+                class="px-4 py-2 sm:px-5 sm:py-2.5 text-sm sm:text-base rounded-full border transition border-slate-200 text-slate-700 hover:border-slate-400 hover:text-slate-900"
             >
                 プロジェクト一覧へ
             </Link>
@@ -72,7 +72,7 @@ defineProps({
             <template v-else>
                 <button
                     @click="openLoginModal"
-                    class="px-6 py-2 font-semibold text-white bg-indigo-600 rounded-full shadow-lg transition shadow-indigo-200 hover:opacity-90"
+                    class="px-5 py-2 sm:px-6 sm:py-2.5 lg:px-7 lg:py-3 text-sm sm:text-base font-semibold text-white bg-indigo-600 rounded-full shadow-lg transition shadow-indigo-200 hover:opacity-90"
                 >
                     ログイン
                 </button>

@@ -2,4 +2,6 @@ User-agent: *
 Disallow: /approve/
 Disallow: /api/
 
+Sitemap: https://autorelease.matsui-dev.net/sitemap.xml
+
 

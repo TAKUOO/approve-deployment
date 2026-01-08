@@ -31,6 +31,40 @@ Route::get('/privacy', function () {
     return Inertia::render('PrivacyPolicy');
 })->name('privacy');
 
+Route::get('/sitemap.xml', function () {
+    $appUrl = config('app.url', 'https://autorelease.matsui-dev.net');
+    $sitemap = '<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>' . $appUrl . '</loc>
+        <lastmod>' . date('Y-m-d') . '</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>1.0</priority>
+    </url>
+    <url>
+        <loc>' . $appUrl . '/docs</loc>
+        <lastmod>' . date('Y-m-d') . '</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>' . $appUrl . '/terms</loc>
+        <lastmod>' . date('Y-m-d') . '</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    <url>
+        <loc>' . $appUrl . '/privacy</loc>
+        <lastmod>' . date('Y-m-d') . '</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+</urlset>';
+    
+    return response($sitemap, 200)
+        ->header('Content-Type', 'text/xml');
+});
+
 Route::get('/dashboard', function () {
     return redirect()->route('projects.index');
 })->middleware(['auth', 'verified'])->name('dashboard');
