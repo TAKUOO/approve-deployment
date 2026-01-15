@@ -648,6 +648,26 @@ class ProjectController extends Controller
                 ], 500);
             }
 
+            $tokenNeedsRefresh = empty($project->approve_token);
+            if (!$tokenNeedsRefresh && $project->approve_token_expires_at) {
+                try {
+                    $tokenNeedsRefresh = \Carbon\Carbon::parse($project->approve_token_expires_at)->isPast();
+                } catch (\Exception $e) {
+                    $tokenNeedsRefresh = true;
+                }
+            }
+
+            if ($tokenNeedsRefresh) {
+                $project->update([
+                    'approve_token' => bin2hex(random_bytes(32)),
+                    'approve_token_expires_at' => now()->addDays(5),
+                ]);
+
+                Log::info('Approval token refreshed for approval URL', [
+                    'project_id' => $project->id,
+                ]);
+            }
+
             // 承認URLを生成（短いIDを含める）
             try {
                 $approvalUrl = route('approve.show', [
