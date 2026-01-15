@@ -7,8 +7,13 @@ use Inertia\Inertia;
 
 Route::get('/', function () {
     // ログイン済みの場合はプロジェクト一覧にリダイレクト
-    if (auth()->check()) {
-        return redirect()->route('projects.index');
+    // セッションクッキーの存在を先にチェックしてから認証チェック（パフォーマンス最適化）
+    $sessionName = config('session.cookie');
+    if ($sessionName && request()->cookie($sessionName)) {
+        // セッションが存在する可能性がある場合のみ詳細チェック
+        if (auth()->check()) {
+            return redirect()->route('projects.index');
+        }
     }
     
     return Inertia::render('Welcome', [

@@ -144,9 +144,12 @@ const faqs = [
         <meta name="robots" content="index, follow" />
         <link rel="canonical" :href="siteUrl" />
 
-        <!-- 画像のプリロード（Above the fold） -->
-        <link rel="preload" as="image" href="/images/hero2.webp" type="image/webp" />
-        <link rel="preload" as="image" href="/images/logo.webp" type="image/webp" />
+        <!-- DNSプリフェッチ（パフォーマンス向上） -->
+        <link rel="dns-prefetch" :href="siteUrl" />
+
+        <!-- 画像のプリロード（Above the fold、優先度を高く設定） -->
+        <link rel="preload" as="image" href="/images/hero2.webp" type="image/webp" fetchpriority="high" />
+        <link rel="preload" as="image" href="/images/logo.webp" type="image/webp" fetchpriority="high" />
 
         <!-- Open Graph / Facebook -->
         <meta property="og:type" content="website" />

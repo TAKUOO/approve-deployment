@@ -20,4 +20,54 @@
     RewriteRule ^ index.php [L]
 </IfModule>
 
+# HTTPキャッシュヘッダーの設定（パフォーマンス最適化）
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # 画像ファイル（WebP、PNG、JPEG）
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    
+    # CSSファイル
+    ExpiresByType text/css "access plus 1 month"
+    
+    # JavaScriptファイル
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
+    
+    # フォントファイル
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/ttf "access plus 1 year"
+    ExpiresByType font/otf "access plus 1 year"
+    
+    # その他の静的アセット
+    ExpiresByType application/json "access plus 1 week"
+    ExpiresByType application/xml "access plus 1 week"
+    ExpiresByType text/xml "access plus 1 week"
+</IfModule>
+
+# Cache-Controlヘッダーの設定（mod_expiresが無効な場合のフォールバック）
+<IfModule mod_headers.c>
+    # 画像ファイル
+    <FilesMatch "\.(webp|png|jpg|jpeg|gif|svg|ico)$">
+        Header set Cache-Control "max-age=31536000, public"
+    </FilesMatch>
+    
+    # CSS/JavaScriptファイル
+    <FilesMatch "\.(css|js)$">
+        Header set Cache-Control "max-age=2592000, public"
+    </FilesMatch>
+    
+    # フォントファイル
+    <FilesMatch "\.(woff2|woff|ttf|otf)$">
+        Header set Cache-Control "max-age=31536000, public"
+    </FilesMatch>
+</IfModule>
+
 

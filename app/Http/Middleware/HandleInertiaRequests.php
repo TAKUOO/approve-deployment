@@ -19,11 +19,25 @@ class HandleInertiaRequests extends Middleware
      */
     public function version(Request $request): ?string
     {
-        // Viteのマニフェストファイルのハッシュを使用してアセットバージョニング
+        // キャッシュを使用してパフォーマンスを改善（リクエストごとにmd5_file()を実行しない）
+        static $cachedVersion = null;
+        static $cachedMtime = null;
+        
         $manifestPath = public_path('build/manifest.json');
+        
         if (file_exists($manifestPath)) {
-            return md5_file($manifestPath);
+            // ファイルの更新時刻をチェック（デプロイ時にキャッシュを無効化）
+            $currentMtime = filemtime($manifestPath);
+            
+            // キャッシュが無効または存在しない場合のみ再計算
+            if ($cachedVersion === null || $cachedMtime !== $currentMtime) {
+                $cachedVersion = md5_file($manifestPath);
+                $cachedMtime = $currentMtime;
+            }
+            
+            return $cachedVersion;
         }
+        
         return parent::version($request);
     }
 
