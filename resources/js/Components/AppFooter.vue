@@ -25,7 +25,10 @@ defineProps({
         <div v-if="showLogo" class="pt-8 mt-12 border-t border-gray-200">
             <div class="flex justify-center mb-10">
                 <a href="/">
-                    <img src="/images/logo.png" alt="AutoRelease" class="h-12 object-contain" />
+                    <picture>
+                        <source srcset="/images/logo.webp" type="image/webp" />
+                        <img src="/images/logo.png" alt="AutoRelease" class="h-12 object-contain" />
+                    </picture>
                 </a>
             </div>
         </div>

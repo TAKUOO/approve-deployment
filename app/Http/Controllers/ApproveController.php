@@ -159,16 +159,13 @@ class ApproveController extends Controller
         // デプロイログが存在する場合は表示を許可
         $deployLog = $deployLogModel;
 
-        // 過去の成功したデプロイログから平均時間を計算
+        // 過去の成功したデプロイログから平均時間を計算（データベース側で計算してパフォーマンスを最適化）
         $averageDuration = \App\Models\DeployLog::where('project_id', $project->id)
             ->where('status', 'success')
             ->whereNotNull('started_at')
             ->whereNotNull('finished_at')
-            ->get()
-            ->map(function ($log) {
-                return $log->started_at->diffInSeconds($log->finished_at);
-            })
-            ->avg();
+            ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, started_at, finished_at)) as avg_seconds')
+            ->value('avg_seconds');
 
         // 承認ステータスページに必要な情報のみを渡す（GitHub情報は除外）
         return Inertia::render('ApproveStatus', [

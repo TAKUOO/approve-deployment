@@ -307,7 +307,7 @@ const pollStatus = async () => {
 
 let elapsedInterval = null;
 let pollCount = 0;
-const MAX_POLL_COUNT = 600; // 最大30分（3秒 × 600回）
+const MAX_POLL_COUNT = 360; // 最大30分（5秒 × 360回）
 
 onMounted(() => {
     // 実行中または待機中の場合はポーリングを開始
@@ -315,8 +315,10 @@ onMounted(() => {
     if (deployLogData.value.status === 'running' || deployLogData.value.status === 'pending') {
         console.log('Starting poll for deploy log:', deployLogData.value.id, 'Status:', deployLogData.value.status);
         
-        // 即座に1回実行
-        pollStatus();
+        // 初回ポーリングを500ms遅延（ページロード直後の負荷を軽減）
+        setTimeout(() => {
+            pollStatus();
+        }, 500);
         
         pollInterval = setInterval(() => {
             pollCount++;
@@ -336,7 +338,7 @@ onMounted(() => {
             }
             
             pollStatus();
-        }, 3000); // 3秒ごとに更新
+        }, 5000); // 5秒ごとに更新（3秒から延長してサーバー負荷を軽減）
         
         // 経過時間を1秒ごとに更新（UI用）
         elapsedInterval = setInterval(() => {
@@ -351,7 +353,10 @@ onMounted(() => {
     } else {
         // 成功や失敗の場合でも、念のため最初の1回はポーリングを実行して最新状態を確認
         console.log('Deploy status is', deployLogData.value.status, ', checking once for latest status');
-        pollStatus();
+        // 成功/失敗時は即座に実行せず、少し遅延させる
+        setTimeout(() => {
+            pollStatus();
+        }, 500);
     }
 });
 

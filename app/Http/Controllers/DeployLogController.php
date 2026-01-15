@@ -30,7 +30,11 @@ class DeployLogController extends Controller
         $deployLog->load('approvalMessage', 'project');
 
         // 実行中でGitHub Run IDがある場合、GitHub Actions APIから直接ステータスを確認
-        if (($deployLog->status === 'running' || $deployLog->status === 'pending') && $deployLog->github_run_id) {
+        // ただし、ポーリング頻度を考慮して、最後の同期から30秒以上経過している場合のみ同期する
+        $lastSyncedAt = $deployLog->updated_at;
+        $shouldSync = $lastSyncedAt === null || $lastSyncedAt->diffInSeconds(now()) >= 30;
+        
+        if (($deployLog->status === 'running' || $deployLog->status === 'pending') && $deployLog->github_run_id && $shouldSync) {
             try {
                 $this->syncStatusFromGitHub($deployLog);
                 // 再取得
@@ -67,16 +71,13 @@ class DeployLogController extends Controller
             }
         }
 
-        // 過去の成功したデプロイログから平均時間を計算
+        // 過去の成功したデプロイログから平均時間を計算（データベース側で計算してパフォーマンスを最適化）
         $averageDuration = \App\Models\DeployLog::where('project_id', $deployLog->project_id)
             ->where('status', 'success')
             ->whereNotNull('started_at')
             ->whereNotNull('finished_at')
-            ->get()
-            ->map(function ($log) {
-                return $log->started_at->diffInSeconds($log->finished_at);
-            })
-            ->avg();
+            ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, started_at, finished_at)) as avg_seconds')
+            ->value('avg_seconds');
 
         return response()->json([
             'id' => $deployLog->id,
@@ -152,8 +153,9 @@ class DeployLogController extends Controller
         try {
             $token = \Illuminate\Support\Facades\Crypt::decryptString($user->github_token);
             
-            // GitHub Actions APIからワークフロー実行の詳細を取得
+            // GitHub Actions APIからワークフロー実行の詳細を取得（タイムアウトを5秒に設定）
             $response = \Illuminate\Support\Facades\Http::withToken($token)
+                ->timeout(5)
                 ->get("https://api.github.com/repos/{$project->github_owner}/{$project->github_repo}/actions/runs/{$deployLog->github_run_id}");
 
             if ($response->successful()) {
@@ -206,7 +208,8 @@ class DeployLogController extends Controller
                 'deploy_log_id' => $deployLog->id,
                 'error' => $e->getMessage(),
             ]);
-            throw $e;
+            // エラーが発生しても処理を継続（タイムアウトやネットワークエラー時もレスポンスを返す）
+            // throw $e; を削除して、エラー時でも既存のデータを返すようにする
         }
     }
 

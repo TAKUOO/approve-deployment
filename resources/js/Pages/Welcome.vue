@@ -144,12 +144,16 @@ const faqs = [
         <meta name="robots" content="index, follow" />
         <link rel="canonical" :href="siteUrl" />
 
+        <!-- 画像のプリロード（Above the fold） -->
+        <link rel="preload" as="image" href="/images/hero2.webp" type="image/webp" />
+        <link rel="preload" as="image" href="/images/logo.webp" type="image/webp" />
+
         <!-- Open Graph / Facebook -->
         <meta property="og:type" content="website" />
         <meta property="og:url" :content="siteUrl" />
         <meta property="og:title" :content="pageTitle" />
         <meta property="og:description" :content="pageDescription" />
-        <meta property="og:image" :content="`${siteUrl}/images/ogp.jpg`" />
+        <meta property="og:image" :content="`${siteUrl}/images/ogp.webp`" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:site_name" content="AutoRelease" />
@@ -160,7 +164,7 @@ const faqs = [
         <meta name="twitter:url" :content="siteUrl" />
         <meta name="twitter:title" :content="pageTitle" />
         <meta name="twitter:description" :content="pageDescription" />
-        <meta name="twitter:image" :content="`${siteUrl}/images/ogp.jpg`" />
+        <meta name="twitter:image" :content="`${siteUrl}/images/ogp.webp`" />
     </Head>
 
     <div class="overflow-hidden relative min-h-screen bg-gradient-to-br from-slate-100 via-slate-200 to-indigo-200/50 text-slate-700">
@@ -200,12 +204,15 @@ const faqs = [
                                     
                                     <!-- イラスト画像 -->
                                     <div class="relative">
-                                        <img 
-                                            src="/images/hero2.png" 
-                                            alt="PC画面でリリースしている様子" 
-                                            class="object-contain w-full h-auto"
-                                            loading="eager"
-                                        />
+                                        <picture>
+                                            <source srcset="/images/hero2.webp" type="image/webp" />
+                                            <img 
+                                                src="/images/hero2.png" 
+                                                alt="PC画面でリリースしている様子" 
+                                                class="object-contain w-full h-auto"
+                                                loading="eager"
+                                            />
+                                        </picture>
                                     </div>
                                 </div>
                             </div>
@@ -235,12 +242,15 @@ const faqs = [
                                 
                                 <!-- イラスト画像 -->
                                 <div class="relative">
-                                    <img 
-                                        src="/images/hero2.png" 
-                                        alt="PC画面でリリースしている様子" 
-                                        class="object-contain w-full h-auto"
-                                        loading="eager"
-                                    />
+                                    <picture>
+                                        <source srcset="/images/hero2.webp" type="image/webp" />
+                                        <img 
+                                            src="/images/hero2.png" 
+                                            alt="PC画面でリリースしている様子" 
+                                            class="object-contain w-full h-auto"
+                                            loading="eager"
+                                        />
+                                    </picture>
                                 </div>
                             </div>
                         </div>
@@ -263,11 +273,20 @@ const faqs = [
                             >
                                 <div class="relative space-y-3 sm:space-y-4">
                                     <!-- メモのアイコン（承認キャンバス） -->
-                                    <img v-if="feature.icon === 'note'" src="/images/note-icon.png" alt="承認キャンバス" class="object-contain w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16" />
+                                    <picture v-if="feature.icon === 'note'">
+                                        <source srcset="/images/note-icon.webp" type="image/webp" />
+                                        <img src="/images/note-icon.png" alt="承認キャンバス" class="object-contain w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16" loading="lazy" />
+                                    </picture>
                                     <!-- GitHub Octocatアイコン -->
-                                    <img v-else-if="feature.icon === 'github'" src="/images/github-icon.png" alt="GitHub Actions連携" class="object-contain w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16" />
+                                    <picture v-else-if="feature.icon === 'github'">
+                                        <source srcset="/images/github-icon.webp" type="image/webp" />
+                                        <img src="/images/github-icon.png" alt="GitHub Actions連携" class="object-contain w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16" loading="lazy" />
+                                    </picture>
                                     <!-- タイムツリーアイコン -->
-                                    <img v-else-if="feature.icon === 'timeline'" src="/images/timeline-icon.png" alt="履歴管理" class="object-contain w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16" />
+                                    <picture v-else-if="feature.icon === 'timeline'">
+                                        <source srcset="/images/timeline-icon.webp" type="image/webp" />
+                                        <img src="/images/timeline-icon.png" alt="履歴管理" class="object-contain w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16" loading="lazy" />
+                                    </picture>
                                     <svg v-else class="w-12 h-12 text-indigo-600 sm:w-14 sm:h-14 lg:w-16 lg:h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 12V6m4 6V6m-7 6v6m11-6v6M3 3h18" />
                                     </svg>

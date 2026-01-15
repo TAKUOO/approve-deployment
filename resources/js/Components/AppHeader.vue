@@ -33,7 +33,10 @@ defineProps({
     <header class="flex flex-wrap gap-4 justify-between items-center px-4 mx-auto mt-4 w-full max-w-6xl sm:gap-6 sm:mt-6 sm:px-0">
         <div class="flex gap-3 items-center sm:gap-4">
             <Link href="/">
-                <img src="/images/logo.png" alt="AutoRelease" class="object-contain h-8 sm:h-9 lg:h-10" />
+                <picture>
+                    <source srcset="/images/logo.webp" type="image/webp" />
+                    <img src="/images/logo.png" alt="AutoRelease" class="object-contain h-8 sm:h-9 lg:h-10" />
+                </picture>
             </Link>
         </div>
 
