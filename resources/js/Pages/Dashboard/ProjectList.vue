@@ -47,7 +47,7 @@
 
             <!-- 右メインコンテンツエリア -->
             <div class="overflow-y-auto flex-1 bg-indigo-50">
-                <div v-if="currentProject" class="p-6 mx-auto max-w-3xl">
+                <div v-if="currentProject" class="p-6 mx-auto max-w-6xl">
                     <div>
                         <div class="bg-white rounded-2xl shadow-xl">
                         <div class="p-6 text-gray-900 border-b border-gray-200">
@@ -410,10 +410,10 @@
         <!-- 編集モーダル -->
         <div 
             v-if="showEditModal"
-            class="flex fixed inset-0 z-50 justify-center items-start overflow-y-auto bg-black bg-opacity-50 p-4"
+            class="flex overflow-y-auto fixed inset-0 z-50 justify-center items-start p-4 bg-black bg-opacity-50"
             @click.self="closeEditModal"
         >
-            <div class="relative my-8 mx-auto w-full max-w-3xl bg-white rounded-lg shadow-xl">
+            <div class="relative mx-auto my-8 w-full max-w-3xl bg-white rounded-lg shadow-xl">
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-xl font-bold text-gray-900">プロジェクトを編集する</h3>
@@ -585,7 +585,7 @@
                             <InputError class="mt-2" :message="editForm.errors.github_branch" />
                         </div>
 
-                        <div class="flex justify-end items-center gap-4 pt-4 border-t border-gray-200">
+                        <div class="flex gap-4 justify-end items-center pt-4 border-t border-gray-200">
                             <button
                                 type="button"
                                 @click="closeEditModal"
