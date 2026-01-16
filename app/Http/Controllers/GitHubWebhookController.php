@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\DeployLog;
+use App\Mail\DeployCompletedNotification;
+use App\Services\SlackNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class GitHubWebhookController extends Controller
 {
@@ -24,15 +27,29 @@ class GitHubWebhookController extends Controller
             $deployLogId = $inputs['deploy_log_id'] ?? null;
 
             if ($deployLogId) {
-                $deployLog = DeployLog::find($deployLogId);
+                $deployLog = DeployLog::with(['project.user', 'approvalMessage'])->find($deployLogId);
 
                 if ($deployLog) {
+                    $oldStatus = $deployLog->status;
+                    $mappedStatus = $this->mapStatus($status, $conclusion);
+                    $shouldNotify = in_array($mappedStatus, ['success', 'failed'], true)
+                        && $deployLog->finished_at === null
+                        && $deployLog->status !== $mappedStatus;
+
                     $deployLog->update([
                         'github_run_id' => $runId,
-                        'status' => $this->mapStatus($status, $conclusion),
+                        'status' => $mappedStatus,
                         'finished_at' => $conclusion ? now() : null,
                         'raw_log' => json_encode($workflowRun),
                     ]);
+
+                    if ($shouldNotify) {
+                        // Slack通知
+                        app(SlackNotifier::class)->notifyDeployStatus($deployLog, $mappedStatus);
+                        
+                        // メール通知
+                        $this->sendEmailNotification($deployLog);
+                    }
                 }
             }
         }
@@ -74,5 +91,36 @@ class GitHubWebhookController extends Controller
             'conclusion' => $conclusion,
         ]);
         return 'pending';
+    }
+
+    private function sendEmailNotification(DeployLog $deployLog): void
+    {
+        try {
+            $project = $deployLog->project;
+            $user = $project->user;
+            
+            if (!$user || !$user->email) {
+                Log::warning('Cannot send deploy completion notification: user or email not found', [
+                    'deploy_log_id' => $deployLog->id,
+                    'project_id' => $project->id,
+                ]);
+                return;
+            }
+            
+            Mail::to($user->email)->send(new DeployCompletedNotification($deployLog));
+            
+            Log::info('Deploy completion notification sent', [
+                'deploy_log_id' => $deployLog->id,
+                'project_id' => $project->id,
+                'user_email' => $user->email,
+                'status' => $deployLog->status,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send deploy completion notification', [
+                'deploy_log_id' => $deployLog->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
     }
 }

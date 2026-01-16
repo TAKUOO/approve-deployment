@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DeployLog;
 use App\Models\Project;
+use App\Services\SlackNotifier;
 use Illuminate\Http\Request;
 
 class DeployLogController extends Controller
@@ -72,12 +73,25 @@ class DeployLogController extends Controller
         }
 
         // 過去の成功したデプロイログから平均時間を計算（データベース側で計算してパフォーマンスを最適化）
-        $averageDuration = \App\Models\DeployLog::where('project_id', $deployLog->project_id)
-            ->where('status', 'success')
-            ->whereNotNull('started_at')
-            ->whereNotNull('finished_at')
-            ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, started_at, finished_at)) as avg_seconds')
-            ->value('avg_seconds');
+        $dbDriver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+        
+        if ($dbDriver === 'sqlite') {
+            // SQLite用のクエリ（julianday関数を使用）
+            $averageDuration = \App\Models\DeployLog::where('project_id', $deployLog->project_id)
+                ->where('status', 'success')
+                ->whereNotNull('started_at')
+                ->whereNotNull('finished_at')
+                ->selectRaw('AVG((julianday(finished_at) - julianday(started_at)) * 86400) as avg_seconds')
+                ->value('avg_seconds');
+        } else {
+            // MySQL/MariaDB用のクエリ
+            $averageDuration = \App\Models\DeployLog::where('project_id', $deployLog->project_id)
+                ->where('status', 'success')
+                ->whereNotNull('started_at')
+                ->whereNotNull('finished_at')
+                ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, started_at, finished_at)) as avg_seconds')
+                ->value('avg_seconds');
+        }
 
         return response()->json([
             'id' => $deployLog->id,
@@ -175,6 +189,9 @@ class DeployLogController extends Controller
 
                 // ステータスが変更された場合のみ更新
                 if ($mappedStatus !== $deployLog->status) {
+                    $shouldNotify = in_array($mappedStatus, ['success', 'failed'], true)
+                        && $deployLog->finished_at === null;
+
                     $deployLog->update([
                         'status' => $mappedStatus,
                         'finished_at' => ($mappedStatus === 'success' || $mappedStatus === 'failed') ? now() : null,
@@ -187,6 +204,10 @@ class DeployLogController extends Controller
                         'github_status' => $status,
                         'github_conclusion' => $conclusion,
                     ]);
+
+                    if ($shouldNotify) {
+                        app(SlackNotifier::class)->notifyDeployStatus($deployLog, $mappedStatus);
+                    }
                 } else {
                     \Illuminate\Support\Facades\Log::debug('Deploy status unchanged', [
                         'deploy_log_id' => $deployLog->id,
@@ -232,4 +253,3 @@ class DeployLogController extends Controller
         return 'pending';
     }
 }
-

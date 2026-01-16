@@ -395,6 +395,12 @@ php artisan serve
 | `GITHUB_CLIENT_SECRET` | GitHub OAuth Client Secret | xxxxx |
 | `GITHUB_REDIRECT_URI` | GitHub OAuth リダイレクトURI | http://localhost:8000/auth/github/callback |
 
+### 任意環境変数（通知）
+
+| 変数名 | 説明 | 例 |
+|--------|------|-----|
+| `SLACK_WEBHOOK_URL` | デプロイ完了/失敗のSlack通知Webhook | https://hooks.slack.com/services/... |
+
 ### GitHub OAuth App の作成方法
 
 詳細は [GITHUB_OAUTH_SETUP.md](./GITHUB_OAUTH_SETUP.md) を参照してください。

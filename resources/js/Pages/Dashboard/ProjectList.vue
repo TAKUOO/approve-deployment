@@ -476,6 +476,21 @@
                         </div>
 
                         <div>
+                            <InputLabel for="edit_slack_webhook_url" value="Slack Webhook URL（任意）" />
+                            <TextInput
+                                id="edit_slack_webhook_url"
+                                v-model="editForm.slack_webhook_url"
+                                type="url"
+                                class="block mt-1 w-full"
+                                placeholder="https://hooks.slack.com/services/xxx/yyy/zzz"
+                            />
+                            <p class="mt-1 text-xs text-gray-500">
+                                デプロイ完了時にSlackに通知を送信するWebhook URLを設定できます。未設定の場合は、グローバル設定（.envのSLACK_WEBHOOK_URL）が使用されます。
+                            </p>
+                            <InputError class="mt-2" :message="editForm.errors.slack_webhook_url" />
+                        </div>
+
+                        <div>
                             <InputLabel for="edit_name" value="プロジェクト名" />
                             <TextInput
                                 id="edit_name"
@@ -683,6 +698,7 @@ const editForm = useForm({
     staging_url: '',
     production_url: '',
     server_dir: '/public_html/',
+    slack_webhook_url: '',
     github_owner: '',
     github_repo: '',
     github_workflow_id: '',
@@ -703,6 +719,7 @@ const openEditModal = () => {
     editForm.staging_url = currentProject.value.staging_url || '';
     editForm.production_url = currentProject.value.production_url || '';
     editForm.server_dir = currentProject.value.server_dir || '/public_html/';
+    editForm.slack_webhook_url = currentProject.value.slack_webhook_url || '';
     editForm.github_owner = currentProject.value.github_owner || '';
     editForm.github_repo = currentProject.value.github_repo || '';
     editForm.github_workflow_id = currentProject.value.github_workflow_id || '';

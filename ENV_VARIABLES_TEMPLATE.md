@@ -44,6 +44,12 @@ SESSION_DRIVER=database
 SESSION_LIFETIME=120
 ```
 
+### Slack通知（任意）
+
+```
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/xxx/yyy/zzz
+```
+
 ### キャッシュ設定
 
 ```
@@ -66,4 +72,3 @@ QUEUE_CONNECTION=database
 - [ ] `GITHUB_CLIENT_ID`と`GITHUB_CLIENT_SECRET`が設定されている
 - [ ] `DB_*`変数が`${{MySQL.*}}`形式で参照されている
 - [ ] `APP_URL`と`GITHUB_REDIRECT_URI`が一致している
-

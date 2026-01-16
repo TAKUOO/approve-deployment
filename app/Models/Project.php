@@ -20,6 +20,7 @@ class Project extends Model
         'github_workflow_id',
         'github_branch',
         'server_dir',
+        'slack_webhook_url',
     ];
 
     public function user(): BelongsTo

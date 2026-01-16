@@ -160,12 +160,25 @@ class ApproveController extends Controller
         $deployLog = $deployLogModel;
 
         // 過去の成功したデプロイログから平均時間を計算（データベース側で計算してパフォーマンスを最適化）
-        $averageDuration = \App\Models\DeployLog::where('project_id', $project->id)
-            ->where('status', 'success')
-            ->whereNotNull('started_at')
-            ->whereNotNull('finished_at')
-            ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, started_at, finished_at)) as avg_seconds')
-            ->value('avg_seconds');
+        $dbDriver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
+        
+        if ($dbDriver === 'sqlite') {
+            // SQLite用のクエリ（julianday関数を使用）
+            $averageDuration = \App\Models\DeployLog::where('project_id', $project->id)
+                ->where('status', 'success')
+                ->whereNotNull('started_at')
+                ->whereNotNull('finished_at')
+                ->selectRaw('AVG((julianday(finished_at) - julianday(started_at)) * 86400) as avg_seconds')
+                ->value('avg_seconds');
+        } else {
+            // MySQL/MariaDB用のクエリ
+            $averageDuration = \App\Models\DeployLog::where('project_id', $project->id)
+                ->where('status', 'success')
+                ->whereNotNull('started_at')
+                ->whereNotNull('finished_at')
+                ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, started_at, finished_at)) as avg_seconds')
+                ->value('avg_seconds');
+        }
 
         // 承認ステータスページに必要な情報のみを渡す（GitHub情報は除外）
         return Inertia::render('ApproveStatus', [
