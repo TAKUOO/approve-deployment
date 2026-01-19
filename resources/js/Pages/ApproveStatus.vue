@@ -307,7 +307,7 @@ const pollStatus = async () => {
 
 let elapsedInterval = null;
 let pollCount = 0;
-const MAX_POLL_COUNT = 360; // 最大30分（5秒 × 360回）
+const MAX_POLL_COUNT = 600; // 最大30分（3秒 × 600回）
 
 onMounted(() => {
     // 実行中または待機中の場合はポーリングを開始
@@ -338,7 +338,7 @@ onMounted(() => {
             }
             
             pollStatus();
-        }, 5000); // 5秒ごとに更新（3秒から延長してサーバー負荷を軽減）
+        }, 3000); // 3秒ごとに更新（ステータス更新のレスポンスを改善）
         
         // 経過時間を1秒ごとに更新（UI用）
         elapsedInterval = setInterval(() => {

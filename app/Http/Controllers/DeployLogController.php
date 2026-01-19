@@ -31,9 +31,9 @@ class DeployLogController extends Controller
         $deployLog->load('approvalMessage', 'project');
 
         // 実行中でGitHub Run IDがある場合、GitHub Actions APIから直接ステータスを確認
-        // ただし、ポーリング頻度を考慮して、最後の同期から30秒以上経過している場合のみ同期する
+        // ただし、ポーリング頻度を考慮して、最後の同期から10秒以上経過している場合のみ同期する
         $lastSyncedAt = $deployLog->updated_at;
-        $shouldSync = $lastSyncedAt === null || $lastSyncedAt->diffInSeconds(now()) >= 30;
+        $shouldSync = $lastSyncedAt === null || $lastSyncedAt->diffInSeconds(now()) >= 10;
         
         if (($deployLog->status === 'running' || $deployLog->status === 'pending') && $deployLog->github_run_id && $shouldSync) {
             try {

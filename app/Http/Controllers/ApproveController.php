@@ -110,8 +110,9 @@ class ApproveController extends Controller
         }
 
         // 承認後、トークンを無効化（ワンタイム使用を保証）
+        // approve_tokenはNOT NULL制約があるため新しい値を入れて期限切れにする
         $project->update([
-            'approve_token' => null,
+            'approve_token' => bin2hex(random_bytes(32)),
             'approve_token_expires_at' => now()->subSecond(), // 過去の日時に設定して確実に無効化
         ]);
 
