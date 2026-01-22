@@ -63,7 +63,7 @@ defineProps({
             <template v-else>
                 <button
                     @click="openLoginModal"
-                    class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-full shadow-lg transition sm:px-6 sm:py-2.5 lg:px-7 lg:py-3 sm:text-base shadow-indigo-200 hover:opacity-90"
+                    class="px-5 py-2 text-sm font-semibold text-white bg-pink-500 rounded-full shadow-lg transition sm:px-6 sm:py-2.5 lg:px-7 lg:py-3 sm:text-base shadow-pink-200 hover:bg-pink-600"
                 >
                     ログイン
                 </button>

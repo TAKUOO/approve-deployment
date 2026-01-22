@@ -230,7 +230,7 @@ const faqs = [
                                 <button
                                     v-if="!$page.props.auth?.user"
                                     @click="openLoginModal"
-                                    class="px-6 py-3 w-full text-base font-semibold text-white bg-indigo-600 rounded-2xl shadow-xl transition sm:w-auto sm:px-8 sm:py-4 sm:text-lg shadow-indigo-200 hover:-translate-y-0.5"
+                                    class="px-6 py-3 w-full text-base font-semibold text-white bg-pink-500 rounded-2xl shadow-xl transition sm:w-auto sm:px-8 sm:py-4 sm:text-lg shadow-pink-200 hover:bg-pink-600 hover:-translate-y-0.5"
                                 >
                                     無料で試す
                                 </button>
@@ -500,7 +500,7 @@ const faqs = [
                             <div class="flex flex-wrap gap-4 justify-center mt-6 sm:mt-8">
                                 <button
                                     @click="openLoginModal"
-                                    class="px-6 py-3 text-base font-semibold text-white bg-indigo-600 rounded-2xl shadow-2xl transition sm:px-8 sm:py-4 lg:px-10 lg:py-4 sm:text-lg shadow-indigo-200 hover:-translate-y-0.5"
+                                    class="px-6 py-3 text-base font-semibold text-white bg-pink-500 rounded-2xl shadow-2xl transition sm:px-8 sm:py-4 lg:px-10 lg:py-4 sm:text-lg shadow-pink-200 hover:bg-pink-600 hover:-translate-y-0.5"
                                 >
                                     無料で試す
                                 </button>
