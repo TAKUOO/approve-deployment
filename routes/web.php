@@ -11,6 +11,7 @@ Route::get('/', function () {
     $sessionName = config('session.cookie');
     if ($sessionName && request()->cookie($sessionName)) {
         // セッションが存在する可能性がある場合のみ詳細チェック
+        // auth()->check() は内部で $request->user() を呼び出すため、一度だけ実行
         if (auth()->check()) {
             return redirect()->route('projects.index');
         }
@@ -19,9 +20,10 @@ Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => true, // GitHubログインは常に利用可能
         'canRegister' => false, // GitHubログインのみのため false
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+        // パフォーマンス最適化: Welcomeページでは不要な情報を削除
+        // 'laravelVersion' => Application::VERSION,
+        // 'phpVersion' => PHP_VERSION,
+    ])->name('welcome');
 });
 
 Route::get('/terms', function () {
