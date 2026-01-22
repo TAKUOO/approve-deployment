@@ -131,40 +131,6 @@
 
                                 <div>
                                     <div class="flex gap-2 items-center">
-                                        <InputLabel for="slack_webhook_url" value="Slack Webhook URL（任意）" />
-                                        <div class="relative">
-                                            <button
-                                                type="button"
-                                                @click.stop="toggleTooltip('slack_webhook_url', $event)"
-                                                class="text-gray-400 transition-colors hover:text-gray-600"
-                                            >
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                            </button>
-                                            <div
-                                                v-if="activeTooltip === 'slack_webhook_url'"
-                                                class="absolute left-0 z-10 p-3 mt-2 w-80 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
-                                            >
-                                                デプロイ完了時にSlackに通知を送信するWebhook URLを設定できます。SlackのIncoming Webhookから取得できます。未設定の場合は、グローバル設定（.envのSLACK_WEBHOOK_URL）が使用されます。
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <TextInput
-                                        id="slack_webhook_url"
-                                        v-model="form.slack_webhook_url"
-                                        type="url"
-                                        class="block mt-1 w-full"
-                                        placeholder="https://hooks.slack.com/services/xxx/yyy/zzz"
-                                    />
-                                    <p class="mt-1 text-xs text-gray-500">
-                                        未設定の場合は、グローバル設定（.envのSLACK_WEBHOOK_URL）が使用されます。
-                                    </p>
-                                    <InputError class="mt-2" :message="form.errors.slack_webhook_url" />
-                                </div>
-
-                                <div>
-                                    <div class="flex gap-2 items-center">
                                         <InputLabel for="organization" value="GitHub 組織（後で設定可）" />
                                         <div class="relative">
                                             <button
@@ -438,6 +404,40 @@
                                             </span>
                                         </span>
                                     </label>
+                                </div>
+
+                                <div>
+                                    <div class="flex gap-2 items-center">
+                                        <InputLabel for="slack_webhook_url" value="Slack Webhook URL（任意）" />
+                                        <div class="relative">
+                                            <button
+                                                type="button"
+                                                @click.stop="toggleTooltip('slack_webhook_url', $event)"
+                                                class="text-gray-400 transition-colors hover:text-gray-600"
+                                            >
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            </button>
+                                            <div
+                                                v-if="activeTooltip === 'slack_webhook_url'"
+                                                class="absolute left-0 z-10 p-3 mt-2 w-80 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
+                                            >
+                                                デプロイ完了時にSlackに通知を送信するWebhook URLを設定できます。SlackのIncoming Webhookから取得できます。未設定の場合は、グローバル設定（.envのSLACK_WEBHOOK_URL）が使用されます。
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <TextInput
+                                        id="slack_webhook_url"
+                                        v-model="form.slack_webhook_url"
+                                        type="url"
+                                        class="block mt-1 w-full"
+                                        placeholder="https://hooks.slack.com/services/xxx/yyy/zzz"
+                                    />
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        未設定の場合は、グローバル設定（.envのSLACK_WEBHOOK_URL）が使用されます。
+                                    </p>
+                                    <InputError class="mt-2" :message="form.errors.slack_webhook_url" />
                                 </div>
 
                                 <div class="flex justify-end items-center">

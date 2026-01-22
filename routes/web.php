@@ -85,6 +85,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/github/repositories', [\App\Http\Controllers\ProjectController::class, 'getRepositories'])->name('api.github.repositories');
     Route::get('/api/github/workflows', [\App\Http\Controllers\ProjectController::class, 'getWorkflows'])->name('api.github.workflows');
     Route::get('/api/github/branches', [\App\Http\Controllers\ProjectController::class, 'getBranches'])->name('api.github.branches');
+    Route::get('/api/github/webhooks/{project}', [\App\Http\Controllers\ProjectController::class, 'checkWebhook'])->name('api.github.webhooks.check');
     
     // Deploy Log Sync
     Route::post('/api/deploy-logs/sync', [\App\Http\Controllers\ProjectController::class, 'syncDeployLogs'])->name('api.deploy-logs.sync');

@@ -798,4 +798,93 @@ class ProjectController extends Controller
             'errors' => $errors,
         ]);
     }
+
+    /**
+     * GitHub Webhookの設定状況を確認
+     */
+    public function checkWebhook(Project $project)
+    {
+        // 所有者チェック
+        if ($project->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $user = Auth::user();
+        
+        if (!$user->github_token) {
+            return response()->json([
+                'configured' => false,
+                'error' => 'GitHub token not found',
+            ], 401);
+        }
+
+        if (!$project->github_owner || !$project->github_repo) {
+            return response()->json([
+                'configured' => false,
+                'error' => 'GitHub repository not configured',
+            ], 400);
+        }
+
+        try {
+            $token = \Illuminate\Support\Facades\Crypt::decryptString($user->github_token);
+            
+            // GitHub APIからwebhook一覧を取得
+            $response = \Illuminate\Support\Facades\Http::withToken($token)
+                ->timeout(5)
+                ->get("https://api.github.com/repos/{$project->github_owner}/{$project->github_repo}/hooks");
+
+            if (!$response->successful()) {
+                Log::warning('Failed to fetch webhooks from GitHub API', [
+                    'project_id' => $project->id,
+                    'status_code' => $response->status(),
+                    'response' => $response->body(),
+                ]);
+                
+                return response()->json([
+                    'configured' => false,
+                    'error' => 'Failed to fetch webhooks from GitHub',
+                ], $response->status());
+            }
+
+            $hooks = $response->json();
+            $appUrl = config('app.url');
+            $webhookUrl = rtrim($appUrl, '/') . '/api/github/webhook';
+            
+            // 該当するwebhookを検索
+            $configured = false;
+            $foundWebhook = null;
+            
+            foreach ($hooks as $hook) {
+                $hookUrl = $hook['config']['url'] ?? '';
+                
+                // URLが一致するかチェック
+                if ($hookUrl === $webhookUrl) {
+                    // workflow_runイベントが有効かチェック
+                    $events = $hook['events'] ?? [];
+                    if (in_array('workflow_run', $events) || in_array('*', $events)) {
+                        $configured = true;
+                        $foundWebhook = $hook;
+                        break;
+                    }
+                }
+            }
+
+            return response()->json([
+                'configured' => $configured,
+                'webhook_url' => $webhookUrl,
+                'hook' => $foundWebhook,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to check webhook status', [
+                'project_id' => $project->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
+            return response()->json([
+                'configured' => false,
+                'error' => 'Failed to check webhook status: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }

@@ -57,7 +57,7 @@
             <div class="overflow-y-auto flex-1 bg-indigo-50">
                 <div v-if="currentProject" class="p-6 mx-auto max-w-6xl">
                     <div>
-                        <div class="bg-white rounded-2xl shadow-xl">
+                        <div class="bg-white rounded-2xl shadow-sm">
                         <div class="p-6 text-gray-900 border-b border-gray-200">
                             <!-- プロジェクト名（タイトル）とアクションボタン -->
                             <div class="flex justify-between items-center mb-1">
@@ -110,6 +110,24 @@
                                         <circle cx="8" cy="11.8" r="1" fill="#fff" />
                                     </svg>
                                     {{ getWorkflowStatusLabel(currentProject) }}
+                                </span>
+                                <span 
+                                    v-if="currentProject.github_owner && currentProject.github_repo"
+                                    :class="getStatusTagClass(getWebhookStatus(currentProject).configured)"
+                                    @click.stop="showWebhookModal = true"
+                                    class="cursor-pointer"
+                                    title="クリックして設定手順を確認"
+                                >
+                                    <svg v-if="getWebhookStatus(currentProject).configured" class="w-3.5 h-3.5 text-emerald-700" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                                        <circle cx="8" cy="8" r="7" />
+                                        <path d="M5 8.2l1.9 1.9L11 6" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    <svg v-else class="w-3.5 h-3.5 text-yellow-700" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                                        <circle cx="8" cy="8" r="7" />
+                                        <path d="M8 4.2v5" stroke="#fff" stroke-width="1.5" stroke-linecap="round" />
+                                        <circle cx="8" cy="11.8" r="1" fill="#fff" />
+                                    </svg>
+                                    {{ getWebhookStatusLabel(currentProject) }}
                                 </span>
                             </div>
                             
@@ -180,36 +198,26 @@
                         </div>
                         <div v-else class="px-4 py-4">
                             <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                                <div class="flex items-start">
-                                    <svg class="flex-shrink-0 mt-0.5 w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                    </svg>
-                                    <div class="ml-3">
-                                        <h3 class="text-sm font-medium text-yellow-800">
-                                            初期設定が未完了のため、承認URLを作成できません。
-                                        </h3>
-                                        <p class="mt-1 text-sm text-yellow-700">
-                                            以下の項目を設定してください。
-                                        </p>
-                                        <div class="flex flex-wrap gap-2 mt-2">
+                                <div class="flex justify-between">
+                                        <h3 class="text-sm font-bold text-yellow-800">
                                             <span
                                                 v-for="item in missingSetupForCurrentProject"
                                                 :key="item"
-                                                class="px-2 py-0.5 text-xs text-yellow-800 bg-yellow-100 rounded-full"
                                             >
                                                 {{ item }}
-                                            </span>
-                                        </div>
-                                        <div class="mt-3">
-                                            <Link 
-                                                :href="route('projects.edit', currentProject.id)" 
-                                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-yellow-800 bg-yellow-100 rounded-md hover:bg-yellow-200"
+                                            </span>が未完了のため、承認URLを作成できません。
+                                        </h3>
+                                        <button
+                                                v-if="missingSetupForCurrentProject.includes('GitHub Webhook') && currentProject.github_owner && currentProject.github_repo"
+                                                @click="showWebhookModal = true"
+                                                class="inline-flex gap-1 items-center text-xs font-bold text-yellow-800 hover:text-yellow-900"
                                             >
-                                                設定する
-                                            </Link>
-                                        </div>
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                詳しくを見る
+                                        </button>
                                     </div>
-                                </div>
                             </div>
                         </div>
                         </div>
@@ -783,6 +791,92 @@
             </div>
         </div>
     </AuthenticatedLayout>
+
+    <!-- Webhook設定手順モーダル -->
+    <Transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-200 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+    >
+        <div
+            v-if="showWebhookModal"
+            class="flex overflow-y-auto fixed inset-0 z-50 justify-center items-start p-4 bg-black bg-opacity-50"
+            @click.self="showWebhookModal = false"
+        >
+            <div class="relative mx-auto my-8 w-full max-w-2xl bg-white rounded-lg shadow-xl">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-gray-900">GitHub Webhook設定手順</h2>
+                        <button
+                            @click="showWebhookModal = false"
+                            class="p-2 text-gray-400 rounded-md transition-colors hover:text-gray-600 hover:bg-gray-100"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-4 text-gray-700">
+                        <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <p class="text-sm text-blue-800">
+                                GitHub Webhookを設定することで、デプロイ完了を自動的に検知できます。設定しない場合、デプロイステータスの更新が遅れる可能性があります。
+                            </p>
+                        </div>
+
+                        <div>
+                            <h3 class="mb-2 text-lg font-medium text-gray-900">設定手順</h3>
+                            <ol class="ml-6 space-y-3 list-decimal">
+                                <li>
+                                    <p class="text-sm">GitHubリポジトリの <strong>Settings</strong> → <strong>Webhooks</strong> → <strong>Add webhook</strong> を開く</p>
+                                </li>
+                                <li>
+                                    <p class="text-sm">
+                                        <strong>Payload URL</strong> に以下を入力：
+                                        <code class="block px-2 py-1 mt-1 text-xs bg-gray-100 rounded">{{ getWebhookStatus(currentProject).webhook_url || 'https://yourdomain.com/api/github/webhook' }}</code>
+                                    </p>
+                                </li>
+                                <li>
+                                    <p class="text-sm"><strong>Content type</strong> を <code class="px-1 py-0.5 text-xs bg-gray-100 rounded">application/json</code> に設定</p>
+                                </li>
+                                <li>
+                                    <p class="text-sm"><strong>Events</strong> で <strong>Workflow run</strong> を選択（または <strong>Let me select individual events</strong> を選択して <strong>Workflow run</strong> にチェック）</p>
+                                </li>
+                                <li>
+                                    <p class="text-sm"><strong>Active</strong> にチェックを入れて <strong>Add webhook</strong> をクリック</p>
+                                </li>
+                            </ol>
+                        </div>
+
+                        <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                            <p class="text-sm text-yellow-800">
+                                <strong>注意:</strong> Webhookを設定すると、GitHub Actionsのワークフロー実行が完了した際に自動的にデプロイステータスが更新されます。設定しない場合、手動で同期する必要があります。
+                            </p>
+                        </div>
+
+                        <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
+                            <button
+                                @click="showWebhookModal = false"
+                                class="px-4 py-2 text-sm text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+                            >
+                                閉じる
+                            </button>
+                            <button
+                                v-if="currentProject && currentProject.github_owner && currentProject.github_repo"
+                                @click="checkWebhookStatus(currentProject); showWebhookModal = false"
+                                class="px-4 py-2 text-sm text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+                            >
+                                ステータスを再確認
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </Transition>
 </template>
 
 <script setup>
@@ -1210,6 +1304,13 @@ onMounted(() => {
     syncInterval = setInterval(() => {
         syncDeployLogs();
     }, 30000);
+
+    // 初期プロジェクトのwebhookステータスを確認
+    if (props.selectedProject && props.selectedProject.github_owner && props.selectedProject.github_repo) {
+        setTimeout(() => {
+            checkWebhookStatus(props.selectedProject);
+        }, 1000); // ページ読み込み後1秒後に実行
+    }
 });
 
 // コンポーネントがアンマウントされたらインターバルをクリア
@@ -1233,12 +1334,36 @@ const getMissingSetup = (project) => {
     if (!project.github_workflow_id) missing.push('ワークフロー');
     if (!project.github_branch) missing.push('ブランチ');
     if (!project.ssh_configured) missing.push('SSH設定');
+    // webhookのチェック（GitHubリポジトリが設定されている場合のみ）
+    if (project.github_owner && project.github_repo) {
+        const webhookStatus = getWebhookStatus(project);
+        if (!webhookStatus.configured) {
+            missing.push('GitHub Webhook');
+        }
+    }
     return missing;
 };
 
 const isProjectSetupIncomplete = (project) => getMissingSetup(project).length > 0;
 const missingSetupForCurrentProject = computed(() => getMissingSetup(currentProject.value));
-const isCurrentProjectSetupComplete = computed(() => missingSetupForCurrentProject.value.length === 0);
+
+// 承認URL生成に必要な必須項目のみをチェック（webhookは除外）
+const getMissingCriticalSetup = (project) => {
+    if (!project) return [];
+    const missing = [];
+    if (!project.github_owner) missing.push('GitHub組織');
+    if (!project.github_repo) missing.push('GitHubリポジトリ');
+    if (!project.github_workflow_id) missing.push('ワークフロー');
+    if (!project.github_branch) missing.push('ブランチ');
+    if (!project.ssh_configured) missing.push('SSH設定');
+    // webhookはクリティカルではないため除外
+    return missing;
+};
+
+const isCurrentProjectSetupComplete = computed(() => {
+    const criticalMissing = getMissingCriticalSetup(currentProject.value);
+    return criticalMissing.length === 0;
+});
 
 const getStatusTagClass = (isConfigured) => (
     isConfigured
@@ -1254,8 +1379,53 @@ const getSshStatusLabel = (project) => (
     project?.ssh_configured ? 'SSH設定済み' : 'SSH未設定'
 );
 
+// Webhookステータス管理
+const webhookStatus = ref({});
+const checkingWebhook = ref(false);
+const showWebhookModal = ref(false);
+
+const checkWebhookStatus = async (project) => {
+    if (!project || !project.github_owner || !project.github_repo) {
+        webhookStatus.value[project?.id] = { configured: false, error: 'GitHub repository not configured' };
+        return;
+    }
+
+    checkingWebhook.value = true;
+    try {
+        const response = await axios.get(route('api.github.webhooks.check', project.id));
+        webhookStatus.value[project.id] = {
+            configured: response.data.configured || false,
+            webhook_url: response.data.webhook_url || '',
+            error: response.data.error || null,
+        };
+    } catch (error) {
+        console.error('Failed to check webhook status:', error);
+        webhookStatus.value[project.id] = {
+            configured: false,
+            error: error.response?.data?.error || 'Failed to check webhook status',
+        };
+    } finally {
+        checkingWebhook.value = false;
+    }
+};
+
+const getWebhookStatus = (project) => {
+    if (!project) return { configured: false };
+    return webhookStatus.value[project.id] || { configured: false };
+};
+
+const getWebhookStatusLabel = (project) => {
+    const status = getWebhookStatus(project);
+    return status.configured ? '完了検知設定済み' : '完了検知未設定';
+};
+
 const selectProject = (projectId) => {
     selectedProjectId.value = projectId;
+    // プロジェクト選択時にwebhookステータスを確認
+    const project = props.projects.find(p => p.id === projectId);
+    if (project && project.github_owner && project.github_repo) {
+        checkWebhookStatus(project);
+    }
 };
 
 const generateApprovalUrl = async () => {
