@@ -48,24 +48,10 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        // Welcomeページでは認証チェックをスキップしてパフォーマンスを向上
-        // セッションクッキーが存在する場合のみ認証チェックを実行
-        $user = null;
-        if ($request->routeIs('welcome') || $request->is('/')) {
-            // Welcomeページでは認証情報を遅延読み込み（必要時のみ）
-            $sessionName = config('session.cookie');
-            if ($sessionName && $request->cookie($sessionName)) {
-                $user = $request->user();
-            }
-        } else {
-            // その他のページでは通常通り認証情報を取得
-            $user = $request->user();
-        }
-
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $user,
+                'user' => $request->user(),
             ],
         ];
     }

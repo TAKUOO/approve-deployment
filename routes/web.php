@@ -23,8 +23,8 @@ Route::get('/', function () {
         // パフォーマンス最適化: Welcomeページでは不要な情報を削除
         // 'laravelVersion' => Application::VERSION,
         // 'phpVersion' => PHP_VERSION,
-    ])->name('welcome');
-});
+    ]);
+})->name('welcome');
 
 Route::get('/terms', function () {
     return Inertia::render('Terms');
