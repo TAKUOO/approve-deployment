@@ -54,9 +54,9 @@
         <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
         <link rel="dns-prefetch" href="https://fonts.bunny.net">
         <!-- フォントの非ブロッキング読み込み（パフォーマンス最適化） -->
-        <link rel="preload" as="style" href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-        <noscript><link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet"></noscript>
+        <link rel="preload" as="style" href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap">
+        <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+        <noscript><link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet"></noscript>
 
         <!-- クリティカルCSS（WelcomeページのAbove the fold部分のみ） -->
         @if(request()->is('/'))

@@ -8,9 +8,9 @@
                 <!-- サイドバーヘッダー -->
                 <div class="p-4">
                     <div class="flex justify-between items-center">
-                        <h2 class="text-sm font-semibold text-gray-900">Projects</h2>
+                        <h2 class="text-sm font-semibold text-gray-900">プロジェクト</h2>
                     <Link :href="route('projects.create')">
-                            <button class="flex gap-1 items-center px-2 py-1 text-xs font-medium text-white bg-indigo-600 rounded-md border border-transparent transition duration-150 ease-in-out hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <button class="flex gap-1 items-center px-2 py-1 text-xs font-bold text-white bg-indigo-600 rounded-md border border-transparent transition duration-150 ease-in-out hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                                 </svg>
@@ -55,10 +55,10 @@
 
             <!-- 右メインコンテンツエリア -->
             <div class="overflow-y-auto flex-1 bg-indigo-50">
-                <div v-if="currentProject" class="p-6 mx-auto max-w-6xl">
+                <div v-if="currentProject" class="p-10 mx-auto max-w-6xl">
                     <div>
-                        <div class="bg-white rounded-2xl shadow-sm">
-                        <div class="p-6 text-gray-900 border-b border-gray-200">
+                        <div class="bg-white rounded-3xl">
+                        <div class="px-6 py-4 text-gray-900 border-b border-gray-200">
                             <!-- プロジェクト名（タイトル）とアクションボタン -->
                             <div class="flex justify-between items-center mb-1">
                                 <div class="flex gap-2 items-center">
@@ -151,19 +151,18 @@
                             ref="approvalSection"
                             class="px-4 py-4"
                         >
-                            <div class="flex gap-1 items-center mb-2">
-                                <h2 class="text-2xl font-bold text-gray-800">改善内容の作成</h2>
+                            <div class="flex items-center mb-2">
+                                <h2 class="text-xl font-bold text-gray-600">改善内容</h2>
                                 <button
                                     @click="showGuide"
                                     class="p-2 text-gray-400 rounded-md transition-colors hover:text-indigo-600 hover:bg-indigo-50"
                                     title="使い方ガイドを見る"
                                 >
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </button>
                             </div>
-                            <p class="mb-6 text-sm text-gray-500">改善内容をまとめてクライアントに共有しましょう</p>
                             <div class="space-y-3">
                                 <div class="mb-6">
                                     <MdEditor
@@ -806,7 +805,7 @@
             class="flex overflow-y-auto fixed inset-0 z-50 justify-center items-start p-4 bg-black bg-opacity-50"
             @click.self="showWebhookModal = false"
         >
-            <div class="relative mx-auto my-8 w-full max-w-2xl bg-white rounded-lg shadow-xl">
+            <div class="relative mx-auto my-8 w-full max-w-2xl bg-white rounded-3xl shadow-3xl">
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-xl font-semibold text-gray-900">GitHub Webhook設定手順</h2>
@@ -821,32 +820,32 @@
                     </div>
                     
                     <div class="space-y-4 text-gray-700">
-                        <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div class="p-4 mb-6 bg-blue-50 rounded-3xl border border-blue-200">
                             <p class="text-sm text-blue-800">
                                 GitHub Webhookを設定することで、デプロイ完了を自動的に検知できます。設定しない場合、デプロイステータスの更新が遅れる可能性があります。
                             </p>
                         </div>
 
                         <div>
-                            <h3 class="mb-2 text-lg font-medium text-gray-900">設定手順</h3>
-                            <ol class="ml-6 space-y-3 list-decimal">
+                            <h3 class="mb-6 font-bold text-gray-500 text-md">設定手順</h3>
+                            <ol class="ml-6 space-y-4 list-decimal text-gray-600">
                                 <li>
-                                    <p class="text-sm">GitHubリポジトリの <strong>Settings</strong> → <strong>Webhooks</strong> → <strong>Add webhook</strong> を開く</p>
+                                    <p class="text-md">GitHubリポジトリの <strong>Settings</strong> → <strong>Webhooks</strong> → <strong>Add webhook</strong> を開く</p>
                                 </li>
                                 <li>
-                                    <p class="text-sm">
+                                    <p class="text-md">
                                         <strong>Payload URL</strong> に以下を入力：
-                                        <code class="block px-2 py-1 mt-1 text-xs bg-gray-100 rounded">{{ getWebhookStatus(currentProject).webhook_url || 'https://yourdomain.com/api/github/webhook' }}</code>
+                                        <code class="block px-4 py-4 mt-1 text-sm text-gray-500 bg-gray-100 rounded-xl">{{ getWebhookStatus(currentProject).webhook_url || 'https://yourdomain.com/api/github/webhook' }}</code>
                                     </p>
                                 </li>
                                 <li>
-                                    <p class="text-sm"><strong>Content type</strong> を <code class="px-1 py-0.5 text-xs bg-gray-100 rounded">application/json</code> に設定</p>
+                                    <p class="text-md"><strong>Content type</strong> を <code class="px-1 py-0.5 text-xs bg-gray-100 rounded">application/json</code> に設定</p>
                                 </li>
                                 <li>
-                                    <p class="text-sm"><strong>Events</strong> で <strong>Workflow run</strong> を選択（または <strong>Let me select individual events</strong> を選択して <strong>Workflow run</strong> にチェック）</p>
+                                    <p class="text-md"><strong>Events</strong> で <strong>Workflow run</strong> を選択（または <strong>Let me select individual events</strong> を選択して <strong>Workflow run</strong> にチェック）</p>
                                 </li>
                                 <li>
-                                    <p class="text-sm"><strong>Active</strong> にチェックを入れて <strong>Add webhook</strong> をクリック</p>
+                                    <p class="text-md"><strong>Active</strong> にチェックを入れて <strong>Add webhook</strong> をクリック</p>
                                 </li>
                             </ol>
                         </div>
