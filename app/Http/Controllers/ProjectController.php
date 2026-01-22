@@ -256,19 +256,25 @@ class ProjectController extends Controller
             'production_url' => 'required|url',
             'server_dir' => 'nullable|string|max:255',
             'slack_webhook_url' => 'nullable|url|max:500',
-            'github_owner' => 'required|string',
-            'github_repo' => 'required|string',
-            'github_workflow_id' => 'required|string',
-            'github_branch' => 'required|string',
+            'github_owner' => 'nullable|string',
+            'github_repo' => 'nullable|string',
+            'github_workflow_id' => 'nullable|string',
+            'github_branch' => 'nullable|string',
+            'ssh_configured' => 'nullable|boolean',
         ]);
         
-        // github_branchが空の場合は'main'をデフォルト値として設定
-        if (empty($validated['github_branch'])) {
-            $validated['github_branch'] = 'main';
+        if (isset($validated['github_branch'])) {
+            $validated['github_branch'] = trim($validated['github_branch']);
         }
 
         // プロジェクト名が未指定の場合は、レポジトリ名を使用
-        $name = $validated['name'] ?? "{$validated['github_owner']}/{$validated['github_repo']}";
+        if (!empty($validated['name'])) {
+            $name = $validated['name'];
+        } elseif (!empty($validated['github_owner']) && !empty($validated['github_repo'])) {
+            $name = "{$validated['github_owner']}/{$validated['github_repo']}";
+        } else {
+            $name = '未設定プロジェクト';
+        }
 
         // より強力なトークン生成（64文字のランダム文字列）
         $approveToken = bin2hex(random_bytes(32));
@@ -279,7 +285,8 @@ class ProjectController extends Controller
             'user_id' => Auth::id(),
             'approve_token' => $approveToken,
             'approve_token_expires_at' => now()->addDays(5), // 5日間有効
-            'github_branch' => $validated['github_branch'] ?? 'main',
+            'github_branch' => $validated['github_branch'] ?? '',
+            'ssh_configured' => $validated['ssh_configured'] ?? false,
         ]);
 
         return redirect()->route('projects.index');
@@ -311,29 +318,32 @@ class ProjectController extends Controller
                 'production_url' => 'required|url',
                 'server_dir' => 'nullable|string|max:255',
                 'slack_webhook_url' => 'nullable|url|max:500',
-                'github_owner' => 'required|string',
-                'github_repo' => 'required|string',
-                'github_workflow_id' => 'required|string',
-                'github_branch' => 'required|string',
+                'github_owner' => 'nullable|string',
+                'github_repo' => 'nullable|string',
+                'github_workflow_id' => 'nullable|string',
+                'github_branch' => 'nullable|string',
+                'ssh_configured' => 'nullable|boolean',
             ]);
             
             // github_branchの前後の空白を削除
             if (isset($validated['github_branch'])) {
                 $validated['github_branch'] = trim($validated['github_branch']);
             }
-            
-            // github_branchが空の場合は'main'をデフォルト値として設定
-            if (empty($validated['github_branch'])) {
-                $validated['github_branch'] = 'main';
-            }
 
             // プロジェクト名が未指定の場合は、レポジトリ名を使用
-            $name = $validated['name'] ?? "{$validated['github_owner']}/{$validated['github_repo']}";
+            if (!empty($validated['name'])) {
+                $name = $validated['name'];
+            } elseif (!empty($validated['github_owner']) && !empty($validated['github_repo'])) {
+                $name = "{$validated['github_owner']}/{$validated['github_repo']}";
+            } else {
+                $name = $project->name;
+            }
 
             $project->update([
                 ...$validated,
                 'name' => $name,
-                'github_branch' => $validated['github_branch'] ?? 'main',
+                'github_branch' => $validated['github_branch'] ?? '',
+                'ssh_configured' => $validated['ssh_configured'] ?? false,
             ]);
 
             Log::info('Project updated', [

@@ -24,7 +24,7 @@ defineExpose({
 defineProps({
     variant: {
         type: String,
-        default: 'default', // 'default' or 'docs'
+        default: 'default', // 'default' or 'simple'
     },
 });
 </script>
@@ -44,24 +44,12 @@ defineProps({
             <!-- Welcomeページ用のナビゲーション -->
             <template v-if="variant === 'default'">
                 <a class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex" href="#features">機能</a>
-                <a class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex" href="#workflow">ワークフロー</a>
-                <a class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex" href="#security">セキュリティ</a>
                 <a class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex" href="#faq">FAQ</a>
-                <a :href="route('docs')" target="_blank" rel="noopener noreferrer" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">ドキュメント</a>
-            </template>
-
-            <!-- ドキュメントページ用のナビゲーション -->
-            <template v-else-if="variant === 'docs'">
-                <Link href="/" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">ホーム</Link>
-                <Link href="/#features" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">機能</Link>
-                <Link href="/#workflow" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">ワークフロー</Link>
-                <Link href="/#faq" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">FAQ</Link>
             </template>
 
             <!-- その他のページ用のナビゲーション -->
             <template v-else>
                 <Link href="/" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">ホーム</Link>
-                <a :href="route('docs')" target="_blank" rel="noopener noreferrer" class="hidden transition text-slate-500 hover:text-slate-900 sm:inline-flex">ドキュメント</a>
             </template>
 
             <Link
@@ -107,4 +95,3 @@ defineProps({
         </div>
     </Modal>
 </template>
-

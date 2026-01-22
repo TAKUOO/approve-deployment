@@ -12,6 +12,12 @@ class DeployController extends Controller
 {
     public function trigger(Request $request, Project $project, $approvalMessageId = null)
     {
+        if (!$project->github_owner || !$project->github_repo || !$project->github_workflow_id || !$project->github_branch || !$project->ssh_configured) {
+            return response()->json([
+                'error' => 'Deployment settings are not configured',
+            ], 422);
+        }
+
         $deployLog = DeployLog::create([
             'project_id' => $project->id,
             'status' => 'pending',

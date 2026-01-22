@@ -101,9 +101,6 @@ const goBack = () => {
                             <Link href="/" class="px-4 py-2 text-sm text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
                                 ホーム
                             </Link>
-                            <a :href="route('docs')" target="_blank" rel="noopener noreferrer" class="px-4 py-2 text-sm text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
-                                ドキュメント
-                            </a>
                             <Link href="/#features" class="px-4 py-2 text-sm text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
                                 機能
                             </Link>
@@ -119,4 +116,3 @@ const goBack = () => {
         </div>
     </div>
 </template>
-

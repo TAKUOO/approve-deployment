@@ -112,7 +112,7 @@ class DeployLogController extends Controller
         $project = $deployLog->project;
         $user = $project->user;
 
-        if (!$user->github_token) {
+        if (!$user->github_token || !$project->github_owner || !$project->github_repo || !$project->github_workflow_id) {
             return;
         }
 
@@ -160,7 +160,7 @@ class DeployLogController extends Controller
         $project = $deployLog->project;
         $user = $project->user;
 
-        if (!$user->github_token) {
+        if (!$user->github_token || !$project->github_owner || !$project->github_repo) {
             return;
         }
 

@@ -36,6 +36,10 @@ class SyncDeployLogs extends Command
                 $this->warn("  No GitHub token for user {$user->id}");
                 continue;
             }
+            if (!$project->github_owner || !$project->github_repo || !$project->github_workflow_id) {
+                $this->warn("  GitHub settings are incomplete for project {$project->id}");
+                continue;
+            }
 
             try {
                 $token = Crypt::decryptString($user->github_token);
@@ -152,4 +156,3 @@ class SyncDeployLogs extends Command
         return 'pending';
     }
 }
-

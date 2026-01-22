@@ -2,8 +2,8 @@
     <Head title="プロジェクト作成 - AutoRelease" />
     
     <AuthenticatedLayout>
-        <div class="py-12 bg-indigo-50 min-h-screen">
-            <div class="mx-auto max-w-2xl sm:px-6 lg:px-8">
+        <div class="py-12 min-h-screen bg-indigo-50">
+            <div class="mx-auto max-w-5xl sm:px-6 lg:px-8">
                 <div class="bg-white rounded-2xl shadow-xl">
                     <div class="p-8 text-gray-900">
                         <!-- 一覧に戻るボタン -->
@@ -20,16 +20,6 @@
                         <div class="mb-8">
                             <div class="flex gap-3 items-center mb-2">
                                 <h1 class="text-2xl font-semibold text-gray-900">プロジェクトを作成する</h1>
-                                <button
-                                    @click="showDocsModal = true"
-                                    class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-500 bg-gray-100 rounded-md transition-colors hover:text-gray-700 hover:bg-gray-200"
-                                    title="使い方を見る"
-                                >
-                                    <svg class="mr-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    使い方を見る
-                                </button>
                             </div>
                             <p class="text-gray-600">
                                 クライアントが確認するプロジェクトを登録しましょう。プロジェクト作成後、詳細画面で改善内容を入力して承認URLを生成し、クライアントに共有できます。クライアントが承認すると、自動的に本番環境にデプロイされます。
@@ -175,7 +165,7 @@
 
                                 <div>
                                     <div class="flex gap-2 items-center">
-                                        <InputLabel for="organization" value="GitHub 組織" />
+                                        <InputLabel for="organization" value="GitHub 組織（後で設定可）" />
                                         <div class="relative">
                                             <button
                                                 type="button"
@@ -199,9 +189,8 @@
                                         v-model="selectedOrganization"
                                         @change="onOrganizationChange"
                                         class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                        required
                                     >
-                                        <option value="" disabled>組織を選択してください</option>
+                                        <option value="">後で設定する</option>
                                         <option value="personal">個人リポジトリ</option>
                                         <option v-for="org in organizations" :key="org.id" :value="org.login">
                                             {{ org.login }}
@@ -209,6 +198,9 @@
                                     </select>
                                     <p v-if="organizations.length === 0" class="mt-1 text-sm text-yellow-600">
                                         ※ 組織が見つかりませんでした。組織に所属している場合、GitHubでアプリの権限を確認してください。
+                                    </p>
+                                    <p class="mt-1 text-xs text-gray-500">
+                                        未設定でも登録できます。あとでプロジェクト一覧から設定してください。
                                     </p>
                                     <InputError class="mt-2" :message="form.errors.github_owner" />
                                 </div>
@@ -240,7 +232,6 @@
                                         @change="onRepositoryChange"
                                         class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                         :disabled="repositories.length === 0"
-                                        required
                                     >
                                         <option :value="null" disabled>
                                             {{ repositories.length === 0 ? 'リポジトリを読み込み中...' : 'リポジトリを選択してください' }}
@@ -370,14 +361,23 @@
                                         id="github_workflow_id"
                                         v-model="form.github_workflow_id"
                                         class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                        required
                                     >
-                                        <option value="" disabled>ワークフローを選択してください</option>
+                                        <option value="">後で設定する</option>
                                         <option v-for="workflow in workflows" :key="workflow.id" :value="String(workflow.id)">
                                             {{ workflow.name }} ({{ workflow.path }})
                                         </option>
                                     </select>
                                     <InputError class="mt-2" :message="form.errors.github_workflow_id" />
+                                    <p class="mt-2 text-sm text-gray-500">
+                                        SSH接続の設定が必要です。
+                                        <button
+                                            type="button"
+                                            @click="showSshModal = true"
+                                            class="font-medium text-indigo-600 underline transition hover:text-indigo-800"
+                                        >
+                                            詳しく見る
+                                        </button>
+                                    </p>
                                 </div>
 
                                 <div v-if="selectedRepository">
@@ -409,7 +409,6 @@
                                             list="branch-list"
                                             class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                             placeholder="main"
-                                            required
                                         />
                                         <!-- ブランチ候補のdatalist（APIから取得できた場合のみ表示） -->
                                         <datalist id="branch-list">
@@ -422,6 +421,23 @@
                                         </p>
                                     </div>
                                     <InputError class="mt-2" :message="form.errors.github_branch" />
+                                </div>
+
+                                <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                    <label for="ssh_configured" class="flex gap-3 items-start cursor-pointer">
+                                        <input
+                                            id="ssh_configured"
+                                            v-model="form.ssh_configured"
+                                            type="checkbox"
+                                            class="mt-1 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                                        />
+                                        <span class="text-sm text-gray-700">
+                                            SSH設定済み（GitHub Secretsに登録済み）
+                                            <span class="block text-xs text-gray-500">
+                                                SSH_HOST / SSH_USER / SSH_PRIVATE_KEY などを登録してからチェックしてください。
+                                            </span>
+                                        </span>
+                                    </label>
                                 </div>
 
                                 <div class="flex justify-end items-center">
@@ -483,9 +499,7 @@
                 </div>
             </div>
         </Modal>
-
-        <!-- ドキュメントモーダル -->
-        <DocumentationModal :show="showDocsModal" @close="showDocsModal = false" />
+        <SshSetupModal :show="showSshModal" @close="showSshModal = false" />
     </AuthenticatedLayout>
 </template>
 
@@ -499,7 +513,7 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import Modal from '@/Components/Modal.vue';
-import DocumentationModal from '@/Components/DocumentationModal.vue';
+import SshSetupModal from '@/Components/SshSetupModal.vue';
 import { ref, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 
@@ -519,14 +533,15 @@ const form = useForm({
     github_owner: '',
     github_repo: '',
     github_workflow_id: '',
-    github_branch: 'main',
+    github_branch: '',
+    ssh_configured: false,
 });
 
 const organizations = ref([]);
 const repositories = ref([]);
 const workflows = ref([]);
 const branches = ref([]);
-const showDocsModal = ref(false);
+const showSshModal = ref(false);
 const selectedOrganization = ref('');
 const selectedRepository = ref(null);
 const selectedTemplate = ref('ftp');
@@ -899,7 +914,17 @@ onUnmounted(() => {
 });
 
 const onOrganizationChange = async () => {
-    if (!selectedOrganization.value) return;
+    if (!selectedOrganization.value) {
+        selectedRepository.value = null;
+        repositories.value = [];
+        workflows.value = [];
+        branches.value = [];
+        form.github_owner = '';
+        form.github_repo = '';
+        form.github_workflow_id = '';
+        form.github_branch = '';
+        return;
+    }
 
     // リセット
     selectedRepository.value = null;
@@ -909,7 +934,7 @@ const onOrganizationChange = async () => {
     form.github_owner = '';
     form.github_repo = '';
     form.github_workflow_id = '';
-    form.github_branch = 'main';
+    form.github_branch = '';
 
     try {
         // 選択した組織のリポジトリを取得
@@ -951,7 +976,7 @@ const onRepositoryChange = async () => {
     
     // Reset dependent fields
     form.github_workflow_id = '';
-    form.github_branch = 'main';
+    form.github_branch = '';
     workflows.value = [];
     branches.value = [];
     loadingWorkflows.value = true;

@@ -19,6 +19,7 @@ class Project extends Model
         'github_repo',
         'github_workflow_id',
         'github_branch',
+        'ssh_configured',
         'server_dir',
         'slack_webhook_url',
     ];

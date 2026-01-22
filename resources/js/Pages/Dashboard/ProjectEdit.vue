@@ -19,18 +19,6 @@
                         <!-- タイトルと使い方ボタン -->
                         <div class="flex gap-3 items-center mb-6">
                             <h1 class="text-2xl font-semibold text-gray-900">プロジェクトを編集する</h1>
-                            <a
-                                :href="route('docs')"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-500 bg-gray-100 rounded-md transition-colors hover:text-gray-700 hover:bg-gray-200"
-                                title="使い方を見る"
-                            >
-                                <svg class="mr-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                使い方を見る
-                            </a>
                         </div>
                         
                         <form @submit.prevent="submit">
@@ -104,9 +92,8 @@
                                         v-model="selectedOrganization"
                                         @change="onOrganizationChange"
                                         class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                        required
                                     >
-                                        <option value="" :selected="!project.github_owner">組織を選択してください</option>
+                                        <option value="" :selected="!project.github_owner">後で設定する</option>
                                         <option value="personal" :selected="project.github_owner && !organizations.find(o => o.login === project.github_owner)">個人リポジトリ</option>
                                         <option v-for="org in organizations" :key="org.id" :value="org.login" :selected="project.github_owner === org.login">
                                             {{ org.login }}
@@ -123,7 +110,6 @@
                                         @change="onRepositoryChange"
                                         class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                         :disabled="repositories.length === 0"
-                                        required
                                     >
                                         <option :value="null" disabled>
                                             {{ repositories.length === 0 ? 'リポジトリを読み込み中...' : 'リポジトリを選択してください' }}
@@ -133,6 +119,44 @@
                                         </option>
                                     </select>
                                     <InputError class="mt-2" :message="form.errors.github_repo" />
+                                </div>
+
+                                <div v-if="selectedRepository">
+                                    <div class="flex gap-2 items-center">
+                                        <InputLabel for="github_workflow_id" value="GitHub ワークフロー" />
+                                        <div class="relative">
+                                            <button
+                                                type="button"
+                                                @click.stop="toggleTooltip('workflow', $event)"
+                                                class="text-gray-400 transition-colors hover:text-gray-600"
+                                            >
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            </button>
+                                            <div
+                                                v-if="activeTooltip === 'workflow'"
+                                                class="absolute left-0 z-10 p-3 mt-2 w-80 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
+                                            >
+                                                承認時に実行されるGitHub Actionsのワークフローを選択してください。
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <select
+                                        id="github_workflow_id"
+                                        v-model="form.github_workflow_id"
+                                        class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        :disabled="loadingWorkflows || workflows.length === 0"
+                                    >
+                                        <option value="">後で設定する</option>
+                                        <option v-for="workflow in workflows" :key="workflow.id" :value="String(workflow.id)">
+                                            {{ workflow.name }} ({{ workflow.path }})
+                                        </option>
+                                    </select>
+                                    <p v-if="!loadingWorkflows && workflows.length === 0" class="mt-1 text-sm text-yellow-600">
+                                        ワークフローが見つかりませんでした。GitHub側でワークフローを作成してください。
+                                    </p>
+                                    <InputError class="mt-2" :message="form.errors.github_workflow_id" />
                                 </div>
 
                                 <div v-if="selectedRepository">
@@ -164,7 +188,6 @@
                                             list="branch-list"
                                             class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                             placeholder="main"
-                                            required
                                         />
                                         <!-- ブランチ候補のdatalist（APIから取得できた場合のみ表示） -->
                                         <datalist id="branch-list">
@@ -185,12 +208,35 @@
                                         v-model="form.github_branch"
                                         type="text"
                                         class="block mt-1 w-full"
-                                        required
                                     />
                                     <p class="mt-1 text-sm text-gray-500">
                                         本番環境にアップするブランチ名（通常は main）
                                     </p>
                                     <InputError class="mt-2" :message="form.errors.github_branch" />
+                                </div>
+
+                                <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                    <div v-if="form.ssh_configured" class="inline-flex items-center gap-2 px-3 py-2 text-sm text-emerald-700 bg-emerald-100 rounded-full">
+                                        <svg class="w-4 h-4 text-emerald-700" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                                            <circle cx="8" cy="8" r="7" />
+                                            <path d="M5 8.2l1.9 1.9L11 6" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                        SSH設定済み
+                                    </div>
+                                    <label v-else for="edit_ssh_configured" class="flex gap-3 items-start cursor-pointer">
+                                        <input
+                                            id="edit_ssh_configured"
+                                            v-model="form.ssh_configured"
+                                            type="checkbox"
+                                            class="mt-1 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                        <span class="text-sm text-gray-700">
+                                            SSH設定済み（GitHub Secretsに登録済み）
+                                            <span class="block text-xs text-gray-500">
+                                                SSH_HOST / SSH_USER / SSH_PRIVATE_KEY などを登録してからチェックしてください。
+                                            </span>
+                                        </span>
+                                    </label>
                                 </div>
 
                                 <div class="flex justify-end items-center gap-4">
@@ -239,15 +285,18 @@ const form = useForm({
     github_owner: props.project.github_owner || '',
     github_repo: props.project.github_repo || '',
     github_workflow_id: props.project.github_workflow_id || '',
-    github_branch: props.project.github_branch || 'main',
+    github_branch: props.project.github_branch || '',
+    ssh_configured: props.project.ssh_configured || false,
 });
 
 const organizations = ref([]);
 const repositories = ref([]);
+const workflows = ref([]);
 const branches = ref([]);
 const selectedOrganization = ref(props.project.github_owner || '');
 const selectedRepository = ref(null);
 const activeTooltip = ref(null);
+const loadingWorkflows = ref(false);
 
 onMounted(async () => {
     // 組織一覧を取得
@@ -310,15 +359,19 @@ const onOrganizationChange = async () => {
     if (!selectedOrganization.value) {
         selectedRepository.value = null;
         repositories.value = [];
+        workflows.value = [];
         form.github_owner = '';
         form.github_repo = '';
+        form.github_workflow_id = '';
         return;
     }
 
     selectedRepository.value = null;
     repositories.value = [];
+    workflows.value = [];
     form.github_owner = '';
     form.github_repo = '';
+    form.github_workflow_id = '';
 
     await loadRepositories();
 };
@@ -342,22 +395,44 @@ const onRepositoryChange = async () => {
     if (!selectedRepository.value) {
         form.github_owner = '';
         form.github_repo = '';
+        form.github_workflow_id = '';
+        workflows.value = [];
         branches.value = [];
         return;
     }
 
+    const previousRepo = form.github_repo;
     form.github_owner = selectedRepository.value.owner.login;
     form.github_repo = selectedRepository.value.name;
+    const repoChanged = previousRepo !== form.github_repo;
+    if (repoChanged) {
+        form.github_workflow_id = '';
+    }
     
-    // ブランチを取得
+    // ワークフローとブランチを取得
+    workflows.value = [];
     branches.value = [];
     try {
-        const branchesResponse = await axios.get(route('api.github.branches'), {
-            params: {
-                owner: form.github_owner,
-                repo: form.github_repo
-            }
-        });
+        loadingWorkflows.value = true;
+        const [workflowsResponse, branchesResponse] = await Promise.all([
+            axios.get(route('api.github.workflows'), {
+                params: {
+                    owner: form.github_owner,
+                    repo: form.github_repo
+                }
+            }),
+            axios.get(route('api.github.branches'), {
+                params: {
+                    owner: form.github_owner,
+                    repo: form.github_repo
+                }
+            }),
+        ]);
+        
+        workflows.value = workflowsResponse.data.workflows || [];
+        if (repoChanged && !form.github_workflow_id && workflows.value.length > 0) {
+            form.github_workflow_id = String(workflows.value[0].id);
+        }
         
         // ブランチを取得（すべてのブランチがソートされて返される）
         branches.value = branchesResponse.data.branches || [];
@@ -380,8 +455,11 @@ const onRepositoryChange = async () => {
             }
         }
     } catch (error) {
-        console.error('Failed to fetch branches:', error);
+        console.error('Failed to fetch repository details:', error);
         branches.value = [];
+        workflows.value = [];
+    } finally {
+        loadingWorkflows.value = false;
     }
 };
 
@@ -389,4 +467,3 @@ const submit = () => {
     form.patch(route('projects.update', props.project.id));
 };
 </script>
-

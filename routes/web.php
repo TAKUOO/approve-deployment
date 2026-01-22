@@ -24,10 +24,6 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/docs', function () {
-    return Inertia::render('Documentation');
-})->name('docs');
-
 Route::get('/terms', function () {
     return Inertia::render('Terms');
 })->name('terms');
@@ -45,12 +41,6 @@ Route::get('/sitemap.xml', function () {
         <lastmod>' . date('Y-m-d') . '</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
-    </url>
-    <url>
-        <loc>' . $appUrl . '/docs</loc>
-        <lastmod>' . date('Y-m-d') . '</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.8</priority>
     </url>
     <url>
         <loc>' . $appUrl . '/terms</loc>
