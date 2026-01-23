@@ -74,10 +74,11 @@ class ProjectController extends Controller
         $project = $deployLog->project;
         $user = $project->user;
 
-        if (!$user->github_token) {
-            \Illuminate\Support\Facades\Log::warning('No GitHub token for user', [
+        if (!$user->github_token || !$project->github_workflow_id) {
+            \Illuminate\Support\Facades\Log::warning('No GitHub token or workflow ID', [
                 'deploy_log_id' => $deployLog->id,
                 'user_id' => $user->id,
+                'has_workflow_id' => !empty($project->github_workflow_id),
             ]);
             return;
         }
@@ -252,12 +253,11 @@ class ProjectController extends Controller
     {
         $validated = $request->validate([
             'name' => 'nullable|string|max:255',
-            'staging_url' => 'required|url',
-            'production_url' => 'required|url',
+            'staging_url' => 'nullable|url',
             'server_dir' => 'nullable|string|max:255',
             'slack_webhook_url' => 'nullable|url|max:500',
-            'github_owner' => 'nullable|string',
-            'github_repo' => 'nullable|string',
+            'github_owner' => 'required|string',
+            'github_repo' => 'required|string',
             'github_workflow_id' => 'nullable|string',
             'github_branch' => 'nullable|string',
             'ssh_configured' => 'nullable|boolean',
@@ -265,6 +265,11 @@ class ProjectController extends Controller
         
         if (isset($validated['github_branch'])) {
             $validated['github_branch'] = trim($validated['github_branch']);
+        }
+
+        // github_workflow_idが空文字列の場合はnullに変換
+        if (isset($validated['github_workflow_id']) && $validated['github_workflow_id'] === '') {
+            $validated['github_workflow_id'] = null;
         }
 
         // プロジェクト名が未指定の場合は、レポジトリ名を使用
@@ -314,8 +319,7 @@ class ProjectController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'nullable|string|max:255',
-                'staging_url' => 'required|url',
-                'production_url' => 'required|url',
+                'staging_url' => 'nullable|url',
                 'server_dir' => 'nullable|string|max:255',
                 'slack_webhook_url' => 'nullable|url|max:500',
                 'github_owner' => 'nullable|string',
@@ -330,6 +334,11 @@ class ProjectController extends Controller
                 $validated['github_branch'] = trim($validated['github_branch']);
             }
 
+            // github_workflow_idが空文字列の場合はnullに変換
+            if (isset($validated['github_workflow_id']) && $validated['github_workflow_id'] === '') {
+                $validated['github_workflow_id'] = null;
+            }
+
             // プロジェクト名が未指定の場合は、レポジトリ名を使用
             if (!empty($validated['name'])) {
                 $name = $validated['name'];
@@ -339,16 +348,41 @@ class ProjectController extends Controller
                 $name = $project->name;
             }
 
-            $project->update([
-                ...$validated,
+            $updateData = [
                 'name' => $name,
-                'github_branch' => $validated['github_branch'] ?? '',
-                'ssh_configured' => $validated['ssh_configured'] ?? false,
-            ]);
+            ];
+
+            // 送信されたフィールドのみを更新
+            if (isset($validated['staging_url'])) {
+                $updateData['staging_url'] = $validated['staging_url'];
+            }
+            if (isset($validated['server_dir'])) {
+                $updateData['server_dir'] = $validated['server_dir'];
+            }
+            if (isset($validated['slack_webhook_url'])) {
+                $updateData['slack_webhook_url'] = $validated['slack_webhook_url'];
+            }
+            if (isset($validated['github_owner'])) {
+                $updateData['github_owner'] = $validated['github_owner'];
+            }
+            if (isset($validated['github_repo'])) {
+                $updateData['github_repo'] = $validated['github_repo'];
+            }
+            if (isset($validated['github_workflow_id'])) {
+                $updateData['github_workflow_id'] = $validated['github_workflow_id'];
+            }
+            if (isset($validated['github_branch'])) {
+                $updateData['github_branch'] = trim($validated['github_branch']);
+            }
+            if (isset($validated['ssh_configured'])) {
+                $updateData['ssh_configured'] = $validated['ssh_configured'];
+            }
+
+            $project->update($updateData);
 
             Log::info('Project updated', [
                 'project_id' => $project->id,
-                'github_branch' => $validated['github_branch'],
+                'updated_fields' => array_keys($updateData),
             ]);
 
             return redirect()->route('projects.index');

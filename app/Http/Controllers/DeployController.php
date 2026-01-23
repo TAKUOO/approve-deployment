@@ -33,11 +33,7 @@ class DeployController extends Controller
                 'deploy_log_id' => (string) $deployLog->id,
             ];
 
-            // server_dirが設定されている場合は追加（末尾にスラッシュを追加）
-            if ($project->server_dir) {
-                $serverDir = rtrim($project->server_dir, '/') . '/';
-                $inputs['server_dir'] = $serverDir;
-            }
+            // server_dirはGitHubシークレット（SERVER_DIR）から取得するため、inputsには含めない
 
             $response = Http::withToken($token)
                 ->post("https://api.github.com/repos/{$project->github_owner}/{$project->github_repo}/actions/workflows/{$project->github_workflow_id}/dispatches", [

@@ -19,6 +19,7 @@ const user = usePage().props.auth.user;
 const form = useForm({
     name: user.name,
     email: user.email,
+    slack_webhook_url: user.slack_webhook_url || '',
 });
 </script>
 
@@ -67,6 +68,25 @@ const form = useForm({
                 />
 
                 <InputError class="mt-2" :message="form.errors.email" />
+            </div>
+
+            <div>
+                <InputLabel for="slack_webhook_url" value="Slack Webhook URL（任意）" />
+
+                <TextInput
+                    id="slack_webhook_url"
+                    type="url"
+                    class="block mt-1 w-full"
+                    v-model="form.slack_webhook_url"
+                    autocomplete="off"
+                    placeholder="https://hooks.slack.com/services/..."
+                />
+
+                <p class="mt-1 text-xs text-gray-500">
+                    デプロイ完了時にSlackに通知を送信するWebhook URLを設定できます。未設定の場合は、環境変数のSLACK_WEBHOOK_URLが使用されます。
+                </p>
+
+                <InputError class="mt-2" :message="form.errors.slack_webhook_url" />
             </div>
 
             <div v-if="mustVerifyEmail && user.email_verified_at === null">

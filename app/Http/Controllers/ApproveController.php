@@ -41,7 +41,6 @@ class ApproveController extends Controller
                 'id' => $project->id,
                 'name' => $project->name,
                 'staging_url' => $project->staging_url,
-                'production_url' => $project->production_url,
             ],
             'token' => $token,
             'approvalMessage' => $approvalMessage,
@@ -186,7 +185,6 @@ class ApproveController extends Controller
             'project' => [
                 'id' => $project->id,
                 'name' => $project->name,
-                'production_url' => $project->production_url,
             ],
             'token' => $token,
             'deployLog' => $deployLog,

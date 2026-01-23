@@ -10,15 +10,15 @@ class SlackNotifier
 {
     public function notifyDeployStatus(DeployLog $deployLog, string $status): void
     {
-        // プロジェクトのslack_webhook_urlを優先的に使用
-        $deployLog->loadMissing('project');
+        $deployLog->loadMissing('project.user');
         $project = $deployLog->project;
         if (!$project) {
             return;
         }
 
-        // プロジェクトに設定されている場合はそれを使用、なければグローバル設定を使用
+        // 優先順位: プロジェクト設定 > ユーザー設定 > グローバル設定
         $webhookUrl = $project->slack_webhook_url 
+            ?: ($project->user->slack_webhook_url ?? null)
             ?: config('services.slack.webhook_url');
         
         if (!$webhookUrl) {
@@ -47,11 +47,6 @@ class SlackNotifier
                             'title' => 'ステータス',
                             'value' => $status === 'success' ? '成功' : '失敗',
                             'short' => true,
-                        ],
-                        [
-                            'title' => '本番URL',
-                            'value' => $project->production_url,
-                            'short' => false,
                         ],
                         [
                             'title' => 'Deploy Log ID',

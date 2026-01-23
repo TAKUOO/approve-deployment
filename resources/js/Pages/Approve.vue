@@ -105,6 +105,8 @@ marked.use({
     },
 });
 
+const isHtmlMessage = (message) => /<\/?[a-z][\s\S]*>/i.test(message);
+
 // メッセージをフォーマット（改善ページURLを自動リンク化 + GitHub風マークダウン）
 const formattedMessage = computed(() => {
     if (!props.approvalMessage || !props.approvalMessage.message) {
@@ -113,6 +115,12 @@ const formattedMessage = computed(() => {
 
     let message = props.approvalMessage.message;
     const stagingUrl = props.project.staging_url.replace(/\/$/, ''); // 末尾のスラッシュを削除
+
+    if (isHtmlMessage(message)) {
+        return DOMPurify.sanitize(message, {
+            ADD_ATTR: ['target', 'rel'],
+        });
+    }
 
     // 改善ページURLのパターンを検出してリンク化
     // 例: "/about" や "改善ページ: /about, /products/item-1"
@@ -270,4 +278,3 @@ const submit = () => {
     margin: 0 0.125rem;
 }
 </style>
-

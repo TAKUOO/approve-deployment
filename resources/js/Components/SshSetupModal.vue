@@ -30,6 +30,7 @@
                         <li><code class="px-2 py-0.5 bg-white rounded border">SSH_USER</code> SSHユーザー名</li>
                         <li><code class="px-2 py-0.5 bg-white rounded border">SSH_PORT</code> ポート番号（省略可、通常22）</li>
                         <li><code class="px-2 py-0.5 bg-white rounded border">SSH_PRIVATE_KEY</code> 秘密鍵の内容</li>
+                        <li><code class="px-2 py-0.5 bg-white rounded border">SERVER_DIR</code> デプロイ先ディレクトリパス（省略可、デフォルト: /public_html/）</li>
                     </ul>
                 </div>
 

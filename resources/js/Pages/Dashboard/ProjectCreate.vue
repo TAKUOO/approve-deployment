@@ -28,110 +28,12 @@
                         
                         <form @submit.prevent="submit">
                             <div class="space-y-6">
-                                <div>
-                                    <div class="flex gap-2 items-center">
-                                        <InputLabel for="staging_url" value="ステージングURL" />
-                                        <div class="relative">
-                                            <button
-                                                type="button"
-                                                @click.stop="toggleTooltip('staging_url', $event)"
-                                                class="text-gray-400 transition-colors hover:text-gray-600"
-                                            >
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                            </button>
-                                            <div
-                                                v-if="activeTooltip === 'staging_url'"
-                                                class="absolute left-0 z-10 p-3 mt-2 w-64 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
-                                            >
-                                                クライアントが確認するテスト環境（ステージング環境）のURLを入力してください。例: https://staging.example.com または https://test.example.com
-                                            </div>
-                                        </div>
-                                </div>
-                                    <TextInput
-                                        id="staging_url"
-                                        v-model="form.staging_url"
-                                        type="url"
-                                        class="block mt-1 w-full"
-                                        placeholder="https://staging.example.com"
-                                        required
-                                    />
-                                    <InputError class="mt-2" :message="form.errors.staging_url" />
-                                    
-                                    <button
-                                        type="button"
-                                        @click="showSecurityModal = true"
-                                        class="mt-2 text-sm text-yellow-600 underline hover:text-yellow-800"
-                                    >
-                                        重要な推奨事項
-                                    </button>
-                                </div>
+
+
 
                                 <div>
                                     <div class="flex gap-2 items-center">
-                                        <InputLabel for="production_url" value="本番URL" />
-                                        <div class="relative">
-                                            <button
-                                                type="button"
-                                                @click.stop="toggleTooltip('production_url', $event)"
-                                                class="text-gray-400 transition-colors hover:text-gray-600"
-                                            >
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                            </button>
-                                            <div
-                                                v-if="activeTooltip === 'production_url'"
-                                                class="absolute left-0 z-10 p-3 mt-2 w-64 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
-                                            >
-                                                実際に公開されている本番環境のURLを入力してください。承認後にこのURLにデプロイされます。例: https://example.com
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <TextInput
-                                        id="production_url"
-                                        v-model="form.production_url"
-                                        type="url"
-                                        class="block mt-1 w-full"
-                                        placeholder="https://example.com"
-                                        required
-                                    />
-                                    <InputError class="mt-2" :message="form.errors.production_url" />
-                                </div>
-
-                                <div>
-                                    <InputLabel for="server_dir" value="デプロイ先パス" />
-                                    <div class="relative">
-                                        <button
-                                            type="button"
-                                            @click.stop="toggleTooltip('server_dir', $event)"
-                                            class="text-gray-400 transition-colors hover:text-gray-600"
-                                        >
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                        </button>
-                                        <div
-                                            v-if="activeTooltip === 'server_dir'"
-                                            class="absolute left-0 z-10 p-3 mt-2 w-64 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
-                                        >
-                                            FTPサーバー上のデプロイ先ディレクトリパスを入力してください。例: /public_html/ または /home/example.com/public_html/wp-content/themes/mytheme/
-                                        </div>
-                                    </div>
-                                    <TextInput
-                                        id="server_dir"
-                                        v-model="form.server_dir"
-                                        type="text"
-                                        class="block mt-1 w-full"
-                                        placeholder="/public_html/"
-                                    />
-                                    <InputError class="mt-2" :message="form.errors.server_dir" />
-                                </div>
-
-                                <div>
-                                    <div class="flex gap-2 items-center">
-                                        <InputLabel for="organization" value="GitHub 組織（後で設定可）" />
+                                        <InputLabel for="organization" value="GitHub 組織" />
                                         <div class="relative">
                                             <button
                                                 type="button"
@@ -155,8 +57,9 @@
                                         v-model="selectedOrganization"
                                         @change="onOrganizationChange"
                                         class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        required
                                     >
-                                        <option value="">後で設定する</option>
+                                        <option value="" disabled>組織を選択してください</option>
                                         <option value="personal">個人リポジトリ</option>
                                         <option v-for="org in organizations" :key="org.id" :value="org.login">
                                             {{ org.login }}
@@ -165,13 +68,10 @@
                                     <p v-if="organizations.length === 0" class="mt-1 text-sm text-yellow-600">
                                         ※ 組織が見つかりませんでした。組織に所属している場合、GitHubでアプリの権限を確認してください。
                                     </p>
-                                    <p class="mt-1 text-xs text-gray-500">
-                                        未設定でも登録できます。あとでプロジェクト一覧から設定してください。
-                                    </p>
                                     <InputError class="mt-2" :message="form.errors.github_owner" />
                                 </div>
 
-                                <div v-if="selectedOrganization">
+                                <div>
                                     <div class="flex gap-2 items-center">
                                         <InputLabel for="repository" value="GitHub リポジトリ" />
                                         <div class="relative">
@@ -197,10 +97,11 @@
                                         v-model="selectedRepository"
                                         @change="onRepositoryChange"
                                         class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                        :disabled="repositories.length === 0"
+                                        :disabled="!selectedOrganization || repositories.length === 0"
+                                        required
                                     >
                                         <option :value="null" disabled>
-                                            {{ repositories.length === 0 ? 'リポジトリを読み込み中...' : 'リポジトリを選択してください' }}
+                                            {{ !selectedOrganization ? 'まず組織を選択してください' : repositories.length === 0 ? 'リポジトリを読み込み中...' : 'リポジトリを選択してください' }}
                                         </option>
                                         <option v-for="repo in repositories" :key="repo.id" :value="repo">
                                             {{ repo.full_name }}
@@ -231,99 +132,9 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- ワークフローが見つからない場合のガイダンス -->
-                                    <div v-if="!loadingWorkflows && workflows.length === 0" class="p-6 mt-1 bg-blue-50 rounded-lg border border-blue-200">
-                                        <div class="flex items-start">
-                                            <div class="flex-shrink-0">
-                                                <svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                            </div>
-                                            <div class="flex-1 ml-3">
-                                                <h3 class="mb-2 text-lg font-semibold text-blue-900">
-                                                    GitHub Actionsワークフローが見つかりません
-                                                </h3>
-                                                <p class="mb-4 text-blue-800">
-                                                    このリポジトリにはまだワークフローが設定されていません。以下の手順でワークフローを作成してください。
-                                                </p>
-                                                
-                                                <!-- セットアップ手順 -->
-                                                <div class="mb-6 space-y-4">
-                                                    <div class="p-4 bg-white rounded-lg border border-blue-100">
-                                                        <h4 class="mb-3 font-semibold text-blue-900">セットアップ手順</h4>
-                                                        <ol class="space-y-2 text-sm list-decimal list-inside text-blue-800">
-                                                            <li>GitHubリポジトリで、<code class="px-1.5 py-0.5 font-mono text-xs bg-blue-100 rounded">.github/workflows</code> ディレクトリを作成</li>
-                                                            <li>下記のテンプレートから適切なものを選択してコピー</li>
-                                                            <li><code class="px-1.5 py-0.5 font-mono text-xs bg-blue-100 rounded">deploy.yml</code> という名前でファイルを作成して貼り付け</li>
-                                                            <li>GitHubにコミット&プッシュ</li>
-                                                            <li>このページをリロードしてワークフローを選択</li>
-                                                        </ol>
-                                                    </div>
-                                                    
-                                                    <!-- テンプレート選択タブ -->
-                                                    <div>
-                                                        <div class="flex mb-3 space-x-2 border-b border-blue-200">
-                                                            <button
-                                                                v-for="template in workflowTemplates"
-                                                                :key="template.id"
-                                                                @click="selectedTemplate = template.id"
-                                                                :class="[
-                                                                    'px-4 py-2 text-sm font-medium border-b-2 transition',
-                                                                    selectedTemplate === template.id
-                                                                        ? 'border-blue-500 text-blue-600'
-                                                                        : 'border-transparent text-blue-400 hover:text-blue-600'
-                                                                ]"
-                                                            >
-                                                                {{ template.name }}
-                                                            </button>
-                                                        </div>
-                                                        
-                                                        <!-- 選択されたテンプレートの表示 -->
-                                                        <div class="relative p-4 bg-gray-900 rounded-lg">
-                                                            <button
-                                                                @click="copyTemplate"
-                                                                class="absolute top-2 right-2 px-3 py-1 text-xs font-medium text-white bg-indigo-600 rounded transition hover:bg-indigo-700"
-                                                            >
-                                                                {{ copied ? 'コピーしました！' : 'コピー' }}
-                                                            </button>
-                                                            <pre class="overflow-x-auto text-xs text-gray-100"><code>{{ getCurrentTemplate() }}</code></pre>
-                                                        </div>
-                                                        <p class="mt-2 text-xs text-blue-700">
-                                                            {{ getCurrentTemplateDescription() }}
-                                                        </p>
-                                                        
-                                                        <!-- GitHub Secrets設定例 -->
-                                                        <div class="p-4 mt-4 bg-gray-50 rounded-lg border border-gray-200">
-                                                            <h5 class="mb-2 text-sm font-semibold text-gray-900">必要なGitHub Secrets設定</h5>
-                                                            <p class="mb-3 text-xs text-gray-600">
-                                                                GitHubリポジトリの <strong>Settings → Secrets and variables → Actions</strong> で以下を設定してください：
-                                                            </p>
-                                                            <div class="space-y-2 text-xs">
-                                                                <div v-for="secret in getCurrentTemplateSecrets()" :key="secret.name" class="flex items-start">
-                                                                    <code class="px-2 py-1 font-mono bg-white border border-gray-300 rounded min-w-[140px]">{{ secret.name }}</code>
-                                                                    <span class="ml-2 text-gray-700">{{ secret.description }}</span>
-                                                                </div>
-                                                            </div>
-                                                            <div class="p-3 mt-3 bg-blue-50 rounded border border-blue-200">
-                                                                <p class="mb-1 text-xs font-semibold text-blue-900">設定例：</p>
-                                                                <pre class="text-xs text-blue-800 whitespace-pre-wrap">{{ getCurrentTemplateSecretsExample() }}</pre>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                                                    <p class="text-sm text-yellow-800">
-                                                        <strong>注意:</strong> Secretsは一度しか表示されません。コピーして安全に保管してください。また、Secret名は大文字・小文字を区別します。
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
                                     <!-- ワークフローが見つかった場合の選択 -->
                                     <select
-                                        v-else
+                                        v-if="!loadingWorkflows && workflows.length > 0"
                                         id="github_workflow_id"
                                         v-model="form.github_workflow_id"
                                         class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -333,16 +144,25 @@
                                             {{ workflow.name }} ({{ workflow.path }})
                                         </option>
                                     </select>
+                                    <div v-else-if="!loadingWorkflows && workflows.length === 0" class="mt-1 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                        <p class="text-sm text-gray-600">
+                                            ワークフローが見つかりませんでした。後で設定できます。
+                                            <Link :href="route('settings.index')" target="_blank" class="font-medium text-indigo-600 underline hover:text-indigo-800">
+                                                設定マニュアル
+                                            </Link>
+                                            から設定方法を確認できます。
+                                        </p>
+                                    </div>
+                                    <div v-else class="mt-1 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                        <p class="text-sm text-gray-600">ワークフローを読み込み中...</p>
+                                    </div>
                                     <InputError class="mt-2" :message="form.errors.github_workflow_id" />
                                     <p class="mt-2 text-sm text-gray-500">
                                         SSH接続の設定が必要です。
-                                        <button
-                                            type="button"
-                                            @click="showSshModal = true"
-                                            class="font-medium text-indigo-600 underline transition hover:text-indigo-800"
-                                        >
-                                            詳しく見る
-                                        </button>
+                                        <Link :href="route('settings.index')" target="_blank" class="font-medium text-indigo-600 underline transition hover:text-indigo-800">
+                                            設定マニュアル
+                                        </Link>
+                                        から設定方法を確認できます。
                                     </p>
                                 </div>
 
@@ -387,57 +207,6 @@
                                         </p>
                                     </div>
                                     <InputError class="mt-2" :message="form.errors.github_branch" />
-                                </div>
-
-                                <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                    <label for="ssh_configured" class="flex gap-3 items-start cursor-pointer">
-                                        <input
-                                            id="ssh_configured"
-                                            v-model="form.ssh_configured"
-                                            type="checkbox"
-                                            class="mt-1 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
-                                        />
-                                        <span class="text-sm text-gray-700">
-                                            SSH設定済み（GitHub Secretsに登録済み）
-                                            <span class="block text-xs text-gray-500">
-                                                SSH_HOST / SSH_USER / SSH_PRIVATE_KEY などを登録してからチェックしてください。
-                                            </span>
-                                        </span>
-                                    </label>
-                                </div>
-
-                                <div>
-                                    <div class="flex gap-2 items-center">
-                                        <InputLabel for="slack_webhook_url" value="Slack Webhook URL（任意）" />
-                                        <div class="relative">
-                                            <button
-                                                type="button"
-                                                @click.stop="toggleTooltip('slack_webhook_url', $event)"
-                                                class="text-gray-400 transition-colors hover:text-gray-600"
-                                            >
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                            </button>
-                                            <div
-                                                v-if="activeTooltip === 'slack_webhook_url'"
-                                                class="absolute left-0 z-10 p-3 mt-2 w-80 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
-                                            >
-                                                デプロイ完了時にSlackに通知を送信するWebhook URLを設定できます。SlackのIncoming Webhookから取得できます。未設定の場合は、グローバル設定（.envのSLACK_WEBHOOK_URL）が使用されます。
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <TextInput
-                                        id="slack_webhook_url"
-                                        v-model="form.slack_webhook_url"
-                                        type="url"
-                                        class="block mt-1 w-full"
-                                        placeholder="https://hooks.slack.com/services/xxx/yyy/zzz"
-                                    />
-                                    <p class="mt-1 text-xs text-gray-500">
-                                        未設定の場合は、グローバル設定（.envのSLACK_WEBHOOK_URL）が使用されます。
-                                    </p>
-                                    <InputError class="mt-2" :message="form.errors.slack_webhook_url" />
                                 </div>
 
                                 <div class="flex justify-end items-center">
@@ -526,10 +295,7 @@ const props = defineProps({
 
 const form = useForm({
     name: '',
-    staging_url: '',
-    production_url: '',
     server_dir: '/public_html/',
-    slack_webhook_url: '',
     github_owner: '',
     github_repo: '',
     github_workflow_id: '',
@@ -574,7 +340,8 @@ const workflowTemplates = [
             { name: 'SSH_HOST', description: 'SSHサーバーのアドレス（例: example.com または 123.45.67.89）' },
             { name: 'SSH_USER', description: 'SSHユーザー名（例: root または ubuntu）' },
             { name: 'SSH_PORT', description: 'SSHポート番号（オプション、デフォルト: 22）' },
-            { name: 'SSH_PRIVATE_KEY', description: 'SSH秘密鍵（-----BEGIN RSA PRIVATE KEY----- から始まる内容全体）' }
+            { name: 'SSH_PRIVATE_KEY', description: 'SSH秘密鍵（-----BEGIN RSA PRIVATE KEY----- から始まる内容全体）' },
+            { name: 'SERVER_DIR', description: 'デプロイ先ディレクトリパス（オプション、デフォルト: /public_html/）' }
         ],
         secretsExample: `SSH_HOST: example.com
 SSH_USER: root
@@ -584,6 +351,7 @@ SSH_PRIVATE_KEY: |
   MIIEpAIBAAKCAQEA...
   (秘密鍵の内容をそのまま貼り付け)
   -----END RSA PRIVATE KEY-----
+SERVER_DIR: /public_html/
 
 ※ SSH秘密鍵は以下のコマンドで確認できます:
   cat ~/.ssh/id_rsa
@@ -591,7 +359,7 @@ SSH_PRIVATE_KEY: |
 ※ 公開鍵（id_rsa.pub）をサーバー側の
   ~/.ssh/authorized_keys に追加してください
 
-※ SSH_PORTは省略可能です（デフォルト: 22）`,
+※ SSH_PORTとSERVER_DIRは省略可能です（デフォルト: SSH_PORT=22, SERVER_DIR=/public_html/）`,
         content: `name: Deploy to Production
 
 on:
@@ -603,10 +371,6 @@ on:
       deploy_log_id:
         description: 'Deploy Log ID'
         required: false
-      server_dir:
-        description: 'Server directory path'
-        required: false
-        default: '/public_html/'
 
 jobs:
   deploy:
@@ -638,7 +402,7 @@ jobs:
             --exclude='.env.*' \\
             ./ \\
             -e "ssh -p \${{ secrets.SSH_PORT || 22 }}" \\
-            \${{ secrets.SSH_USER }}@\${{ secrets.SSH_HOST }}:\${{ inputs.server_dir || '/public_html/' }}
+            \${{ secrets.SSH_USER }}@\${{ secrets.SSH_HOST }}:\${{ secrets.SERVER_DIR || '/public_html/' }}
 `
     },
     {
@@ -649,7 +413,8 @@ jobs:
             { name: 'SSH_HOST', description: 'SSHサーバーのアドレス（例: example.com または 123.45.67.89）' },
             { name: 'SSH_USER', description: 'SSHユーザー名（例: root または ubuntu）' },
             { name: 'SSH_PORT', description: 'SSHポート番号（オプション、デフォルト: 22）' },
-            { name: 'SSH_PRIVATE_KEY', description: 'SSH秘密鍵（-----BEGIN RSA PRIVATE KEY----- から始まる内容全体）' }
+            { name: 'SSH_PRIVATE_KEY', description: 'SSH秘密鍵（-----BEGIN RSA PRIVATE KEY----- から始まる内容全体）' },
+            { name: 'SERVER_DIR', description: 'デプロイ先ディレクトリパス（オプション、デフォルト: /public_html/）' }
         ],
         secretsExample: `SSH_HOST: example.com
 SSH_USER: root
@@ -659,6 +424,7 @@ SSH_PRIVATE_KEY: |
   MIIEpAIBAAKCAQEA...
   (秘密鍵の内容をそのまま貼り付け)
   -----END RSA PRIVATE KEY-----
+SERVER_DIR: /public_html/
 
 ※ SSH秘密鍵は以下のコマンドで確認できます:
   cat ~/.ssh/id_rsa
@@ -666,7 +432,7 @@ SSH_PRIVATE_KEY: |
 ※ 公開鍵（id_rsa.pub）をサーバー側の
   ~/.ssh/authorized_keys に追加してください
 
-※ SSH_PORTは省略可能です（デフォルト: 22）`,
+※ SSH_PORTとSERVER_DIRは省略可能です（デフォルト: SSH_PORT=22, SERVER_DIR=/public_html/）`,
         content: `name: Deploy to Production
 
 on:
@@ -678,10 +444,6 @@ on:
       deploy_log_id:
         description: 'Deploy Log ID'
         required: false
-      server_dir:
-        description: 'Server directory path'
-        required: false
-        default: '/public_html/'
 
 jobs:
   deploy:
@@ -713,7 +475,7 @@ jobs:
             --exclude='.env.*' \\
             ./ \\
             -e "ssh -p \${{ secrets.SSH_PORT || 22 }}" \\
-            \${{ secrets.SSH_USER }}@\${{ secrets.SSH_HOST }}:\${{ inputs.server_dir || '/public_html/' }}
+            \${{ secrets.SSH_USER }}@\${{ secrets.SSH_HOST }}:\${{ secrets.SERVER_DIR || '/public_html/' }}
 `
     },
     {
@@ -724,7 +486,8 @@ jobs:
             { name: 'SSH_HOST', description: 'SSHサーバーのアドレス（例: example.com または 123.45.67.89）' },
             { name: 'SSH_USER', description: 'SSHユーザー名（例: root または ubuntu）' },
             { name: 'SSH_PORT', description: 'SSHポート番号（オプション、デフォルト: 22）' },
-            { name: 'SSH_PRIVATE_KEY', description: 'SSH秘密鍵（-----BEGIN RSA PRIVATE KEY----- から始まる内容全体）' }
+            { name: 'SSH_PRIVATE_KEY', description: 'SSH秘密鍵（-----BEGIN RSA PRIVATE KEY----- から始まる内容全体）' },
+            { name: 'SERVER_DIR', description: 'デプロイ先ディレクトリパス（オプション、デフォルト: /public_html/）' }
         ],
         secretsExample: `SSH_HOST: example.com
 SSH_USER: root
@@ -734,6 +497,7 @@ SSH_PRIVATE_KEY: |
   MIIEpAIBAAKCAQEA...
   (秘密鍵の内容をそのまま貼り付け)
   -----END RSA PRIVATE KEY-----
+SERVER_DIR: /public_html/
 
 ※ SSH秘密鍵は以下のコマンドで確認できます:
   cat ~/.ssh/id_rsa
@@ -741,7 +505,7 @@ SSH_PRIVATE_KEY: |
 ※ 公開鍵（id_rsa.pub）をサーバー側の
   ~/.ssh/authorized_keys に追加してください
 
-※ SSH_PORTは省略可能です（デフォルト: 22）`,
+※ SSH_PORTとSERVER_DIRは省略可能です（デフォルト: SSH_PORT=22, SERVER_DIR=/public_html/）`,
         content: `name: Deploy to Production
 
 on:
@@ -753,10 +517,6 @@ on:
       deploy_log_id:
         description: 'Deploy Log ID'
         required: false
-      server_dir:
-        description: 'Server directory path'
-        required: false
-        default: '/public_html/'
 
 jobs:
   deploy:
@@ -788,7 +548,7 @@ jobs:
             --exclude='.env.*' \\
             ./ \\
             -e "ssh -p \${{ secrets.SSH_PORT || 22 }}" \\
-            \${{ secrets.SSH_USER }}@\${{ secrets.SSH_HOST }}:\${{ inputs.server_dir || '/public_html/' }}
+            \${{ secrets.SSH_USER }}@\${{ secrets.SSH_HOST }}:\${{ secrets.SERVER_DIR || '/public_html/' }}
 `
     },
     {
@@ -828,10 +588,6 @@ on:
       deploy_log_id:
         description: 'Deploy Log ID'
         required: false
-      server_dir:
-        description: 'Server directory path'
-        required: false
-        default: '/public_html/'
 
 jobs:
   deploy:
@@ -874,7 +630,7 @@ jobs:
             --exclude='.env.*' \\
             ./ \\
             -e "ssh -p \${{ secrets.SSH_PORT || 22 }}" \\
-            \${{ secrets.SSH_USER }}@\${{ secrets.SSH_HOST }}:\${{ inputs.server_dir || '/public_html/' }}
+            \${{ secrets.SSH_USER }}@\${{ secrets.SSH_HOST }}:\${{ secrets.SERVER_DIR || '/public_html/' }}
 `
     }
 ];
@@ -1068,6 +824,17 @@ const copyTemplate = async () => {
 };
 
 const submit = () => {
+    // GitHub組織とリポジトリの必須チェック
+    if (!selectedOrganization.value) {
+        alert('GitHub組織を選択してください。');
+        return;
+    }
+    
+    if (!selectedRepository.value) {
+        alert('GitHubリポジトリを選択してください。');
+        return;
+    }
+    
     form.post(route('projects.store'));
 };
 </script>

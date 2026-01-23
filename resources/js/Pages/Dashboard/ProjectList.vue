@@ -2,22 +2,27 @@
     <Head title="プロジェクト一覧 - AutoRelease" />
     
     <AuthenticatedLayout>
-        <div class="flex h-[calc(100vh-4rem)]">
+        <div class="flex h-screen">
             <!-- 左サイドバー（固定） -->
-            <div class="flex flex-col w-64 bg-white border-r border-gray-200">
-                <!-- サイドバーヘッダー -->
-                <div class="p-4">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-sm font-semibold text-gray-900">プロジェクト</h2>
-                    <Link :href="route('projects.create')">
-                            <button class="flex gap-1 items-center px-2 py-1 text-xs font-bold text-white bg-indigo-600 rounded-md border border-transparent transition duration-150 ease-in-out hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                                </svg>
-                                新規作成
-                            </button>
+            <div class="flex flex-col bg-white border-r border-gray-200 w-70">
+                <!-- ロゴ（上部） -->
+                <div class="px-4 py-6">
+                    <Link :href="route('projects.index')" class="flex items-center shrink-0">
+                        <ApplicationLogo />
                     </Link>
-                    </div>
+                </div>
+
+                <!-- サイドバーヘッダー -->
+                <div class="px-4 py-2">
+                    <button 
+                        @click="openCreateModal"
+                        class="flex gap-1 justify-center items-center px-4 py-3 w-full text-sm font-bold text-indigo-600 rounded-3xl border border-indigo-100 border-solid transition duration-150 ease-in-out hover:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400"
+                    >
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        プロジェクトの新規追加
+                    </button>
                 </div>
 
                 <!-- プロジェクトリスト（スクロール可能） -->
@@ -31,10 +36,10 @@
                                 :key="project.id"
                             @click="selectProject(project.id)"
                             :class="[
-                                'px-3 py-2 rounded-md cursor-pointer transition-colors mb-1',
+                                'px-4 py-2 rounded-xl cursor-pointer transition-colors mb-1',
                                 selectedProjectId === project.id 
-                                    ? 'bg-indigo-50 text-gray-900 font-medium' 
-                                    : 'text-gray-700 hover:bg-gray-50'
+                                    ? 'bg-indigo-50 text-gray-800 font-bold' 
+                                    : 'text-gray-600 hover:bg-gray-50 font-semibold'
                             ]"
                         >
                             <div class="flex gap-2 justify-between items-center">
@@ -51,6 +56,49 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- ユーザー設定（下部固定） -->
+                <div class="flex flex-shrink-0 justify-between items-center border-t border-gray-200">
+                    <div class="relative w-full">
+                        <Dropdown align="right" width="48" :bottom="true">
+                            <template #trigger>
+                                <button
+                                        type="button"
+                                        class="flex justify-between items-center px-2 py-4 w-full text-sm font-semibold leading-4 text-gray-500 bg-white rounded-md border border-transparent transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
+                                    >
+                                        {{ $page.props.auth.user.name }}
+                                        <svg
+                                            class="w-4 h-4 -me-0.5 ms-2"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 20 20"
+                                            fill="currentColor"
+                                        >
+                                            <path
+                                                fill-rule="evenodd"
+                                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                clip-rule="evenodd"
+                                            />
+                                        </svg>
+                                    </button>
+                            </template>
+                            <template #content>
+                                <DropdownLink :href="route('profile.edit')">
+                                    プロフィール
+                                </DropdownLink>
+                                <DropdownLink :href="route('settings.index')">
+                                    設定マニュアル
+                                </DropdownLink>
+                                <DropdownLink
+                                    :href="route('logout')"
+                                    method="post"
+                                    as="button"
+                                >
+                                    ログアウト
+                                </DropdownLink>
+                            </template>
+                        </Dropdown>
+                    </div>
+                </div>
             </div>
 
             <!-- 右メインコンテンツエリア -->
@@ -58,7 +106,7 @@
                 <div v-if="currentProject" class="p-10 mx-auto max-w-6xl">
                     <div>
                         <div class="bg-white rounded-3xl">
-                        <div class="px-6 py-4 text-gray-900 border-b border-gray-200">
+                        <div class="px-6 py-4 text-gray-900">
                             <!-- プロジェクト名（タイトル）とアクションボタン -->
                             <div class="flex justify-between items-center mb-1">
                                 <div class="flex gap-2 items-center">
@@ -133,15 +181,22 @@
                             
                             <!-- その他の情報（横並び） -->
                             <div class="text-sm text-gray-900">
-                                <span class="font-medium text-gray-400">本番URL：</span>
-                                <a :href="currentProject.production_url" target="_blank" class="text-blue-600 hover:text-blue-800" :title="currentProject.production_url">
-                                    {{ currentProject.production_url }}
-                                </a>
-                                <span class="mx-2 text-gray-400">　</span>
-                                <span class="font-medium text-gray-400">テストURL：</span>
-                                <a :href="currentProject.staging_url" target="_blank" class="text-blue-600 hover:text-blue-800" :title="currentProject.staging_url">
+                                <span class="font-semibold text-gray-400">確認用URL：</span>
+                                <a 
+                                    v-if="currentProject.staging_url"
+                                    :href="currentProject.staging_url" 
+                                    target="_blank" 
+                                    class="text-blue-600 hover:text-blue-800" 
+                                    :title="currentProject.staging_url"
+                                >
                                     {{ currentProject.staging_url }}
                                 </a>
+                                <button
+                                    @click="openStagingUrlModal"
+                                    class="ml-1 font-medium text-gray-500"
+                                >
+                                    {{ currentProject.staging_url ? '(編集)' : '登録されていません' }}
+                                </button>
                             </div>
                         </div>
 
@@ -151,7 +206,7 @@
                             ref="approvalSection"
                             class="px-4 py-4"
                         >
-                            <div class="flex items-center mb-2">
+                            <!-- <div class="flex items-center mb-2">
                                 <h2 class="text-xl font-bold text-gray-600">改善内容</h2>
                                 <button
                                     @click="showGuide"
@@ -162,20 +217,35 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </button>
-                            </div>
+                            </div> -->
                             <div class="space-y-3">
-                                <div class="mb-6">
-                                    <MdEditor
-                                        v-model="approvalMessage"
-                                        :preview="true"
-                                        :toolbars="markdownToolbars"
-                                        language="ja-JP"
-                                        placeholder="例：&#10;- トップページのデザインを更新&#10;- 改善ページ: /about, /products/item-1&#10;- 変更点: ヘッダーの色を変更、ボタンの配置を調整"
-                                        class="markdown-editor"
-                                    />
-                                    <p class="mt-1 text-xs text-gray-500">
-                                        改善ページURLは「/about」のようにパスだけ入力してください。テスト環境URLと自動的に結合されます。
-                                    </p>
+                                <div class="mb-4">
+                                    <div class="tiptap-editor">
+                                        <div class="tiptap-toolbar">
+                                            <button type="button" @click="toggleHeading(1)" :class="{ 'is-active': editor?.isActive('heading', { level: 1 }) }">H1</button>
+                                            <button type="button" @click="toggleHeading(2)" :class="{ 'is-active': editor?.isActive('heading', { level: 2 }) }">H2</button>
+                                            <button type="button" @click="toggleHeading(3)" :class="{ 'is-active': editor?.isActive('heading', { level: 3 }) }">H3</button>
+                                            <span class="divider"></span>
+                                            <button type="button" @click="toggleBold" :class="{ 'is-active': editor?.isActive('bold') }"><strong>B</strong></button>
+                                            <button type="button" @click="toggleItalic" :class="{ 'is-active': editor?.isActive('italic') }"><em>I</em></button>
+                                            <button type="button" @click="toggleUnderline" :class="{ 'is-active': editor?.isActive('underline') }"><u>U</u></button>
+                                            <button type="button" @click="toggleStrike" :class="{ 'is-active': editor?.isActive('strike') }"><s>S</s></button>
+                                            <span class="divider"></span>
+                                            <button type="button" @click="toggleBulletList" :class="{ 'is-active': editor?.isActive('bulletList') }">•</button>
+                                            <button type="button" @click="toggleOrderedList" :class="{ 'is-active': editor?.isActive('orderedList') }">1.</button>
+                                            <button type="button" @click="toggleBlockquote" :class="{ 'is-active': editor?.isActive('blockquote') }">“”</button>
+                                            <button type="button" @click="toggleCodeBlock" :class="{ 'is-active': editor?.isActive('codeBlock') }">&lt;/&gt;</button>
+                                            <button type="button" @click="toggleCode" :class="{ 'is-active': editor?.isActive('code') }">`</button>
+                                            <button type="button" @click="setHorizontalRule">HR</button>
+                                            <span class="divider"></span>
+                                            <button type="button" @click="setLink" :class="{ 'is-active': editor?.isActive('link') }">Link</button>
+                                            <button type="button" @click="addImage">Image</button>
+                                            <span class="divider"></span>
+                                            <button type="button" @click="undo" :disabled="!editor?.can().undo()">↶</button>
+                                            <button type="button" @click="redo" :disabled="!editor?.can().redo()">↷</button>
+                                        </div>
+                                        <EditorContent :editor="editor" class="tiptap-content" />
+                                    </div>
                                 </div>
                                 <div class="flex gap-2 justify-end">
                                     <button
@@ -187,7 +257,7 @@
                                     <button
                                         ref="generateButton"
                                         @click="generateApprovalUrl"
-                                        :disabled="!approvalMessage || generatingUrl"
+                                        :disabled="isApprovalMessageEmpty || generatingUrl"
                                         class="px-6 py-2 text-sm text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                                     >
                                         {{ generatingUrl ? '生成中...' : (generatedApprovalUrl ? '承認URLを再生成' : '承認URLを生成') }}
@@ -203,8 +273,7 @@
                                                 v-for="item in missingSetupForCurrentProject"
                                                 :key="item"
                                             >
-                                                {{ item }}
-                                            </span>が未完了のため、承認URLを作成できません。
+                                            {{ item }}/</span>が未完了のため、本機能をご利用できません。
                                         </h3>
                                         <button
                                                 v-if="missingSetupForCurrentProject.includes('GitHub Webhook') && currentProject.github_owner && currentProject.github_repo"
@@ -214,7 +283,7 @@
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
-                                                詳しくを見る
+                                                設定マニュアルへ
                                         </button>
                                     </div>
                             </div>
@@ -266,17 +335,14 @@
                                 </div>
                         </Transition>
 
-                        <div class="mt-8 bg-white rounded-2xl">
+                        <div v-if="currentProject.deploy_logs && currentProject.deploy_logs.length > 0" class="mt-8 bg-white rounded-2xl">
                                 <div class="flex justify-between items-center p-4 border-b border-gray-200">
                                     <h3 class="font-bold text-gray-700 text-md">リリースログ</h3>
                                     <p class="text-xs font-bold text-gray-600">
                                         ブランチ：<span class="font-medium">{{ currentProject.github_branch || '未設定' }}</span>
                                     </p>
                                 </div>
-                                <div v-if="!currentProject.deploy_logs || currentProject.deploy_logs.length === 0" class="text-gray-500">
-                                    リリースログがありません
-                                </div>
-                                <div v-else>
+                                <div>
                                     <div
                                         v-for="log in currentProject.deploy_logs"
                                         :key="log.id"
@@ -323,7 +389,7 @@
                                                     </button>
                                                 </div>
                                                 <div v-if="log.approval_message && expandedLogs[log.id]" class="p-4 mt-2 bg-white rounded-2xl">
-                                                    <div class="text-sm text-gray-600 whitespace-pre-line">{{ log.approval_message.message }}</div>
+                                                    <div class="max-w-none text-sm text-gray-600 prose prose-sm" v-html="formatApprovalMessage(log.approval_message.message)"></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -420,476 +486,81 @@
             </div>
         </div>
 
-        <!-- 編集モーダル -->
-        <div 
-            v-if="showEditModal"
-            class="flex overflow-y-auto fixed inset-0 z-50 justify-center items-start p-4 bg-black bg-opacity-50"
-            @click.self="closeEditModal"
-        >
-            <div class="relative mx-auto my-8 w-full max-w-3xl bg-white rounded-lg shadow-xl">
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-xl font-bold text-gray-900">プロジェクトを編集する</h3>
-                        <button
-                            @click="closeEditModal"
-                            class="p-1 text-gray-400 hover:text-gray-600"
-                        >
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                    
-                    <form @submit.prevent="submitEditForm" class="space-y-6">
-                        <div>
-                            <div class="flex gap-2 items-center">
-                                <InputLabel for="edit_staging_url" value="テストURL" class="font-bold text-gray-900" />
-                                <div class="relative">
-                                    <button
-                                        type="button"
-                                        @click.stop="toggleEditTooltip('staging_url', $event)"
-                                        class="text-gray-400 transition-colors hover:text-gray-600"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </button>
-                                    <div
-                                        v-if="editActiveTooltip === 'staging_url'"
-                                        class="absolute left-0 z-10 p-3 mt-2 w-72 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
-                                    >
-                                        クライアントが確認するテスト環境（ステージング環境）のURLです。
-                                    </div>
-                                </div>
-                            </div>
-                            <TextInput
-                                id="edit_staging_url"
-                                v-model="editForm.staging_url"
-                                type="url"
-                                class="block mt-1 w-full"
-                                placeholder="https://staging.example.com"
-                                required
-                            />
-                            <InputError class="mt-2" :message="editForm.errors.staging_url" />
-                        </div>
-
-                        <div>
-                            <div class="flex gap-2 items-center">
-                                <InputLabel for="edit_production_url" value="本番URL" class="font-bold text-gray-900" />
-                                <div class="relative">
-                                    <button
-                                        type="button"
-                                        @click.stop="toggleEditTooltip('production_url', $event)"
-                                        class="text-gray-400 transition-colors hover:text-gray-600"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </button>
-                                    <div
-                                        v-if="editActiveTooltip === 'production_url'"
-                                        class="absolute left-0 z-10 p-3 mt-2 w-72 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
-                                    >
-                                        実際に公開されている本番環境のURLです。
-                                    </div>
-                                </div>
-                            </div>
-                            <TextInput
-                                id="edit_production_url"
-                                v-model="editForm.production_url"
-                                type="url"
-                                class="block mt-1 w-full"
-                                placeholder="https://example.com"
-                                required
-                            />
-                            <InputError class="mt-2" :message="editForm.errors.production_url" />
-                        </div>
-
-                        <div>
-                            <div class="flex gap-2 items-center">
-                                <InputLabel for="edit_server_dir" value="デプロイ先パス" class="font-bold text-gray-900" />
-                                <div class="relative">
-                                    <button
-                                        type="button"
-                                        @click.stop="toggleEditTooltip('server_dir', $event)"
-                                        class="text-gray-400 transition-colors hover:text-gray-600"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </button>
-                                    <div
-                                        v-if="editActiveTooltip === 'server_dir'"
-                                        class="absolute left-0 z-10 p-3 mt-2 w-80 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
-                                    >
-                                        サーバー上のデプロイ先ディレクトリパスです。
-                                    </div>
-                                </div>
-                            </div>
-                            <TextInput
-                                id="edit_server_dir"
-                                v-model="editForm.server_dir"
-                                type="text"
-                                class="block mt-1 w-full"
-                                placeholder="/public_html/"
-                            />
-                            <InputError class="mt-2" :message="editForm.errors.server_dir" />
-                        </div>
-
-                        <div>
-                            <div class="flex gap-2 items-center">
-                                <InputLabel for="edit_slack_webhook_url" value="Slack Webhook URL（任意）" class="font-bold text-gray-900" />
-                                <div class="relative">
-                                    <button
-                                        type="button"
-                                        @click.stop="toggleEditTooltip('slack_webhook_url', $event)"
-                                        class="text-gray-400 transition-colors hover:text-gray-600"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </button>
-                                    <div
-                                        v-if="editActiveTooltip === 'slack_webhook_url'"
-                                        class="absolute left-0 z-10 p-3 mt-2 w-80 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
-                                    >
-                                        デプロイ完了時にSlackに通知を送るWebhook URLです。未設定の場合はグローバル設定を使用します。
-                                    </div>
-                                </div>
-                            </div>
-                            <TextInput
-                                id="edit_slack_webhook_url"
-                                v-model="editForm.slack_webhook_url"
-                                type="url"
-                                class="block mt-1 w-full"
-                                placeholder="https://hooks.slack.com/services/xxx/yyy/zzz"
-                            />
-                            <InputError class="mt-2" :message="editForm.errors.slack_webhook_url" />
-                        </div>
-
-                        <div>
-                            <div class="flex gap-2 items-center">
-                                <InputLabel for="edit_name" value="プロジェクト名" class="font-bold text-gray-900" />
-                                <div class="relative">
-                                    <button
-                                        type="button"
-                                        @click.stop="toggleEditTooltip('project_name', $event)"
-                                        class="text-gray-400 transition-colors hover:text-gray-600"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </button>
-                                    <div
-                                        v-if="editActiveTooltip === 'project_name'"
-                                        class="absolute left-0 z-10 p-3 mt-2 w-72 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
-                                    >
-                                        未入力の場合はGitHubリポジトリ名が使用されます。
-                                    </div>
-                                </div>
-                            </div>
-                            <TextInput
-                                id="edit_name"
-                                v-model="editForm.name"
-                                type="text"
-                                class="block mt-1 w-full"
-                                placeholder="プロジェクト名（任意）"
-                            />
-                            <InputError class="mt-2" :message="editForm.errors.name" />
-                        </div>
-
-                        <div>
-                            <div class="flex gap-2 items-center">
-                                <InputLabel for="edit_organization" value="GitHub 組織" class="font-bold text-gray-900" />
-                                <div class="relative">
-                                    <button
-                                        type="button"
-                                        @click.stop="toggleEditTooltip('organization', $event)"
-                                        class="text-gray-400 transition-colors hover:text-gray-600"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </button>
-                                    <div
-                                        v-if="editActiveTooltip === 'organization'"
-                                        class="absolute left-0 z-10 p-3 mt-2 w-64 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
-                                    >
-                                        リポジトリが所属する組織を選択します。
-                                    </div>
-                                </div>
-                            </div>
-                            <select
-                                id="edit_organization"
-                                v-model="editSelectedOrganization"
-                                @change="onEditOrganizationChange"
-                                class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            >
-                                <option value="">後で設定する</option>
-                                <option value="personal">個人リポジトリ</option>
-                                <option v-for="org in editOrganizations" :key="org.id" :value="org.login">
-                                    {{ org.login }}
-                                </option>
-                            </select>
-                            <InputError class="mt-2" :message="editForm.errors.github_owner" />
-                        </div>
-
-                        <div v-if="editSelectedOrganization">
-                            <div class="flex gap-2 items-center">
-                                <InputLabel for="edit_repository" value="GitHub リポジトリ" class="font-bold text-gray-900" />
-                                <div class="relative">
-                                    <button
-                                        type="button"
-                                        @click.stop="toggleEditTooltip('repository', $event)"
-                                        class="text-gray-400 transition-colors hover:text-gray-600"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </button>
-                                    <div
-                                        v-if="editActiveTooltip === 'repository'"
-                                        class="absolute left-0 z-10 p-3 mt-2 w-72 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
-                                    >
-                                        デプロイ対象のGitHubリポジトリを選択します。
-                                    </div>
-                                </div>
-                            </div>
-                            <select
-                                id="edit_repository"
-                                v-model="editSelectedRepository"
-                                @change="onEditRepositoryChange"
-                                class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                :disabled="editRepositories.length === 0"
-                            >
-                                <option :value="null" disabled>
-                                    {{ editRepositories.length === 0 ? 'リポジトリを読み込み中...' : 'リポジトリを選択してください' }}
-                                </option>
-                                <option v-for="repo in editRepositories" :key="repo.id" :value="repo">
-                                    {{ repo.full_name }}
-                                </option>
-                            </select>
-                            <InputError class="mt-2" :message="editForm.errors.github_repo" />
-                        </div>
-
-                        <div v-if="editSelectedRepository">
-                            <div class="flex gap-2 items-center">
-                                <InputLabel for="edit_github_workflow_id" value="GitHub ワークフロー" class="font-bold text-gray-900" />
-                                <div class="relative">
-                                    <button
-                                        type="button"
-                                        @click.stop="toggleEditTooltip('workflow', $event)"
-                                        class="text-gray-400 transition-colors hover:text-gray-600"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </button>
-                                    <div
-                                        v-if="editActiveTooltip === 'workflow'"
-                                        class="absolute left-0 z-10 p-3 mt-2 w-80 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
-                                    >
-                                        承認時に実行されるGitHub Actionsのワークフローを選択してください。
-                                    </div>
-                                </div>
-                            </div>
-                            <select
-                                id="edit_github_workflow_id"
-                                v-model="editForm.github_workflow_id"
-                                class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                :disabled="editLoadingWorkflows || editWorkflows.length === 0"
-                            >
-                                <option value="">後で設定する</option>
-                                <option v-for="workflow in editWorkflows" :key="workflow.id" :value="String(workflow.id)">
-                                    {{ workflow.name }} ({{ workflow.path }})
-                                </option>
-                            </select>
-                            <p v-if="!editLoadingWorkflows && editWorkflows.length === 0" class="mt-1 text-sm text-yellow-600">
-                                ワークフローが見つかりませんでした。GitHub側でワークフローを作成してください。
-                            </p>
-                            <InputError class="mt-2" :message="editForm.errors.github_workflow_id" />
-                        </div>
-
-                        <div v-if="editSelectedRepository">
-                            <div class="flex gap-2 items-center">
-                                <InputLabel for="edit_github_branch" value="GitHub ブランチ" class="font-bold text-gray-900" />
-                                <div class="relative">
-                                    <button
-                                        type="button"
-                                        @click.stop="toggleEditTooltip('branch', $event)"
-                                        class="text-gray-400 transition-colors hover:text-gray-600"
-                                    >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </button>
-                                    <div
-                                        v-if="editActiveTooltip === 'branch'"
-                                        class="absolute left-0 z-10 p-3 mt-2 w-80 text-sm text-gray-700 bg-white rounded-lg border border-gray-200 shadow-lg"
-                                    >
-                                        本番環境にアップロードするブランチ名です。通常は <code class="px-1 py-0.5 text-xs bg-gray-100 rounded">main</code> を使用します。
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="relative">
-                                <input
-                                    type="text"
-                                    id="edit_github_branch"
-                                    v-model="editForm.github_branch"
-                                    list="edit-branch-list"
-                                    class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                                    placeholder="main"
-                                />
-                                <datalist id="edit-branch-list">
-                                    <option v-for="branch in editBranches" :key="branch.name" :value="branch.name">
-                                        {{ branch.name }}
-                                    </option>
-                                </datalist>
-                            </div>
-                            <InputError class="mt-2" :message="editForm.errors.github_branch" />
-                        </div>
-                        <div v-else>
-                            <InputLabel for="edit_github_branch_fallback" value="GitHub ブランチ" class="font-bold text-gray-900" />
-                            <TextInput
-                                id="edit_github_branch_fallback"
-                                v-model="editForm.github_branch"
-                                type="text"
-                                class="block mt-1 w-full"
-                            />
-                            <InputError class="mt-2" :message="editForm.errors.github_branch" />
-                        </div>
-
-                        <div v-if="!editForm.ssh_configured" class="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <label for="edit_ssh_configured" class="flex gap-3 items-start cursor-pointer">
-                                <input
-                                    id="edit_ssh_configured"
-                                    v-model="editForm.ssh_configured"
-                                    type="checkbox"
-                                    class="mt-1 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
-                                />
-                                <span class="text-sm text-gray-700">
-                                    SSH設定済み（GitHub Secretsに登録済み）
-                                </span>
-                            </label>
-                        </div>
-
-                        <div class="flex gap-4 justify-end items-center pt-4 border-t border-gray-200">
-                            <button
-                                type="button"
-                                @click="closeEditModal"
-                                class="px-4 py-2 text-sm text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
-                            >
-                                キャンセル
-                            </button>
-                            <PrimaryButton :class="{ 'opacity-25': editForm.processing }" :disabled="editForm.processing">
-                                更新
-                            </PrimaryButton>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+        <ProjectEditModal
+            :show="showEditModal"
+            :form="editForm"
+            v-model:selected-organization="editSelectedOrganization"
+            :organizations="editOrganizations"
+            v-model:selected-repository="editSelectedRepository"
+            :repositories="editRepositories"
+            :workflows="editWorkflows"
+            :branches="editBranches"
+            :active-tooltip="editActiveTooltip"
+            :loading-workflows="editLoadingWorkflows"
+            @close="closeEditModal"
+            @submit="submitEditForm"
+            @toggle-tooltip="toggleEditTooltip"
+            @organization-change="onEditOrganizationChange"
+            @repository-change="onEditRepositoryChange"
+        />
     </AuthenticatedLayout>
 
-    <!-- Webhook設定手順モーダル -->
-    <Transition
-        enter-active-class="transition duration-300 ease-out"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="transition duration-200 ease-in"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-    >
-        <div
-            v-if="showWebhookModal"
-            class="flex overflow-y-auto fixed inset-0 z-50 justify-center items-start p-4 bg-black bg-opacity-50"
-            @click.self="showWebhookModal = false"
-        >
-            <div class="relative mx-auto my-8 w-full max-w-2xl bg-white rounded-3xl shadow-3xl">
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-semibold text-gray-900">GitHub Webhook設定手順</h2>
-                        <button
-                            @click="showWebhookModal = false"
-                            class="p-2 text-gray-400 rounded-md transition-colors hover:text-gray-600 hover:bg-gray-100"
-                        >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                    
-                    <div class="space-y-4 text-gray-700">
-                        <div class="p-4 mb-6 bg-blue-50 rounded-3xl border border-blue-200">
-                            <p class="text-sm text-blue-800">
-                                GitHub Webhookを設定することで、デプロイ完了を自動的に検知できます。設定しない場合、デプロイステータスの更新が遅れる可能性があります。
-                            </p>
-                        </div>
+    <WebhookSetupModal
+        :show="showWebhookModal"
+        :webhook-url="getWebhookStatus(currentProject).webhook_url"
+        :can-check="!!(currentProject && currentProject.github_owner && currentProject.github_repo)"
+        @close="showWebhookModal = false"
+        @check="checkWebhookStatus(currentProject); showWebhookModal = false"
+    />
 
-                        <div>
-                            <h3 class="mb-6 font-bold text-gray-500 text-md">設定手順</h3>
-                            <ol class="ml-6 space-y-4 list-decimal text-gray-600">
-                                <li>
-                                    <p class="text-md">GitHubリポジトリの <strong>Settings</strong> → <strong>Webhooks</strong> → <strong>Add webhook</strong> を開く</p>
-                                </li>
-                                <li>
-                                    <p class="text-md">
-                                        <strong>Payload URL</strong> に以下を入力：
-                                        <code class="block px-4 py-4 mt-1 text-sm text-gray-500 bg-gray-100 rounded-xl">{{ getWebhookStatus(currentProject).webhook_url || 'https://yourdomain.com/api/github/webhook' }}</code>
-                                    </p>
-                                </li>
-                                <li>
-                                    <p class="text-md"><strong>Content type</strong> を <code class="px-1 py-0.5 text-xs bg-gray-100 rounded">application/json</code> に設定</p>
-                                </li>
-                                <li>
-                                    <p class="text-md"><strong>Events</strong> で <strong>Workflow run</strong> を選択（または <strong>Let me select individual events</strong> を選択して <strong>Workflow run</strong> にチェック）</p>
-                                </li>
-                                <li>
-                                    <p class="text-md"><strong>Active</strong> にチェックを入れて <strong>Add webhook</strong> をクリック</p>
-                                </li>
-                            </ol>
-                        </div>
+    <StagingUrlModal
+        :show="showStagingUrlModal"
+        :form="stagingUrlForm"
+        :has-staging-url="!!(currentProject && currentProject.staging_url)"
+        @close="showStagingUrlModal = false"
+        @submit="submitStagingUrl"
+    />
 
-                        <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                            <p class="text-sm text-yellow-800">
-                                <strong>注意:</strong> Webhookを設定すると、GitHub Actionsのワークフロー実行が完了した際に自動的にデプロイステータスが更新されます。設定しない場合、手動で同期する必要があります。
-                            </p>
-                        </div>
-
-                        <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
-                            <button
-                                @click="showWebhookModal = false"
-                                class="px-4 py-2 text-sm text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
-                            >
-                                閉じる
-                            </button>
-                            <button
-                                v-if="currentProject && currentProject.github_owner && currentProject.github_repo"
-                                @click="checkWebhookStatus(currentProject); showWebhookModal = false"
-                                class="px-4 py-2 text-sm text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
-                            >
-                                ステータスを再確認
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </Transition>
+    <ProjectCreateModal
+        :show="showCreateModal"
+        :form="createForm"
+        v-model:selected-organization="createSelectedOrganization"
+        :organizations="createOrganizations"
+        v-model:selected-repository="createSelectedRepository"
+        :repositories="createRepositories"
+        :workflows="createWorkflows"
+        :branches="createBranches"
+        :active-tooltip="createActiveTooltip"
+        :loading-workflows="createLoadingWorkflows"
+        :loading-organizations="createLoadingOrganizations"
+        @close="closeCreateModal"
+        @submit="submitCreateForm"
+        @toggle-tooltip="toggleCreateTooltip"
+        @organization-change="onCreateOrganizationChange"
+        @repository-change="onCreateRepositoryChange"
+    />
 </template>
 
 <script setup>
 import { ref, computed, onMounted, nextTick, Transition, onUnmounted } from 'vue';
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import AppFooter from '@/Components/AppFooter.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { MdEditor } from 'md-editor-v3';
-import 'md-editor-v3/lib/style.css';
-import 'md-editor-v3/lib/preview.css';
+import ApplicationLogo from '@/Components/ApplicationLogo.vue';
+import Dropdown from '@/Components/Dropdown.vue';
+import DropdownLink from '@/Components/DropdownLink.vue';
+import ProjectEditModal from '@/Components/Dashboard/ProjectEditModal.vue';
+import ProjectCreateModal from '@/Components/Dashboard/ProjectCreateModal.vue';
+import WebhookSetupModal from '@/Components/Dashboard/WebhookSetupModal.vue';
+import StagingUrlModal from '@/Components/Dashboard/StagingUrlModal.vue';
+import { EditorContent, useEditor } from '@tiptap/vue-3';
+import StarterKit from '@tiptap/starter-kit';
+import LinkExtension from '@tiptap/extension-link';
+import Image from '@tiptap/extension-image';
+import Underline from '@tiptap/extension-underline';
+import Placeholder from '@tiptap/extension-placeholder';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import axios from 'axios';
 
 const props = defineProps({
@@ -904,37 +575,115 @@ const generatedApprovalUrl = ref('');
 const generatedUrlCopied = ref(false);
 const showSuccessMessage = ref(false);
 const isRegenerating = ref(false);
+const isConvertingPaths = ref(false); // パス変換中フラグ
 
-// md-editor-v3 ツールバー設定
-const markdownToolbars = [
-    'bold',
-    'underline',
-    'italic',
-    '-',
-    'title',
-    'strikeThrough',
-    'sub',
-    'sup',
-    'quote',
-    'unorderedList',
-    'orderedList',
-    'task',
-    '-',
-    'codeRow',
-    'code',
-    'link',
-    'image',
-    'table',
-    '-',
-    'revoke',
-    'next',
-    'save',
-    '=',
-    'pageFullscreen',
-    'fullscreen',
-    'preview',
-    'catalog',
-];
+const editor = useEditor({
+    extensions: [
+        StarterKit.configure({
+            heading: {
+                levels: [1, 2, 3],
+            },
+            bulletList: {
+                keepMarks: true,
+            },
+            orderedList: {
+                keepMarks: true,
+            },
+        }),
+        Underline,
+        LinkExtension.configure({
+            openOnClick: false,
+            autolink: true,
+            linkOnPaste: true,
+            HTMLAttributes: {
+                target: '_blank',
+                rel: 'noopener noreferrer',
+            },
+        }),
+        Image.configure({
+            inline: false,
+        }),
+        Placeholder.configure({
+            placeholder: '改善内容の入力...',
+        }),
+    ],
+    content: '',
+    onUpdate: ({ editor: editorInstance }) => {
+        approvalMessage.value = editorInstance.getHTML();
+        
+        // パスの自動リンク化処理（無限ループを避けるため、変換中はスキップ）
+        if (isConvertingPaths.value || !currentProject.value || !currentProject.value.staging_url) return;
+        
+        const stagingUrl = currentProject.value.staging_url.replace(/\/$/, ''); // 末尾のスラッシュを削除
+        
+        // エディター全体を走査してパスを検出
+        const pathsToConvert = [];
+        
+        editorInstance.state.doc.descendants((node, pos) => {
+            if (node.isText && node.text) {
+                const text = node.text;
+                // パスパターンを検出（/で始まり、空白、改行、句読点、または行末まで）
+                // 例: /top, /about, /products/item-1
+                const pathPattern = /(?:^|[\s\n,。、])(\/[\w\-/]+(?:\?[\w\-=&]+)?(?:#[\w\-]+)?)(?=[\s\n,。、]|$)/g;
+                
+                let match;
+                while ((match = pathPattern.exec(text)) !== null) {
+                    const path = match[1];
+                    const matchIndex = match.index + (match[0].startsWith('/') ? 0 : 1); // 前の文字を考慮
+                    const absoluteFrom = pos + matchIndex;
+                    const absoluteTo = absoluteFrom + path.length;
+                    
+                    // 既にリンクになっているかチェック
+                    const marksAt = node.marks;
+                    const isAlreadyLink = marksAt.some(mark => mark.type.name === 'link');
+                    
+                    if (!isAlreadyLink) {
+                        pathsToConvert.push({
+                            path,
+                            from: absoluteFrom,
+                            to: absoluteTo,
+                        });
+                    }
+                }
+            }
+        });
+        
+        // パスが見つかった場合、リンクに変換（逆順にソートして後ろから変換）
+        if (pathsToConvert.length > 0) {
+            isConvertingPaths.value = true;
+            pathsToConvert.sort((a, b) => b.from - a.from);
+            
+            // 一度にすべてのパスを変換するのではなく、次のフレームで処理
+            nextTick(() => {
+                pathsToConvert.forEach(({ path, from: pathFrom, to: pathTo }) => {
+                    const fullUrl = stagingUrl + path;
+                    const displayText = stagingUrl + path; // 表示テキスト: ステージングURL + パス
+                    
+                    // 既にリンクになっていないか再確認
+                    const marksAt = editorInstance.state.doc.resolve(pathFrom).marks();
+                    const isAlreadyLink = marksAt.some(mark => mark.type.name === 'link');
+                    
+                    if (!isAlreadyLink) {
+                        // テキストを「ステージングURL + パス」に置き換えてリンクを設定
+                        const linkHtml = `<a href="${fullUrl}" target="_blank" rel="noopener noreferrer">${displayText}</a>`;
+                        editorInstance.chain()
+                            .setTextSelection({ from: pathFrom, to: pathTo })
+                            .deleteSelection()
+                            .insertContent(linkHtml)
+                            .run();
+                    }
+                });
+                
+                // 変換完了後、フラグをリセット
+                setTimeout(() => {
+                    isConvertingPaths.value = false;
+                }, 100);
+            });
+        }
+    },
+});
+
+const isApprovalMessageEmpty = computed(() => !editor.value || editor.value.isEmpty);
 
 // ガイド関連
 const showGuideOverlay = ref(false);
@@ -950,14 +699,95 @@ const toggleLogExpansion = (logId) => {
     expandedLogs.value[logId] = !expandedLogs.value[logId];
 };
 
+const toggleHeading = (level) => {
+    if (!editor.value) return;
+    editor.value.chain().focus().toggleHeading({ level }).run();
+};
+
+const toggleBold = () => {
+    if (!editor.value) return;
+    editor.value.chain().focus().toggleBold().run();
+};
+
+const toggleItalic = () => {
+    if (!editor.value) return;
+    editor.value.chain().focus().toggleItalic().run();
+};
+
+const toggleUnderline = () => {
+    if (!editor.value) return;
+    editor.value.chain().focus().toggleUnderline().run();
+};
+
+const toggleStrike = () => {
+    if (!editor.value) return;
+    editor.value.chain().focus().toggleStrike().run();
+};
+
+const toggleBulletList = () => {
+    if (!editor.value) return;
+    editor.value.chain().focus().toggleBulletList().run();
+};
+
+const toggleOrderedList = () => {
+    if (!editor.value) return;
+    editor.value.chain().focus().toggleOrderedList().run();
+};
+
+const toggleBlockquote = () => {
+    if (!editor.value) return;
+    editor.value.chain().focus().toggleBlockquote().run();
+};
+
+const toggleCodeBlock = () => {
+    if (!editor.value) return;
+    editor.value.chain().focus().toggleCodeBlock().run();
+};
+
+const toggleCode = () => {
+    if (!editor.value) return;
+    editor.value.chain().focus().toggleCode().run();
+};
+
+const setHorizontalRule = () => {
+    if (!editor.value) return;
+    editor.value.chain().focus().setHorizontalRule().run();
+};
+
+const setLink = () => {
+    if (!editor.value) return;
+    const previousUrl = editor.value.getAttributes('link').href;
+    const url = window.prompt('リンクURLを入力してください', previousUrl || '');
+    if (url === null) return;
+    if (url === '') {
+        editor.value.chain().focus().unsetLink().run();
+        return;
+    }
+    editor.value.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+};
+
+const addImage = () => {
+    if (!editor.value) return;
+    const url = window.prompt('画像URLを入力してください');
+    if (!url) return;
+    editor.value.chain().focus().setImage({ src: url }).run();
+};
+
+const undo = () => {
+    if (!editor.value) return;
+    editor.value.chain().focus().undo().run();
+};
+
+const redo = () => {
+    if (!editor.value) return;
+    editor.value.chain().focus().redo().run();
+};
+
 // 編集モーダル関連
 const showEditModal = ref(false);
 const editForm = useForm({
     name: '',
-    staging_url: '',
-    production_url: '',
     server_dir: '/public_html/',
-    slack_webhook_url: '',
     github_owner: '',
     github_repo: '',
     github_workflow_id: '',
@@ -978,10 +808,7 @@ const openEditModal = () => {
     
     // フォームに現在のプロジェクト情報を設定
     editForm.name = currentProject.value.name || '';
-    editForm.staging_url = currentProject.value.staging_url || '';
-    editForm.production_url = currentProject.value.production_url || '';
     editForm.server_dir = currentProject.value.server_dir || '/public_html/';
-    editForm.slack_webhook_url = currentProject.value.slack_webhook_url || '';
     editForm.github_owner = currentProject.value.github_owner || '';
     editForm.github_repo = currentProject.value.github_repo || '';
     editForm.github_workflow_id = currentProject.value.github_workflow_id || '';
@@ -1378,10 +1205,229 @@ const getSshStatusLabel = (project) => (
     project?.ssh_configured ? 'SSH設定済み' : 'SSH未設定'
 );
 
+const isHtmlMessage = (message) => /<\/?[a-z][\s\S]*>/i.test(message);
+
+const formatApprovalMessage = (message) => {
+    if (!message) return '';
+    if (isHtmlMessage(message)) {
+        return DOMPurify.sanitize(message, {
+            ADD_ATTR: ['target', 'rel'],
+        });
+    }
+    const html = marked.parse(message);
+    return DOMPurify.sanitize(html, {
+        ADD_ATTR: ['target', 'rel'],
+    });
+};
+
 // Webhookステータス管理
 const webhookStatus = ref({});
 const checkingWebhook = ref(false);
 const showWebhookModal = ref(false);
+
+// ステージングURL登録モーダル
+const showStagingUrlModal = ref(false);
+const stagingUrlForm = useForm({
+    staging_url: '',
+});
+
+// プロジェクト作成モーダル
+const showCreateModal = ref(false);
+const createForm = useForm({
+    name: '',
+    server_dir: '/public_html/',
+    github_owner: '',
+    github_repo: '',
+    github_workflow_id: '',
+    github_branch: '',
+    ssh_configured: false,
+});
+const createOrganizations = ref([]);
+const createRepositories = ref([]);
+const createWorkflows = ref([]);
+const createBranches = ref([]);
+const createSelectedOrganization = ref('');
+const createSelectedRepository = ref(null);
+const createActiveTooltip = ref(null);
+const createLoadingWorkflows = ref(false);
+const createLoadingOrganizations = ref(false);
+
+const openCreateModal = async () => {
+    showCreateModal.value = true;
+    document.addEventListener('click', closeCreateTooltip);
+    
+    // 組織一覧を取得
+    createLoadingOrganizations.value = true;
+    try {
+        const response = await axios.get(route('api.github.organizations'));
+        if (response.data && Array.isArray(response.data)) {
+            createOrganizations.value = response.data;
+        } else {
+            createOrganizations.value = [];
+        }
+    } catch (error) {
+        console.error('Failed to fetch organizations:', error);
+        createOrganizations.value = [];
+    } finally {
+        createLoadingOrganizations.value = false;
+    }
+};
+
+const closeCreateModal = () => {
+    showCreateModal.value = false;
+    createForm.reset();
+    createForm.clearErrors();
+    createSelectedOrganization.value = '';
+    createSelectedRepository.value = null;
+    createRepositories.value = [];
+    createWorkflows.value = [];
+    createBranches.value = [];
+    document.removeEventListener('click', closeCreateTooltip);
+};
+
+const toggleCreateTooltip = (tooltipName, event) => {
+    if (event) {
+        event.stopPropagation();
+    }
+    if (createActiveTooltip.value === tooltipName) {
+        createActiveTooltip.value = null;
+    } else {
+        createActiveTooltip.value = tooltipName;
+    }
+};
+
+const closeCreateTooltip = () => {
+    createActiveTooltip.value = null;
+};
+
+const loadCreateRepositories = async () => {
+    if (!createSelectedOrganization.value) return;
+
+    try {
+        const response = await axios.get(route('api.github.repositories'), {
+            params: {
+                organization: createSelectedOrganization.value
+            }
+        });
+        
+        if (response.data && Array.isArray(response.data)) {
+            createRepositories.value = response.data;
+        } else {
+            createRepositories.value = [];
+        }
+    } catch (error) {
+        console.error('Failed to fetch repositories:', error);
+        createRepositories.value = [];
+    }
+};
+
+const onCreateOrganizationChange = async () => {
+    if (!createSelectedOrganization.value) {
+        createSelectedRepository.value = null;
+        createRepositories.value = [];
+        createWorkflows.value = [];
+        createBranches.value = [];
+        createForm.github_owner = '';
+        createForm.github_repo = '';
+        createForm.github_workflow_id = '';
+        createForm.github_branch = '';
+        return;
+    }
+
+    createSelectedRepository.value = null;
+    createRepositories.value = [];
+    createWorkflows.value = [];
+    createBranches.value = [];
+    createForm.github_owner = '';
+    createForm.github_repo = '';
+    createForm.github_workflow_id = '';
+    createForm.github_branch = '';
+
+    await loadCreateRepositories();
+};
+
+const onCreateRepositoryChange = async () => {
+    if (!createSelectedRepository.value) return;
+
+    createForm.github_owner = createSelectedRepository.value.owner.login;
+    createForm.github_repo = createSelectedRepository.value.name;
+    createForm.name = `${createSelectedRepository.value.owner.login}/${createSelectedRepository.value.name}`;
+    
+    createForm.github_workflow_id = '';
+    createForm.github_branch = '';
+    createWorkflows.value = [];
+    createBranches.value = [];
+    createLoadingWorkflows.value = true;
+
+    try {
+        const [workflowsResponse, branchesResponse] = await Promise.all([
+            axios.get(route('api.github.workflows'), {
+                params: {
+                    owner: createForm.github_owner,
+                    repo: createForm.github_repo
+                }
+            }),
+            axios.get(route('api.github.branches'), {
+                params: {
+                    owner: createForm.github_owner,
+                    repo: createForm.github_repo
+                }
+            })
+        ]);
+
+        createWorkflows.value = workflowsResponse.data.workflows || [];
+        createBranches.value = branchesResponse.data.branches || [];
+        const defaultBranch = branchesResponse.data.default_branch;
+        
+        if (createWorkflows.value && createWorkflows.value.length > 0) {
+            createForm.github_workflow_id = String(createWorkflows.value[0].id);
+        }
+        
+        if (createBranches.value && createBranches.value.length > 0) {
+            const mainBranch = createBranches.value.find(b => b.name === 'main');
+            const masterBranch = createBranches.value.find(b => b.name === 'master');
+            const defaultBranchObj = createBranches.value.find(b => b.name === defaultBranch);
+            
+            if (mainBranch) {
+                createForm.github_branch = mainBranch.name;
+            } else if (masterBranch) {
+                createForm.github_branch = masterBranch.name;
+            } else if (defaultBranchObj) {
+                createForm.github_branch = defaultBranchObj.name;
+            } else {
+                createForm.github_branch = createBranches.value[0].name;
+            }
+        }
+    } catch (error) {
+        console.error('Failed to fetch repository details:', error);
+    } finally {
+        createLoadingWorkflows.value = false;
+    }
+};
+
+const submitCreateForm = () => {
+    if (!createSelectedOrganization.value) {
+        alert('GitHub組織を選択してください。');
+        return;
+    }
+    
+    if (!createSelectedRepository.value) {
+        alert('GitHubリポジトリを選択してください。');
+        return;
+    }
+    
+    createForm.post(route('projects.store'), {
+        preserveState: false,
+        preserveScroll: false,
+        onSuccess: () => {
+            // モーダルを閉じる（リダイレクトはInertiaが自動的に処理）
+            closeCreateModal();
+        },
+        onError: (errors) => {
+            console.error('Project creation errors:', errors);
+        }
+    });
+};
 
 const checkWebhookStatus = async (project) => {
     if (!project || !project.github_owner || !project.github_repo) {
@@ -1418,6 +1464,25 @@ const getWebhookStatusLabel = (project) => {
     return status.configured ? '完了検知設定済み' : '完了検知未設定';
 };
 
+const openStagingUrlModal = () => {
+    if (!currentProject.value) return;
+    stagingUrlForm.staging_url = currentProject.value.staging_url || '';
+    showStagingUrlModal.value = true;
+};
+
+const submitStagingUrl = () => {
+    if (!currentProject.value) return;
+    
+    stagingUrlForm.patch(route('projects.update', currentProject.value.id), {
+        onSuccess: () => {
+            showStagingUrlModal.value = false;
+            stagingUrlForm.reset();
+            // プロジェクト一覧を再読み込み
+            router.reload({ only: ['projects', 'selectedProject'] });
+        }
+    });
+};
+
 const selectProject = (projectId) => {
     selectedProjectId.value = projectId;
     // プロジェクト選択時にwebhookステータスを確認
@@ -1428,7 +1493,7 @@ const selectProject = (projectId) => {
 };
 
 const generateApprovalUrl = async () => {
-    if (!currentProject.value || !approvalMessage.value || !isCurrentProjectSetupComplete.value) return;
+    if (!currentProject.value || isApprovalMessageEmpty.value || !isCurrentProjectSetupComplete.value) return;
     
     // 再生成かどうかを判定
     const wasRegenerating = !!generatedApprovalUrl.value;
@@ -1472,6 +1537,9 @@ const generateApprovalUrl = async () => {
 };
 
 const resetApprovalForm = () => {
+    if (editor.value) {
+        editor.value.commands.clearContent(true);
+    }
     approvalMessage.value = '';
     generatedApprovalUrl.value = '';
     generatedUrlCopied.value = false;
@@ -1557,21 +1625,60 @@ const formatDurationFromSeconds = (seconds) => {
 </script>
 
 <style scoped>
-.markdown-editor {
-    min-height: 300px;
-}
-
-.markdown-editor :deep(.md-editor) {
+.tiptap-editor {
     border: 1px solid rgb(199, 210, 254);
-    border-radius: 0.375rem;
+    border-radius: 0.5rem;
+    background-color: white;
+    overflow: hidden;
 }
 
-.markdown-editor :deep(.md-editor-toolbar) {
-    background-color: white;
+.tiptap-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0.5rem;
     border-bottom: 1px solid rgb(199, 210, 254);
+    background-color: white;
 }
 
-.markdown-editor :deep(.md-editor-content) {
-    background-color: white;
+.tiptap-toolbar button {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    color: #475569;
+    border-radius: 0.375rem;
+    border: 1px solid transparent;
+}
+
+.tiptap-toolbar button.is-active {
+    background-color: #e0e7ff;
+    color: #4338ca;
+    border-color: #c7d2fe;
+}
+
+.tiptap-toolbar button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.tiptap-toolbar .divider {
+    width: 1px;
+    height: 1.25rem;
+    background-color: #e2e8f0;
+    margin: 0 0.25rem;
+}
+
+.tiptap-content :deep(.ProseMirror) {
+    min-height: 260px;
+    padding: 0.75rem;
+    outline: none;
+}
+
+.tiptap-content :deep(.ProseMirror p.is-editor-empty:first-child::before) {
+    color: #94a3b8;
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+    white-space: pre-wrap;
 }
 </style>

@@ -92,9 +92,7 @@
                                 </dd>
                             </div>
                             <div v-if="deployLogData.approval_message && isApprovalMessageExpanded">
-                                <dd class="p-3 mt-1 text-sm text-gray-700 whitespace-pre-line bg-white rounded-2xl border border-gray-200">
-                                    {{ deployLogData.approval_message.message }}
-                                </dd>
+                                <dd class="p-3 mt-1 text-sm text-gray-700 prose prose-sm max-w-none bg-white rounded-2xl border border-gray-200" v-html="formattedApprovalMessage"></dd>
                             </div>
                         </dl>
                     </div>
@@ -110,12 +108,30 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppFooter from '@/Components/AppFooter.vue';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 const props = defineProps({
     project: Object,
     token: String,
     deployLog: Object,
     averageDurationSeconds: Number,
+});
+
+const isHtmlMessage = (message) => /<\/?[a-z][\s\S]*>/i.test(message);
+
+const formattedApprovalMessage = computed(() => {
+    const message = deployLogData.value?.approval_message?.message;
+    if (!message) return '';
+    if (isHtmlMessage(message)) {
+        return DOMPurify.sanitize(message, {
+            ADD_ATTR: ['target', 'rel'],
+        });
+    }
+    const html = marked.parse(message);
+    return DOMPurify.sanitize(html, {
+        ADD_ATTR: ['target', 'rel'],
+    });
 });
 
 const deployLogData = ref(props.deployLog);
@@ -369,4 +385,3 @@ onUnmounted(() => {
     }
 });
 </script>
-

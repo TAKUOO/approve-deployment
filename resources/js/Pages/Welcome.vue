@@ -30,7 +30,7 @@ const siteUrl = computed(() => {
 });
 
 const pageTitle = 'WEBデザイナー向けリリース自動化システム - AutoRelease';
-const pageDescription = 'クライアントがテスト環境を確認し、承認ボタンを押すだけで本番環境へ自動的にアップされます。GitHub Actionsと連携した承認→自動デプロイシステム。Slackで催促する、手作業でアップロードする、といった二重作業をなくします。';
+const pageDescription = '確認者が承認ボタンを押すだけで本番環境へ自動的にアップされます。GitHub Actionsと連携した承認→自動デプロイシステム。Slackで催促する、手作業でアップロードする、といった二重作業をなくします。';
 const pageKeywords = 'リリース自動化,デプロイ自動化,承認フロー,クライアント承認,Web制作,デザイナー向け,CI/CD,GitHub Actions,workflow_dispatch,テスト環境,本番環境,デプロイツール';
 
 
@@ -222,7 +222,7 @@ const faqs = [
 
                             <div>
                                 <p class="mt-3 text-sm leading-relaxed sm:mt-4 sm:text-base text-slate-600">
-                                    クライアントがテスト環境を確認し、承認ボタンを押すだけで本番環境へ自動的にアップされます。Slackで催促する、手作業でアップロードする、といった二重作業をなくします。
+                                    製作者側は承認URLを発行するだけ。あとは確認者側が公開ボタンを押せば、テスト環境の内容が本番環境へと公開されます。手作業でアップロードする、といった二重作業をなくします。
                                 </p>
                             </div>
 

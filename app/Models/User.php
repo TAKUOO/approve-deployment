@@ -23,6 +23,7 @@ class User extends Authenticatable
         'github_username',
         'github_token',
         'avatar',
+        'slack_webhook_url',
     ];
 
     /**
