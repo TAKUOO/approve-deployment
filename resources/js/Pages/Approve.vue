@@ -1,14 +1,14 @@
 <template>
     <Head>
-        <title>サイト更新の承認 - AutoRelease</title>
+        <title>承認依頼 - AutoRelease</title>
         <meta name="robots" content="noindex, nofollow">
     </Head>
     
-    <div class="flex justify-center px-4 py-12 min-h-screen bg-indigo-50 sm:px-6 lg:px-8">
-        <div class="p-8 space-y-12 w-full max-w-4xl bg-white rounded-2xl">
+    <div class="flex justify-center p-0 min-h-screen bg-indigo-50 sm:px-4 sm:py-12 lg:px-8">
+        <div class="p-4 space-y-12 w-full max-w-4xl bg-white rounded-3xl sm:p-8">
             <div>
-                <h2 class="mt-6 text-3xl font-extrabold text-center text-gray-900">
-                    サイト更新の承認
+                <h2 class="mt-4 text-3xl font-extrabold text-center text-gray-900 sm:mt-6">
+                    承認依頼
                 </h2>
                 <p class="mt-4 text-sm text-center text-gray-600">
                     変更内容を確認して、実際のサイト（公開中のサイト）に反映するかどうかを承認できます。
