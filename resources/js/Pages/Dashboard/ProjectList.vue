@@ -275,16 +275,16 @@
                                             >
                                             {{ item }}/</span>が未完了のため、本機能をご利用できません。
                                         </h3>
-                                        <button
+                                        <Link
                                                 v-if="missingSetupForCurrentProject.includes('GitHub Webhook') && currentProject.github_owner && currentProject.github_repo"
-                                                @click="showWebhookModal = true"
+                                                :href="route('settings.index')"
                                                 class="inline-flex gap-1 items-center text-xs font-bold text-yellow-800 hover:text-yellow-900"
                                             >
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                 </svg>
                                                 設定マニュアルへ
-                                        </button>
+                                        </Link>
                                     </div>
                             </div>
                         </div>

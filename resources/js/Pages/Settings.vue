@@ -8,6 +8,9 @@
                     <div class="p-8 text-gray-900">
                         <!-- タイトル -->
                         <div class="mb-8">
+                            <Link :href="route('projects.index')" class="inline-flex items-center mb-4 text-indigo-600 hover:text-indigo-800 font-medium">
+                                ← 一覧へ戻る
+                            </Link>
                             <h1 class="text-2xl font-semibold text-gray-900">設定マニュアル</h1>
                             <p class="mt-2 text-gray-600">
                                 プロジェクトのデプロイに必要な設定方法を確認できます。
@@ -225,7 +228,7 @@
 </template>
 
 <script setup>
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { ref, computed } from 'vue';
 
