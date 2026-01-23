@@ -58,15 +58,29 @@
                 </div>
 
                 <!-- ユーザー設定（下部固定） -->
-                <div class="flex flex-shrink-0 justify-between items-center border-t border-gray-200">
+                <div class="flex flex-col flex-shrink-0 border-t border-gray-200">
+                    <!-- 設定マニュアルリンク -->
+                    <Link
+                        :href="route('settings.index')"
+                        class="flex gap-2 items-center px-2 py-3 text-sm font-semibold text-gray-600 transition duration-150 ease-in-out hover:text-gray-900 hover:bg-gray-50"
+                    >
+                        <span class="text-base">📖</span>
+                        <span>設定マニュアル</span>
+                    </Link>
+                    <!-- 区切り線 -->
+                    <div class="border-t border-gray-200"></div>
+                    <!-- ユーザードロップダウン -->
                     <div class="relative w-full">
                         <Dropdown align="right" width="48" :bottom="true">
                             <template #trigger>
                                 <button
                                         type="button"
-                                        class="flex justify-between items-center px-2 py-4 w-full text-sm font-semibold leading-4 text-gray-500 bg-white rounded-md border border-transparent transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
+                                        class="flex justify-between items-center px-2 py-2 w-full text-sm font-semibold leading-4 text-gray-500 bg-white rounded-md border border-transparent transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
                                     >
-                                        {{ $page.props.auth.user.name }}
+                                        <span class="flex gap-2 items-center">
+                                            <span class="text-base">😊</span>
+                                            <span>{{ $page.props.auth.user.name }}</span>
+                                        </span>
                                         <svg
                                             class="w-4 h-4 -me-0.5 ms-2"
                                             xmlns="http://www.w3.org/2000/svg"
@@ -84,9 +98,6 @@
                             <template #content>
                                 <DropdownLink :href="route('profile.edit')">
                                     プロフィール
-                                </DropdownLink>
-                                <DropdownLink :href="route('settings.index')">
-                                    設定マニュアル
                                 </DropdownLink>
                                 <DropdownLink
                                     :href="route('logout')"
