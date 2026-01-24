@@ -188,7 +188,11 @@
                                 キャンセル
                             </button>
                             <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                                プロジェクトを作成
+                                <span v-if="form.processing" class="flex gap-2 items-center">
+                                    <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    <span>作成中...</span>
+                                </span>
+                                <span v-else>プロジェクトを作成</span>
                             </PrimaryButton>
                         </div>
                     </form>

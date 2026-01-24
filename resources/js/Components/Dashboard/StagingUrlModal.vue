@@ -57,9 +57,10 @@
                             <button
                                 @click="emit('submit')"
                                 :disabled="form.processing"
-                                class="px-4 py-2 text-sm text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                class="flex gap-2 items-center px-4 py-2 text-sm text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                             >
-                                {{ form.processing ? '保存中...' : '保存' }}
+                                <div v-if="form.processing" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span>{{ form.processing ? '保存中...' : '保存' }}</span>
                             </button>
                         </div>
                     </div>

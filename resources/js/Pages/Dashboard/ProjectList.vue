@@ -114,7 +114,14 @@
 
             <!-- 右メインコンテンツエリア -->
             <div class="overflow-y-auto flex-1 bg-indigo-50">
-                <div v-if="currentProject" class="p-10 mx-auto max-w-6xl">
+                <!-- プロジェクト選択中のローディング表示 -->
+                <div v-if="selectingProject" class="flex justify-center items-center h-full">
+                    <div class="text-center">
+                        <div class="inline-block w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                        <p class="mt-4 text-sm text-gray-600">プロジェクトを読み込み中...</p>
+                    </div>
+                </div>
+                <div v-else-if="currentProject" class="p-10 mx-auto max-w-6xl">
                     <div>
                         <div class="bg-white rounded-3xl">
                         <div class="px-6 py-4 text-gray-900">
@@ -126,21 +133,25 @@
                                 <div class="flex gap-1">
                                     <button
                                         @click="openEditModal"
-                                        class="p-2 text-gray-500 rounded-md transition-colors hover:text-indigo-600 hover:bg-indigo-50"
+                                        :disabled="editForm.processing"
+                                        class="p-2 text-gray-500 rounded-md transition-colors hover:text-indigo-600 hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                         title="編集"
                                     >
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg v-if="!editForm.processing" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
+                                        <div v-else class="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
                                     </button>
                                     <button
                                         @click="confirmDelete"
-                                        class="p-2 text-gray-500 rounded-md transition-colors hover:text-red-600 hover:bg-red-50"
+                                        :disabled="deletingProject"
+                                        class="p-2 text-gray-500 rounded-md transition-colors hover:text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                         title="削除"
                                     >
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg v-if="!deletingProject" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                         </svg>
+                                        <div v-else class="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
                                     </button>
                                 </div>
                             </div>
@@ -269,9 +280,10 @@
                                         ref="generateButton"
                                         @click="generateApprovalUrl"
                                         :disabled="isApprovalMessageEmpty || generatingUrl"
-                                        class="px-6 py-2 text-sm text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                        class="flex gap-2 items-center px-6 py-2 text-sm text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                                     >
-                                        {{ generatingUrl ? '生成中...' : (generatedApprovalUrl ? '承認URLを再生成' : '承認URLを生成') }}
+                                        <div v-if="generatingUrl" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        <span>{{ generatingUrl ? '生成中...' : (generatedApprovalUrl ? '承認URLを再生成' : '承認URLを生成') }}</span>
                                     </button>
                                 </div>
                             </div>
@@ -587,6 +599,8 @@ const generatedUrlCopied = ref(false);
 const showSuccessMessage = ref(false);
 const isRegenerating = ref(false);
 const isConvertingPaths = ref(false); // パス変換中フラグ
+const selectingProject = ref(false); // プロジェクト選択中フラグ
+const deletingProject = ref(false); // プロジェクト削除中フラグ
 
 const editor = useEditor({
     extensions: [
@@ -1014,10 +1028,16 @@ const submitEditForm = () => {
     if (!currentProject.value) return;
     
     editForm.patch(route('projects.update', currentProject.value.id), {
+        onStart: () => {
+            // フォーム送信開始時はform.processingが自動的にtrueになる
+        },
         onSuccess: () => {
             closeEditModal();
             // プロジェクト一覧を再読み込み
             router.reload({ only: ['projects', 'selectedProject'] });
+        },
+        onError: () => {
+            // エラー時も処理は継続
         }
     });
 };
@@ -1430,6 +1450,9 @@ const submitCreateForm = () => {
     createForm.post(route('projects.store'), {
         preserveState: false,
         preserveScroll: false,
+        onStart: () => {
+            // フォーム送信開始時はform.processingが自動的にtrueになる
+        },
         onSuccess: () => {
             // モーダルを閉じる（リダイレクトはInertiaが自動的に処理）
             closeCreateModal();
@@ -1485,6 +1508,9 @@ const submitStagingUrl = () => {
     if (!currentProject.value) return;
     
     stagingUrlForm.patch(route('projects.update', currentProject.value.id), {
+        onStart: () => {
+            // フォーム送信開始時はform.processingが自動的にtrueになる
+        },
         onSuccess: () => {
             showStagingUrlModal.value = false;
             stagingUrlForm.reset();
@@ -1494,12 +1520,19 @@ const submitStagingUrl = () => {
     });
 };
 
-const selectProject = (projectId) => {
-    selectedProjectId.value = projectId;
-    // プロジェクト選択時にwebhookステータスを確認
-    const project = props.projects.find(p => p.id === projectId);
-    if (project && project.github_owner && project.github_repo) {
-        checkWebhookStatus(project);
+const selectProject = async (projectId) => {
+    selectingProject.value = true;
+    try {
+        selectedProjectId.value = projectId;
+        // プロジェクト選択時にwebhookステータスを確認
+        const project = props.projects.find(p => p.id === projectId);
+        if (project && project.github_owner && project.github_repo) {
+            await checkWebhookStatus(project);
+        }
+        // 少し遅延を入れてローディング表示を見せる（UX向上）
+        await new Promise(resolve => setTimeout(resolve, 200));
+    } finally {
+        selectingProject.value = false;
     }
 };
 
@@ -1579,7 +1612,11 @@ const closeSuccessMessage = () => {
 const confirmDelete = () => {
     if (!currentProject.value) return;
     if (confirm(`プロジェクト「${currentProject.value.name}」を削除してもよろしいですか？\nこの操作は取り消せません。`)) {
+        deletingProject.value = true;
         router.delete(route('projects.destroy', currentProject.value.id), {
+            onStart: () => {
+                deletingProject.value = true;
+            },
             onSuccess: () => {
                 // 削除後、最初のプロジェクトを選択
                 if (props.projects.length > 1) {
@@ -1588,6 +1625,9 @@ const confirmDelete = () => {
                         selectedProjectId.value = remainingProjects[0].id;
                     }
                 }
+            },
+            onFinish: () => {
+                deletingProject.value = false;
             }
         });
     }

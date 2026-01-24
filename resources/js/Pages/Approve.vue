@@ -59,8 +59,9 @@
                     <p class="mb-6 text-sm font-semibold text-center text-gray-700">問題がなければボタンをクリックしてください</p>
                     <form @submit.prevent="submit">
                         <div class="flex justify-center">
-                            <PrimaryButton :disabled="processing" class="px-6 py-3 text-base">
-                                問題ないので公開する
+                            <PrimaryButton :disabled="form.processing" class="flex gap-2 items-center px-6 py-3 text-base">
+                                <div v-if="form.processing" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span>{{ form.processing ? '処理中...' : '問題ないので公開する' }}</span>
                             </PrimaryButton>
                         </div>
                     </form>
@@ -90,8 +91,6 @@ const props = defineProps({
 const form = useForm({
     msg: props.approvalMessage?.id || null,
 });
-
-const processing = false;
 
 // カスタムレンダラーを作成してすべてのリンクを別タブで開く
 marked.use({

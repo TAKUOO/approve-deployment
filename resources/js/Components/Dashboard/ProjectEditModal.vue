@@ -235,7 +235,11 @@
                             キャンセル
                         </button>
                         <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                            更新
+                            <span v-if="form.processing" class="flex gap-2 items-center">
+                                <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span>更新中...</span>
+                            </span>
+                            <span v-else>更新</span>
                         </PrimaryButton>
                     </div>
                 </form>
