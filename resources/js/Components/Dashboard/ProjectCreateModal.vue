@@ -51,7 +51,7 @@
                             <select
                                 id="create_organization"
                                 v-model="selectedOrganizationModel"
-                                class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                class="block mt-1 w-full rounded-xl p-3 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 required
                             >
                                 <option value="" disabled>組織を選択してください</option>
@@ -90,7 +90,7 @@
                             <select
                                 id="create_repository"
                                 v-model="selectedRepositoryModel"
-                                class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                class="block mt-1 w-full rounded-xl p-3 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 :disabled="!selectedOrganization || repositories.length === 0"
                                 required
                             >
@@ -128,7 +128,7 @@
                             <select
                                 id="create_github_workflow_id"
                                 v-model="form.github_workflow_id"
-                                class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                class="block mt-1 w-full rounded-xl p-3 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 :disabled="loadingWorkflows || workflows.length === 0"
                             >
                                 <option value="">後で設定する</option>
@@ -168,7 +168,7 @@
                                 id="create_github_branch"
                                 v-model="form.github_branch"
                                 list="create-branch-list"
-                                class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                class="block mt-1 w-full rounded-xl p-3 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 placeholder="main"
                             />
                             <datalist id="create-branch-list">

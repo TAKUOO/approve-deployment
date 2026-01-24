@@ -75,7 +75,7 @@
                             id="edit_organization"
                             v-model="selectedOrganizationModel"
                             disabled
-                            class="block mt-1 w-full rounded-md border-gray-300 shadow-sm bg-gray-100 text-gray-500 cursor-not-allowed"
+                            class="block mt-1 w-full rounded-xl p-3 border-gray-300 shadow-sm bg-gray-100 text-gray-500 cursor-not-allowed"
                         >
                             <option value="">後で設定する</option>
                             <option value="personal">個人リポジトリ</option>
@@ -112,7 +112,7 @@
                             id="edit_repository"
                             v-model="selectedRepositoryModel"
                             disabled
-                            class="block mt-1 w-full rounded-md border-gray-300 shadow-sm bg-gray-100 text-gray-500 cursor-not-allowed"
+                            class="block mt-1 w-full rounded-xl p-3 border-gray-300 shadow-sm bg-gray-100 text-gray-500 cursor-not-allowed"
                         >
                             <option :value="null" disabled>
                                 {{ repositories.length === 0 ? 'リポジトリを読み込み中...' : 'リポジトリを選択してください' }}
@@ -149,7 +149,7 @@
                         <select
                             id="edit_github_workflow_id"
                             v-model="form.github_workflow_id"
-                            class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            class="block mt-1 w-full rounded-xl p-3 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                             :disabled="loadingWorkflows || workflows.length === 0"
                         >
                             <option value="">後で設定する</option>
@@ -190,7 +190,7 @@
                                 id="edit_github_branch"
                                 v-model="form.github_branch"
                                 list="edit-branch-list"
-                                class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                class="block mt-1 w-full rounded-xl p-3 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 placeholder="main"
                             />
                             <datalist id="edit-branch-list">

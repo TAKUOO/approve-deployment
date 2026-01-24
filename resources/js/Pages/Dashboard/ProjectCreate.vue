@@ -56,7 +56,7 @@
                                         id="organization"
                                         v-model="selectedOrganization"
                                         @change="onOrganizationChange"
-                                        class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="block mt-1 w-full rounded-xl p-3 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                         required
                                     >
                                         <option value="" disabled>組織を選択してください</option>
@@ -96,7 +96,7 @@
                                         id="repository"
                                         v-model="selectedRepository"
                                         @change="onRepositoryChange"
-                                        class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="block mt-1 w-full rounded-xl p-3 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                         :disabled="!selectedOrganization || repositories.length === 0"
                                         required
                                     >
@@ -137,7 +137,7 @@
                                         v-if="!loadingWorkflows && workflows.length > 0"
                                         id="github_workflow_id"
                                         v-model="form.github_workflow_id"
-                                        class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="block mt-1 w-full rounded-xl p-3 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     >
                                         <option value="">後で設定する</option>
                                         <option v-for="workflow in workflows" :key="workflow.id" :value="String(workflow.id)">
@@ -193,7 +193,7 @@
                                             id="github_branch"
                                             v-model="form.github_branch"
                                             list="branch-list"
-                                            class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="block mt-1 w-full rounded-xl p-3 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                             placeholder="main"
                                         />
                                         <!-- ブランチ候補のdatalist（APIから取得できた場合のみ表示） -->

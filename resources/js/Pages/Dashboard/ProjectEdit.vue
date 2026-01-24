@@ -44,7 +44,7 @@
                                         id="organization"
                                         v-model="selectedOrganization"
                                         @change="onOrganizationChange"
-                                        class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="block mt-1 w-full rounded-xl p-3 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                     >
                                         <option value="" :selected="!project.github_owner">後で設定する</option>
                                         <option value="personal" :selected="project.github_owner && !organizations.find(o => o.login === project.github_owner)">個人リポジトリ</option>
@@ -61,7 +61,7 @@
                                         id="repository"
                                         v-model="selectedRepository"
                                         @change="onRepositoryChange"
-                                        class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="block mt-1 w-full rounded-xl p-3 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                         :disabled="repositories.length === 0"
                                     >
                                         <option :value="null" disabled>
@@ -98,7 +98,7 @@
                                     <select
                                         id="github_workflow_id"
                                         v-model="form.github_workflow_id"
-                                        class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        class="block mt-1 w-full rounded-xl p-3 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                         :disabled="loadingWorkflows || workflows.length === 0"
                                     >
                                         <option value="">後で設定する</option>
@@ -139,7 +139,7 @@
                                             id="github_branch"
                                             v-model="form.github_branch"
                                             list="branch-list"
-                                            class="block mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            class="block mt-1 w-full rounded-xl p-3 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                             placeholder="main"
                                         />
                                         <!-- ブランチ候補のdatalist（APIから取得できた場合のみ表示） -->
