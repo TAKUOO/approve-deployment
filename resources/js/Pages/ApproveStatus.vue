@@ -277,7 +277,10 @@ const estimatedTime = computed(() => {
 // ステータスをポーリングで更新
 const pollStatus = async () => {
     try {
-        const response = await fetch(`/api/deploy-logs/${deployLogData.value.id}?token=${props.token}`, {
+        const query = props.deployLog?.access_token
+            ? `access_token=${encodeURIComponent(props.deployLog.access_token)}`
+            : `token=${encodeURIComponent(props.token)}`;
+        const response = await fetch(`/api/deploy-logs/${deployLogData.value.id}?${query}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',

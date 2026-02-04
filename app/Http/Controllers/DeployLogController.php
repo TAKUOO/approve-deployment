@@ -11,20 +11,26 @@ class DeployLogController extends Controller
 {
     public function show(Request $request, DeployLog $deployLog)
     {
-        // 承認トークンで保護
-        $token = $request->query('token');
-        if (!$token) {
-            return response()->json(['error' => 'Token required'], 401);
-        }
+        // ステータス閲覧用のアクセストークン（承認後に approve_token が無効化されるため）
+        $accessToken = $request->query('access_token');
+        if ($accessToken && hash_equals((string) $deployLog->access_token, (string) $accessToken)) {
+            // OK: deploy_log 単位のトークンで認可
+        } else {
+            // 承認トークンで保護（従来互換）
+            $token = $request->query('token');
+            if (!$token) {
+                return response()->json(['error' => 'Token required'], 401);
+            }
         
-        $project = Project::where('approve_token', $token)
-            ->where(function ($query) {
-                $query->whereNull('approve_token_expires_at')
-                      ->orWhere('approve_token_expires_at', '>', now());
-            })
-            ->first();
-        if (!$project || $deployLog->project_id !== $project->id) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+            $project = Project::where('approve_token', $token)
+                ->where(function ($query) {
+                    $query->whereNull('approve_token_expires_at')
+                        ->orWhere('approve_token_expires_at', '>', now());
+                })
+                ->first();
+            if (!$project || $deployLog->project_id !== $project->id) {
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
         }
         
         // デプロイログと関連データを取得

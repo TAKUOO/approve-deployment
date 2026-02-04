@@ -22,6 +22,7 @@ class DeployController extends Controller
             'project_id' => $project->id,
             'status' => 'pending',
             'started_at' => now(),
+            'access_token' => bin2hex(random_bytes(32)),
             'approval_message_id' => $approvalMessageId,
         ]);
 

@@ -60,7 +60,7 @@
                     <form @submit.prevent="submit">
                         <div class="flex justify-center">
                             <PrimaryButton :disabled="form.processing" class="flex gap-2 items-center px-6 py-3 text-base">
-                                <div v-if="form.processing" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <div v-if="form.processing" class="w-4 h-4 rounded-full border-2 border-white animate-spin border-t-transparent"></div>
                                 <span>{{ form.processing ? '処理中...' : '問題ないので公開する' }}</span>
                             </PrimaryButton>
                         </div>
@@ -112,8 +112,12 @@ const formattedMessage = computed(() => {
         return '';
     }
 
+    const rawStagingUrl = props.project?.staging_url;
+    const stagingUrl = (rawStagingUrl != null && typeof rawStagingUrl === 'string')
+        ? rawStagingUrl.replace(/\/$/, '') // 末尾のスラッシュを削除
+        : null;
+
     let message = props.approvalMessage.message;
-    const stagingUrl = props.project.staging_url.replace(/\/$/, ''); // 末尾のスラッシュを削除
 
     if (isHtmlMessage(message)) {
         return DOMPurify.sanitize(message, {
@@ -121,25 +125,28 @@ const formattedMessage = computed(() => {
         });
     }
 
-    // 改善ページURLのパターンを検出してリンク化
-    // 例: "/about" や "改善ページ: /about, /products/item-1"
-    message = message.replace(/(?:改善ページ|改善したページ|ページ)[:：]\s*([^\n]+)/g, (match, paths) => {
-        const pageLinks = paths.split(',').map(path => {
-            const trimmedPath = path.trim();
-            if (trimmedPath.startsWith('/')) {
-                const fullUrl = stagingUrl + trimmedPath;
-                return `<a href="${fullUrl}" target="_blank" class="text-blue-600 underline hover:text-blue-800">${stagingUrl}${trimmedPath}</a>`;
-            }
-            return trimmedPath;
-        }).join(', ');
-        return match.replace(paths, pageLinks);
-    });
+    // staging_url がある場合のみ改善ページURLをリンク化
+    if (stagingUrl) {
+        // 改善ページURLのパターンを検出してリンク化
+        // 例: "/about" や "改善ページ: /about, /products/item-1"
+        message = message.replace(/(?:改善ページ|改善したページ|ページ)[:：]\s*([^\n]+)/g, (match, paths) => {
+            const pageLinks = paths.split(',').map(path => {
+                const trimmedPath = path.trim();
+                if (trimmedPath.startsWith('/')) {
+                    const fullUrl = stagingUrl + trimmedPath;
+                    return `<a href="${fullUrl}" target="_blank" class="text-blue-600 underline hover:text-blue-800">${stagingUrl}${trimmedPath}</a>`;
+                }
+                return trimmedPath;
+            }).join(', ');
+            return match.replace(paths, pageLinks);
+        });
 
-    // 単独のパス（行頭が "/" で始まる）もリンク化
-    message = message.replace(/^(\s*)(\/[^\s\n]+)/gm, (match, indent, path) => {
-        const fullUrl = stagingUrl + path;
-        return `${indent}<a href="${fullUrl}" target="_blank" class="text-blue-600 underline hover:text-blue-800">${stagingUrl}${path}</a>`;
-    });
+        // 単独のパス（行頭が "/" で始まる）もリンク化
+        message = message.replace(/^(\s*)(\/[^\s\n]+)/gm, (match, indent, path) => {
+            const fullUrl = stagingUrl + path;
+            return `${indent}<a href="${fullUrl}" target="_blank" class="text-blue-600 underline hover:text-blue-800">${stagingUrl}${path}</a>`;
+        });
+    }
 
     const html = marked.parse(message);
     // DOMPurifyでtarget="_blank"とrel="noopener noreferrer"を許可
