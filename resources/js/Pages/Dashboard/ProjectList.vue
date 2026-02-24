@@ -140,7 +140,6 @@
                             <template #trigger>
                                 <button
                                     type="button"
-                                    @click.stop
                                     :class="[
                                         'flex items-center w-full font-medium text-gray-600 transition-colors hover:text-gray-900 hover:bg-gray-50 focus:outline-none rounded-xl',
                                         isCollapsed ? 'justify-center px-2 py-3' : 'justify-between px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm mx-1 md:mx-0'
