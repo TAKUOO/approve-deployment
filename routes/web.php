@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\ApprovalCommentController;
 
 Route::get('/', function () {
     // ログイン済みの場合はプロジェクト一覧にリダイレクト
@@ -81,9 +82,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/create', [\App\Http\Controllers\ProjectController::class, 'create'])->name('projects.create');
     Route::post('/projects', [\App\Http\Controllers\ProjectController::class, 'store'])->name('projects.store');
     Route::get('/projects/{project}/edit', [\App\Http\Controllers\ProjectController::class, 'edit'])->name('projects.edit');
+    Route::get('/projects/{project}/improve', [\App\Http\Controllers\ProjectController::class, 'improve'])->name('projects.improve');
     Route::patch('/projects/{project}', [\App\Http\Controllers\ProjectController::class, 'update'])->name('projects.update');
     Route::delete('/projects/{project}', [\App\Http\Controllers\ProjectController::class, 'destroy'])->name('projects.destroy');
     Route::post('/projects/{project}/generate-approval-url', [\App\Http\Controllers\ProjectController::class, 'generateApprovalUrl'])->name('projects.generate-approval-url');
+    Route::post('/projects/{project}/approval-messages', [\App\Http\Controllers\ProjectController::class, 'createApprovalMessage'])->name('projects.approval-messages.store');
+
+    // Approval comments (project owner)
+    Route::get('/projects/{project}/comments', [ApprovalCommentController::class, 'indexForProject'])->name('projects.comments.index');
+    Route::post('/projects/{project}/comments', [ApprovalCommentController::class, 'storeForProject'])->name('projects.comments.store');
+    Route::patch('/projects/{project}/comments/{comment}', [ApprovalCommentController::class, 'updateForProject'])->name('projects.comments.update');
+    Route::delete('/projects/{project}/comments/{comment}', [ApprovalCommentController::class, 'destroyForProject'])->name('projects.comments.destroy');
     
     // GitHub API Proxy
     Route::get('/api/github/organizations', [\App\Http\Controllers\ProjectController::class, 'getOrganizations'])->name('api.github.organizations');
@@ -103,6 +112,13 @@ Route::get('/approve/{token}', [\App\Http\Controllers\ApproveController::class, 
 Route::post('/approve/{token}', [\App\Http\Controllers\ApproveController::class, 'approve'])
     ->middleware('throttle:30,10') // 10分間に30回まで
     ->name('approve.approve');
+// Approval comments (public)
+Route::get('/approve/{token}/comments', [ApprovalCommentController::class, 'indexForApproval'])
+    ->middleware('throttle:60,1')
+    ->name('approve.comments.index');
+Route::post('/approve/{token}/comments', [ApprovalCommentController::class, 'storeForApproval'])
+    ->middleware('throttle:30,10')
+    ->name('approve.comments.store');
 Route::get('/approve/{token}/status/{deployLog}', [\App\Http\Controllers\ApproveController::class, 'status'])
     ->middleware('throttle:60,1') // 1分間に60回まで
     ->name('approve.status');

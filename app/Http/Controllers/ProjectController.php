@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ApprovalMessage;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -307,6 +308,57 @@ class ProjectController extends Controller
         return Inertia::render('Dashboard/ProjectEdit', [
             'project' => $project,
         ]);
+    }
+
+    public function improve(Request $request, Project $project): Response
+    {
+        if ($project->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $approvalMessageId = null;
+        if ($request->has('msg')) {
+            $message = ApprovalMessage::where('id', $request->query('msg'))
+                ->where('project_id', $project->id)
+                ->first();
+            $approvalMessageId = $message?->id;
+        }
+
+        if (!$approvalMessageId) {
+            $latest = ApprovalMessage::where('project_id', $project->id)
+                ->latest()
+                ->first();
+            $approvalMessageId = $latest?->id;
+        }
+
+        return Inertia::render('Dashboard/ProjectImprove', [
+            'project' => [
+                'id' => $project->id,
+                'name' => $project->name,
+                'staging_url' => $project->staging_url,
+            ],
+            'approvalMessageId' => $approvalMessageId,
+        ]);
+    }
+
+    public function createApprovalMessage(Request $request, Project $project)
+    {
+        if ($project->user_id !== Auth::id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'message' => 'nullable|string|max:5000',
+        ]);
+
+        $approvalMessage = ApprovalMessage::create([
+            'project_id' => $project->id,
+            'message' => $validated['message'] ?? '',
+        ]);
+
+        return response()->json([
+            'message_id' => $approvalMessage->id,
+        ], 201);
     }
 
     public function update(Request $request, Project $project)
@@ -673,25 +725,34 @@ class ProjectController extends Controller
             }
 
             $validated = $request->validate([
-                'message' => 'required|string|max:5000',
+                'message' => 'nullable|string|max:5000',
+                'message_id' => 'nullable|integer',
             ]);
 
-            // メッセージを保存
-            try {
-                $approvalMessage = \App\Models\ApprovalMessage::create([
-                    'project_id' => $project->id,
-                    'message' => $validated['message'],
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Failed to create ApprovalMessage', [
-                    'project_id' => $project->id,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                ]);
-                return response()->json([
-                    'error' => '承認メッセージの保存に失敗しました',
-                    'details' => $e->getMessage(),
-                ], 500);
+            $approvalMessage = null;
+            if (!empty($validated['message_id'])) {
+                $approvalMessage = ApprovalMessage::where('id', $validated['message_id'])
+                    ->where('project_id', $project->id)
+                    ->first();
+            }
+
+            if (!$approvalMessage) {
+                try {
+                    $approvalMessage = ApprovalMessage::create([
+                        'project_id' => $project->id,
+                        'message' => $validated['message'] ?? '',
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to create ApprovalMessage', [
+                        'project_id' => $project->id,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString(),
+                    ]);
+                    return response()->json([
+                        'error' => '承認メッセージの保存に失敗しました',
+                        'details' => $e->getMessage(),
+                    ], 500);
+                }
             }
 
             $tokenNeedsRefresh = empty($project->approve_token);

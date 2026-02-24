@@ -3,7 +3,7 @@
         <title>承認依頼 - AutoRelease</title>
         <meta name="robots" content="noindex, nofollow">
     </Head>
-    
+
     <div class="flex justify-center p-0 min-h-screen bg-indigo-50 sm:px-4 sm:py-12 lg:px-8">
         <div class="p-4 space-y-12 w-full max-w-4xl bg-white rounded-3xl sm:p-8">
             <div>
@@ -13,8 +13,7 @@
                 <p class="mt-4 text-sm text-center text-gray-600">
                     変更内容を確認して、実際のサイト（公開中のサイト）に反映するかどうかを承認できます。
                 </p>
-                
-                <!-- 重要な注意書き -->
+
                 <div class="p-4 mt-6 bg-yellow-50 rounded-md border-l-4 border-yellow-400">
                     <div class="flex">
                         <div class="flex-shrink-0">
@@ -32,15 +31,30 @@
             </div>
 
             <div class="mt-8 space-y-16">
-                <div v-if="approvalMessage">
-                    <div class="overflow-hidden bg-white rounded-lg border border-indigo-500">
-                        <div class="px-4 py-3 bg-indigo-500 border-b border-indigo-600">
-                            <h3 class="text-sm font-semibold text-white">改善内容</h3>
-                        </div>
-                        <div class="p-4 bg-white">
-                            <div class="text-sm markdown-body" v-html="formattedMessage"></div>
-                        </div>
+                <div class="space-y-3">
+                    <h3 class="text-sm font-semibold text-gray-700">改善内容</h3>
+                    <div class="text-sm">
+                        <a
+                            v-if="project?.staging_url"
+                            :href="project.staging_url"
+                            target="_blank"
+                            class="text-indigo-600 underline break-all"
+                        >
+                            {{ project.staging_url }}
+                        </a>
+                        <span v-else class="text-gray-400">URLが未設定です。</span>
                     </div>
+                    <PinnedReviewCanvas
+                        :review-url="project?.staging_url || ''"
+                        :approval-message-id="approvalMessage?.id || null"
+                        :list-route="{ name: 'approve.comments.index', params: { token } }"
+                        :create-route="{ name: 'approve.comments.store', params: { token } }"
+                        :can-edit="false"
+                        :can-create="true"
+                        :require-author-name="true"
+                        :poll-interval-ms="5000"
+                        frame-height="calc(100vh - 320px)"
+                    />
                 </div>
 
                 <div v-if="$page.props.flash?.success" class="p-4 bg-green-50 rounded-md">
@@ -74,13 +88,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import AppFooter from '@/Components/AppFooter.vue';
-import { marked } from 'marked';
-import DOMPurify from 'dompurify';
-import 'github-markdown-css/github-markdown-light.css';
+import PinnedReviewCanvas from '@/Components/Review/PinnedReviewCanvas.vue';
 
 const props = defineProps({
     project: Object,
@@ -92,195 +103,7 @@ const form = useForm({
     msg: props.approvalMessage?.id || null,
 });
 
-// カスタムレンダラーを作成してすべてのリンクを別タブで開く
-marked.use({
-    gfm: true,
-    breaks: true,
-    renderer: {
-        link({ href, title, text }) {
-            const titleAttr = title ? ` title="${title}"` : '';
-            return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer" class="text-blue-600 underline hover:text-blue-800">${text}</a>`;
-        },
-    },
-});
-
-const isHtmlMessage = (message) => /<\/?[a-z][\s\S]*>/i.test(message);
-
-// メッセージをフォーマット（改善ページURLを自動リンク化 + GitHub風マークダウン）
-const formattedMessage = computed(() => {
-    if (!props.approvalMessage || !props.approvalMessage.message) {
-        return '';
-    }
-
-    const rawStagingUrl = props.project?.staging_url;
-    const stagingUrl = (rawStagingUrl != null && typeof rawStagingUrl === 'string')
-        ? rawStagingUrl.replace(/\/$/, '') // 末尾のスラッシュを削除
-        : null;
-
-    let message = props.approvalMessage.message;
-
-    if (isHtmlMessage(message)) {
-        return DOMPurify.sanitize(message, {
-            ADD_ATTR: ['target', 'rel'],
-        });
-    }
-
-    // staging_url がある場合のみ改善ページURLをリンク化
-    if (stagingUrl) {
-        // 改善ページURLのパターンを検出してリンク化
-        // 例: "/about" や "改善ページ: /about, /products/item-1"
-        message = message.replace(/(?:改善ページ|改善したページ|ページ)[:：]\s*([^\n]+)/g, (match, paths) => {
-            const pageLinks = paths.split(',').map(path => {
-                const trimmedPath = path.trim();
-                if (trimmedPath.startsWith('/')) {
-                    const fullUrl = stagingUrl + trimmedPath;
-                    return `<a href="${fullUrl}" target="_blank" class="text-blue-600 underline hover:text-blue-800">${stagingUrl}${trimmedPath}</a>`;
-                }
-                return trimmedPath;
-            }).join(', ');
-            return match.replace(paths, pageLinks);
-        });
-
-        // 単独のパス（行頭が "/" で始まる）もリンク化
-        message = message.replace(/^(\s*)(\/[^\s\n]+)/gm, (match, indent, path) => {
-            const fullUrl = stagingUrl + path;
-            return `${indent}<a href="${fullUrl}" target="_blank" class="text-blue-600 underline hover:text-blue-800">${stagingUrl}${path}</a>`;
-        });
-    }
-
-    const html = marked.parse(message);
-    // DOMPurifyでtarget="_blank"とrel="noopener noreferrer"を許可
-    return DOMPurify.sanitize(html, {
-        ADD_ATTR: ['target', 'rel'],
-    }); // XSS対策
-});
-
 const submit = () => {
     form.post(route('approve.approve', props.token));
 };
 </script>
-
-<style scoped>
-.markdown-body {
-    background-color: transparent;
-    line-height: 1.75;
-}
-
-/* 段落の余白 */
-.markdown-body p {
-    margin: 1rem 0;
-}
-
-/* 見出しの余白 */
-.markdown-body h1,
-.markdown-body h2,
-.markdown-body h3,
-.markdown-body h4,
-.markdown-body h5,
-.markdown-body h6 {
-    margin: 1.5rem 0 1rem 0;
-    font-weight: 600;
-}
-
-.markdown-body h1 {
-    font-size: 1.875rem;
-}
-
-.markdown-body h2 {
-    font-size: 1.5rem;
-}
-
-.markdown-body h3 {
-    font-size: 1.25rem;
-}
-
-.markdown-body h4 {
-    font-size: 1.125rem;
-}
-
-/* リストの余白 */
-.markdown-body ul,
-.markdown-body ol {
-    list-style-type: disc;
-    list-style-position: inside;
-    padding-left: 1.25rem;
-    margin: 1rem 0;
-}
-
-.markdown-body ol {
-    list-style-type: decimal;
-    padding-left: 1.5rem;
-}
-
-.markdown-body li {
-    margin: 0.5rem 0;
-    line-height: 1.75;
-}
-
-/* リスト内の段落 */
-.markdown-body li p {
-    margin: 0.5rem 0;
-}
-</style>
-
-<style>
-/* コードブロックの背景色を調整（github-markdown-cssを上書き） */
-.markdown-body pre {
-    background-color: rgb(238, 242, 255) !important; /* indigo-50 */
-    border-radius: 0.375rem !important;
-    padding: 1rem !important;
-    margin: 1.25rem 0 !important;
-    overflow-x: auto;
-}
-
-.markdown-body code {
-    background-color: rgb(238, 242, 255) !important; /* indigo-50 */
-    border: 1px solid rgb(165, 180, 252) !important; /* indigo-300 */
-    border-radius: 0.25rem !important;
-    padding: 0.125rem 0.375rem !important;
-    font-size: 0.875em;
-    margin: 0 0.125rem;
-}
-
-.markdown-body pre code {
-    background-color: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-}
-
-/* テーブルのスタイル調整 */
-.markdown-body table {
-    background-color: white !important;
-    border: 1px solid rgb(165, 180, 252) !important; /* indigo-300 */
-    border-radius: 0.375rem !important;
-    margin: 1.25rem 0 !important;
-}
-
-.markdown-body table th,
-.markdown-body table td {
-    border: 1px solid rgb(165, 180, 252) !important; /* indigo-300 */
-}
-
-.markdown-body table th {
-    background-color: rgb(238, 242, 255) !important; /* indigo-50 */
-}
-
-/* 引用ブロックのスタイル調整 */
-.markdown-body blockquote {
-    background-color: rgb(238, 242, 255) !important; /* indigo-50 */
-    border-left: 4px solid rgb(99, 102, 241) !important; /* indigo-500 */
-    padding: 0.75rem 1rem !important;
-    margin: 1.25rem 0 !important;
-}
-
-/* 水平線の余白 */
-.markdown-body hr {
-    margin: 1.5rem 0 !important;
-    border-color: rgb(199, 210, 254) !important; /* indigo-200 */
-}
-
-/* リンクのスタイル */
-.markdown-body a {
-    margin: 0 0.125rem;
-}
-</style>

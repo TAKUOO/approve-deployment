@@ -2,98 +2,171 @@
     <Head title="プロジェクト一覧 - AutoRelease" />
     
     <AuthenticatedLayout>
-        <div class="flex h-screen">
-            <!-- 左サイドバー（固定） -->
-            <div class="flex flex-col bg-white border-r border-gray-200 w-70">
+        <div class="flex h-screen bg-indigo-50 relative">
+            <!-- オーバーレイ（メニューが開いている時のみ表示） -->
+            <div
+                v-if="isMenuOpen"
+                @click="toggleMenu"
+                class="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden transition-opacity"
+            ></div>
+
+            <!-- ハンバーガーメニューボタン（モバイルのみ表示） -->
+            <button
+                @click="toggleMenu"
+                class="fixed top-4 left-4 z-50 p-2 bg-white rounded-xl shadow-lg border border-gray-200 md:hidden transition-transform"
+                :class="{ 'rotate-90': isMenuOpen }"
+            >
+                <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path v-if="!isMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+
+            <!-- 左サイドバー（フローティングカード風） -->
+            <div
+                @dblclick="toggleCollapse"
+                :class="[
+                    'fixed md:relative flex flex-col m-2 md:m-4 bg-white rounded-3xl shadow-lg border border-gray-200 flex-shrink-0 z-40 md:z-auto',
+                    'transition-all duration-300 ease-in-out',
+                    'top-20 md:top-auto h-[calc(100vh-5.5rem)] md:h-auto',
+                    isMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+                    isCollapsed ? 'w-16 md:w-16' : 'w-56 md:w-64 lg:w-72'
+                ]"
+            >
                 <!-- ロゴ（上部） -->
-                <div class="px-4 py-6">
-                    <Link :href="route('projects.index')" class="flex items-center shrink-0">
-                        <ApplicationLogo />
+                <div @dblclick.stop :class="['border-b border-gray-200', isCollapsed ? 'px-2 py-4' : 'px-3 py-4 md:px-4 md:py-5']">
+                    <Link :href="route('projects.index')" class="flex items-center shrink-0 justify-center">
+                        <ApplicationLogo v-if="!isCollapsed" />
+                        <div v-else class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                            <span class="text-xs font-bold text-indigo-600">A</span>
+                        </div>
                     </Link>
                 </div>
 
-                <!-- サイドバーヘッダー -->
-                <div class="px-4 py-2">
+                <!-- 新規プロジェクトボタン -->
+                <div @dblclick.stop :class="['border-b border-gray-200', isCollapsed ? 'px-2 py-2' : 'px-3 py-2 md:px-4 md:py-3']">
                     <button 
-                        @click="openCreateModal"
-                        class="flex gap-1 justify-center items-center px-4 py-3 w-full text-sm font-bold text-indigo-600 rounded-3xl border border-indigo-100 border-solid transition duration-150 ease-in-out hover:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400"
+                        @click.stop="() => { openCreateModal(); if (window.innerWidth < 768) isMenuOpen.value = false; }"
+                        :class="[
+                            'flex items-center justify-center w-full font-semibold text-white rounded-xl bg-indigo-600 transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
+                            isCollapsed ? 'px-2 py-2' : 'gap-2 px-3 py-2 md:px-4 md:py-2.5 text-xs md:text-sm'
+                        ]"
                     >
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
-                        プロジェクトの新規追加
+                        <span v-if="!isCollapsed" class="truncate">新規プロジェクト</span>
                     </button>
                 </div>
 
                 <!-- プロジェクトリスト（スクロール可能） -->
-                <div class="overflow-y-auto flex-1">
-                    <div v-if="projects.length === 0" class="p-4 text-center">
-                        <p class="text-sm text-gray-500">プロジェクトがありません</p>
-                        </div>
-                    <div v-else class="p-2">
+                <div class="overflow-y-auto flex-1 py-2">
+                    <div v-if="projects.length === 0" :class="['py-8 text-center', isCollapsed ? 'px-2' : 'px-3 md:px-4']">
+                        <p v-if="!isCollapsed" class="text-xs md:text-sm text-gray-500">プロジェクトがありません</p>
+                        <svg v-else class="w-5 h-5 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        </svg>
+                    </div>
+                    <div v-else :class="isCollapsed ? 'px-1.5' : 'px-1.5 md:px-2'">
                         <div
-                                v-for="project in projects"
-                                :key="project.id"
-                            @click="selectProject(project.id)"
+                            v-for="project in projects"
+                            :key="project.id"
+                            @click.stop="selectProjectWithMenuClose(project.id)"
+                            @dblclick.stop
                             :class="[
-                                'px-4 py-2 rounded-xl cursor-pointer transition-colors mb-1',
+                                'group relative flex items-center rounded-xl cursor-pointer transition-colors mb-1',
+                                isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-2 md:gap-3 px-2 md:px-3 py-2 md:py-2.5',
                                 selectedProjectId === project.id 
-                                    ? 'bg-indigo-50 text-gray-800 font-bold' 
-                                    : 'text-gray-600 hover:bg-gray-50 font-semibold'
+                                    ? 'bg-indigo-50 text-indigo-700 font-semibold' 
+                                    : 'text-gray-700 hover:bg-gray-50 font-medium'
                             ]"
+                            :title="isCollapsed ? project.name : ''"
                         >
-                            <div class="flex gap-2 justify-between items-center">
-                                <span class="block text-sm truncate">
-                                    {{ project.name }}
-                                </span>
-                                <span
-                                    v-if="isProjectSetupIncomplete(project)"
-                                    class="flex-shrink-0 px-2 py-0.5 text-xs text-yellow-800 bg-yellow-100 rounded-full"
-                                >
-                                    未設定
-                                </span>
+                            <!-- アクティブインジケーター -->
+                            <div 
+                                v-if="selectedProjectId === project.id && !isCollapsed"
+                                class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 md:h-6 bg-indigo-600 rounded-r"
+                            ></div>
+                            
+                            <!-- プロジェクトアイコン -->
+                            <svg 
+                                class="w-4 h-4 flex-shrink-0" 
+                                :class="selectedProjectId === project.id ? 'text-indigo-600' : 'text-gray-500 group-hover:text-gray-700'"
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                            </svg>
+                            
+                            <!-- プロジェクト名 -->
+                            <div v-if="!isCollapsed" class="flex-1 min-w-0">
+                                <div class="flex gap-1.5 md:gap-2 items-center">
+                                    <span class="block text-xs md:text-sm truncate">
+                                        {{ project.name }}
+                                    </span>
+                                    <span
+                                        v-if="isProjectSetupIncomplete(project)"
+                                        class="flex-shrink-0 w-1.5 h-1.5 bg-yellow-400 rounded-full"
+                                        title="設定未完了"
+                                    ></span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- ユーザー設定（下部固定） -->
-                <div class="flex flex-col flex-shrink-0 border-t border-gray-200">
+                <div @dblclick.stop class="flex flex-col flex-shrink-0 border-t border-gray-200">
                     <!-- 設定マニュアルリンク -->
                     <Link
                         :href="route('settings.index')"
-                        class="flex gap-2 items-center px-2 py-3 text-sm font-semibold text-gray-600 transition duration-150 ease-in-out hover:text-gray-900 hover:bg-gray-50"
+                        @click.stop="() => { if (window.innerWidth < 768) isMenuOpen.value = false; }"
+                        :class="[
+                            'flex items-center font-medium text-gray-600 transition-colors hover:text-gray-900 hover:bg-gray-50 rounded-xl',
+                            isCollapsed ? 'justify-center px-2 py-3' : 'gap-2 md:gap-3 px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm mx-1 md:mx-0'
+                        ]"
+                        :title="isCollapsed ? '設定マニュアル' : ''"
                     >
-                        <span class="text-base">📖</span>
-                        <span>設定マニュアル</span>
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        <span v-if="!isCollapsed" class="truncate">設定マニュアル</span>
                     </Link>
-                    <!-- 区切り線 -->
-                    <div class="border-t border-gray-200"></div>
+                    
                     <!-- ユーザードロップダウン -->
                     <div class="relative w-full">
                         <Dropdown align="right" width="48" :bottom="true">
                             <template #trigger>
                                 <button
-                                        type="button"
-                                        class="flex justify-between items-center px-2 py-2 w-full text-sm font-semibold leading-4 text-gray-500 bg-white rounded-md border border-transparent transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
-                                    >
-                                        <span class="flex gap-2 items-center">
-                                            <span class="text-base">😊</span>
-                                            <span>{{ $page.props.auth.user.name }}</span>
-                                        </span>
-                                        <svg
-                                            class="w-4 h-4 -me-0.5 ms-2"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            viewBox="0 0 20 20"
-                                            fill="currentColor"
-                                        >
-                                            <path
-                                                fill-rule="evenodd"
-                                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                clip-rule="evenodd"
-                                            />
+                                    type="button"
+                                    @click.stop
+                                    :class="[
+                                        'flex items-center w-full font-medium text-gray-600 transition-colors hover:text-gray-900 hover:bg-gray-50 focus:outline-none rounded-xl',
+                                        isCollapsed ? 'justify-center px-2 py-3' : 'justify-between px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm mx-1 md:mx-0'
+                                    ]"
+                                    :title="isCollapsed ? $page.props.auth.user.name : ''"
+                                >
+                                    <span :class="['flex items-center', isCollapsed ? 'justify-center' : 'gap-2 md:gap-3 min-w-0']">
+                                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                         </svg>
-                                    </button>
+                                        <span v-if="!isCollapsed" class="truncate">{{ $page.props.auth.user.name }}</span>
+                                    </span>
+                                    <svg
+                                        v-if="!isCollapsed"
+                                        class="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0 ml-1 md:ml-2"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                </button>
                             </template>
                             <template #content>
                                 <DropdownLink :href="route('profile.edit')">
@@ -113,50 +186,49 @@
             </div>
 
             <!-- 右メインコンテンツエリア -->
-            <div class="overflow-y-auto flex-1 bg-indigo-50">
+            <div class="overflow-y-auto flex-1">
                 <!-- プロジェクト選択中のローディング表示 -->
                 <div v-if="selectingProject" class="flex justify-center items-center h-full">
                     <div class="text-center">
-                        <div class="inline-block w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                        <p class="mt-4 text-sm text-gray-600">プロジェクトを読み込み中...</p>
+                        <div class="inline-block w-8 h-8 rounded-full border-4 border-indigo-600 animate-spin border-t-transparent"></div>
+                        <p class="mt-4 text-sm text-gray-500">プロジェクトを読み込み中...</p>
                     </div>
                 </div>
-                <div v-else-if="currentProject" class="p-10 mx-auto max-w-6xl">
+                <div v-else-if="currentProject" class="p-4 md:p-6 lg:p-10 mx-auto max-w-6xl">
                     <div>
-                        <div class="bg-white rounded-3xl">
-                        <div class="px-6 py-4 text-gray-900">
+                        <div class="pb-6">
                             <!-- プロジェクト名（タイトル）とアクションボタン -->
-                            <div class="flex justify-between items-center mb-1">
+                            <div class="flex justify-between items-center mb-4">
                                 <div class="flex gap-2 items-center">
-                                    <h1 class="text-xl font-bold text-gray-700">{{ currentProject.name }}</h1>
+                                    <h1 class="text-2xl font-semibold text-gray-900">{{ currentProject.name }}</h1>
                                 </div>
                                 <div class="flex gap-1">
                                     <button
                                         @click="openEditModal"
                                         :disabled="editForm.processing"
-                                        class="p-2 text-gray-500 rounded-md transition-colors hover:text-indigo-600 hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        class="p-2 text-gray-500 rounded-lg transition-colors hover:text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                         title="編集"
                                     >
                                         <svg v-if="!editForm.processing" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
-                                        <div v-else class="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                                        <div v-else class="w-5 h-5 rounded-full border-2 border-indigo-600 animate-spin border-t-transparent"></div>
                                     </button>
                                     <button
                                         @click="confirmDelete"
                                         :disabled="deletingProject"
-                                        class="p-2 text-gray-500 rounded-md transition-colors hover:text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        class="p-2 text-gray-500 rounded-lg transition-colors hover:text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                         title="削除"
                                     >
                                         <svg v-if="!deletingProject" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                         </svg>
-                                        <div v-else class="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                                        <div v-else class="w-5 h-5 rounded-full border-2 border-red-600 animate-spin border-t-transparent"></div>
                                     </button>
                                 </div>
                             </div>
 
-                            <div class="flex flex-wrap gap-2 mb-6">
+                            <div class="flex flex-wrap gap-2">
                                 <span :class="getStatusTagClass(!!currentProject.ssh_configured)">
                                     <svg v-if="currentProject.ssh_configured" class="w-3.5 h-3.5 text-emerald-700" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
                                         <circle cx="8" cy="8" r="7" />
@@ -201,168 +273,39 @@
                                 </span>
                             </div>
                             
-                            <!-- その他の情報（横並び） -->
-                            <div class="text-sm text-gray-900">
-                                <span class="font-semibold text-gray-400">確認用URL：</span>
-                                <a 
-                                    v-if="currentProject.staging_url"
-                                    :href="currentProject.staging_url" 
-                                    target="_blank" 
-                                    class="text-blue-600 hover:text-blue-800" 
-                                    :title="currentProject.staging_url"
-                                >
-                                    {{ currentProject.staging_url }}
-                                </a>
-                                <button
-                                    @click="openStagingUrlModal"
-                                    class="ml-1 font-medium text-gray-500"
-                                >
-                                    {{ currentProject.staging_url ? '(編集)' : '登録されていません' }}
-                                </button>
-                            </div>
                         </div>
-
-                        <!-- 改善内容入力と承認URL生成 -->
-                        <div
-                            v-if="isCurrentProjectSetupComplete"
-                            ref="approvalSection"
-                            class="px-4 py-4"
-                        >
-                            <!-- <div class="flex items-center mb-2">
-                                <h2 class="text-xl font-bold text-gray-600">改善内容</h2>
-                                <button
-                                    @click="showGuide"
-                                    class="p-2 text-gray-400 rounded-md transition-colors hover:text-indigo-600 hover:bg-indigo-50"
-                                    title="使い方ガイドを見る"
-                                >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </button>
-                            </div> -->
-                            <div class="space-y-3">
-                                <div class="mb-4">
-                                    <div class="tiptap-editor">
-                                        <div class="tiptap-toolbar">
-                                            <button type="button" @click="toggleHeading(1)" :class="{ 'is-active': editor?.isActive('heading', { level: 1 }) }">H1</button>
-                                            <button type="button" @click="toggleHeading(2)" :class="{ 'is-active': editor?.isActive('heading', { level: 2 }) }">H2</button>
-                                            <button type="button" @click="toggleHeading(3)" :class="{ 'is-active': editor?.isActive('heading', { level: 3 }) }">H3</button>
-                                            <span class="divider"></span>
-                                            <button type="button" @click="toggleBold" :class="{ 'is-active': editor?.isActive('bold') }"><strong>B</strong></button>
-                                            <button type="button" @click="toggleItalic" :class="{ 'is-active': editor?.isActive('italic') }"><em>I</em></button>
-                                            <button type="button" @click="toggleUnderline" :class="{ 'is-active': editor?.isActive('underline') }"><u>U</u></button>
-                                            <button type="button" @click="toggleStrike" :class="{ 'is-active': editor?.isActive('strike') }"><s>S</s></button>
-                                            <span class="divider"></span>
-                                            <button type="button" @click="toggleBulletList" :class="{ 'is-active': editor?.isActive('bulletList') }">•</button>
-                                            <button type="button" @click="toggleOrderedList" :class="{ 'is-active': editor?.isActive('orderedList') }">1.</button>
-                                            <button type="button" @click="toggleBlockquote" :class="{ 'is-active': editor?.isActive('blockquote') }">“”</button>
-                                            <button type="button" @click="toggleCodeBlock" :class="{ 'is-active': editor?.isActive('codeBlock') }">&lt;/&gt;</button>
-                                            <button type="button" @click="toggleCode" :class="{ 'is-active': editor?.isActive('code') }">`</button>
-                                            <button type="button" @click="setHorizontalRule">HR</button>
-                                            <span class="divider"></span>
-                                            <button type="button" @click="setLink" :class="{ 'is-active': editor?.isActive('link') }">Link</button>
-                                            <button type="button" @click="addImage">Image</button>
-                                            <span class="divider"></span>
-                                            <button type="button" @click="undo" :disabled="!editor?.can().undo()">↶</button>
-                                            <button type="button" @click="redo" :disabled="!editor?.can().redo()">↷</button>
-                                        </div>
-                                        <EditorContent :editor="editor" class="tiptap-content" />
-                                    </div>
-                                </div>
-                                <div class="flex gap-2 justify-end">
+                        <div class="bg-white rounded-3xl shadow-sm border border-gray-200">
+                        <div class="p-6">
+                            <div class="space-y-2">
+                                <div class="mb-2 text-sm font-bold text-gray-700">URLを入れるだけでWebサイトを読み込み！コメントを付けてすぐに共有</div>
+                                <div class="flex overflow-hidden rounded-2xl border border-indigo-300 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500">
+                                    <input
+                                        v-model="stagingUrlForm.staging_url"
+                                        type="url"
+                                        class="flex-1 px-3 py-3 min-w-0 bg-transparent border-0 text-md focus:ring-0 focus:outline-none"
+                                        placeholder="https://example.com"
+                                        @keyup.enter="submitImproveUrl"
+                                    />
                                     <button
-                                        @click="resetApprovalForm"
-                                        class="px-6 py-2 text-sm text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+                                        v-if="currentProject?.id"
+                                        type="button"
+                                        class="flex-shrink-0 px-6 py-3 m-1.5 font-semibold text-white bg-indigo-500 rounded-xl transition-colors text-md hover:bg-indigo-600 disabled:opacity-60"
+                                        :disabled="stagingUrlForm.processing"
+                                        @click="goToImprovePage"
                                     >
-                                        {{ generatedApprovalUrl ? 'すべてクリア' : 'キャンセル' }}
-                                    </button>
-                                    <button
-                                        ref="generateButton"
-                                        @click="generateApprovalUrl"
-                                        :disabled="isApprovalMessageEmpty || generatingUrl"
-                                        class="flex gap-2 items-center px-6 py-2 text-sm text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                    >
-                                        <div v-if="generatingUrl" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        <span>{{ generatingUrl ? '生成中...' : (generatedApprovalUrl ? '承認URLを再生成' : '承認URLを生成') }}</span>
+                                        すぐ作る
                                     </button>
                                 </div>
+                                <p class="text-xs text-gray-400">Enterキーでも遷移します。</p>
                             </div>
                         </div>
-                        <div v-else class="px-4 py-4">
-                            <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                                <div class="flex justify-between">
-                                        <h3 class="text-sm font-bold text-yellow-800">
-                                            <span
-                                                v-for="item in missingSetupForCurrentProject"
-                                                :key="item"
-                                            >
-                                            {{ item }}/</span>が未完了のため、本機能をご利用できません。
-                                        </h3>
-                                        <Link
-                                                v-if="missingSetupForCurrentProject.includes('GitHub Webhook') && currentProject.github_owner && currentProject.github_repo"
-                                                :href="route('settings.index')"
-                                                class="inline-flex gap-1 items-center text-xs font-bold text-yellow-800 hover:text-yellow-900"
-                                            >
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                                設定マニュアルへ
-                                        </Link>
-                                    </div>
-                            </div>
-                        </div>
-                        </div>
+                    </div>
 
-                        <!-- サクセスメッセージ（画面下からフェードイン） -->
-                        <Transition
-                                enter-active-class="transition duration-300 ease-out"
-                                enter-from-class="opacity-0 transform translate-y-full"
-                                enter-to-class="opacity-100 transform translate-y-0"
-                                leave-active-class="transition duration-200 ease-in"
-                                leave-from-class="opacity-100 transform translate-y-0"
-                                leave-to-class="opacity-0 transform translate-y-full"
-                            >
-                                <div
-                                    v-if="showSuccessMessage"
-                                    class="fixed bottom-4 z-50 px-6 max-w-3xl"
-                                    style="left: 256px; right: 0; margin: 0 auto;"
-                                >
-                                    <div class="relative p-3 w-full bg-indigo-100 rounded-2xl border border-indigo-200 shadow-lg">
-                                        <div class="flex justify-between items-center mb-2">
-                                            <p class="text-sm font-semibold text-blue-800">
-                                                {{ isRegenerating ? '承認URLを再生成しました！' : '承認URLを生成しました！' }}
-                                            </p>
-                                            <button
-                                                @click="closeSuccessMessage"
-                                                class="flex-shrink-0 text-xs text-blue-700 hover:text-blue-900"
-                                            >
-                                                閉じる
-                                            </button>
-                                        </div>
-                                        <div class="flex relative gap-2 items-center px-4 py-2 bg-white rounded-xl border border-indigo-200">
-                                            <a :href="generatedApprovalUrl" target="_blank" class="flex-1 text-sm text-blue-600 underline truncate hover:text-blue-800">{{ generatedApprovalUrl }}</a>
-                                            <button
-                                                @click="copyGeneratedApprovalUrl"
-                                                class="flex-shrink-0 p-1 text-gray-600 rounded hover:bg-gray-100"
-                                                :title="generatedUrlCopied ? 'コピーしました！' : 'コピー'"
-                                            >
-                                                <svg v-if="!generatedUrlCopied" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                                </svg>
-                                                <svg v-else class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                        </Transition>
-
-                        <div v-if="currentProject.deploy_logs && currentProject.deploy_logs.length > 0" class="mt-8 bg-white rounded-2xl">
+                    <div v-if="currentProject.deploy_logs && currentProject.deploy_logs.length > 0" class="mt-8 bg-white rounded-xl shadow-sm border border-gray-200">
                                 <div class="flex justify-between items-center p-4 border-b border-gray-200">
-                                    <h3 class="font-bold text-gray-700 text-md">リリースログ</h3>
-                                    <p class="text-xs font-bold text-gray-600">
-                                        ブランチ：<span class="font-medium">{{ currentProject.github_branch || '未設定' }}</span>
+                                    <h3 class="font-semibold text-gray-900 text-sm">リリースログ</h3>
+                                    <p class="text-xs font-medium text-gray-600">
+                                        ブランチ：<span class="font-normal">{{ currentProject.github_branch || '未設定' }}</span>
                                     </p>
                                 </div>
                                 <div>
@@ -411,7 +354,7 @@
                                                         </svg>
                                                     </button>
                                                 </div>
-                                                <div v-if="log.approval_message && expandedLogs[log.id]" class="p-4 mt-2 bg-white rounded-2xl">
+                                                <div v-if="log.approval_message && expandedLogs[log.id]" class="p-4 mt-2 bg-gray-50 rounded-lg">
                                                     <div class="max-w-none text-sm text-gray-600 prose prose-sm" v-html="formatApprovalMessage(log.approval_message.message)"></div>
                                                 </div>
                                             </div>
@@ -420,90 +363,18 @@
                                 </div>
                         </div>
                     </div>
-                    
+
                     <!-- フッター -->
                     <div class="mt-8">
                         <AppFooter />
                     </div>
                 </div>
                 <div v-else class="flex justify-center items-center h-full">
-                    <p class="text-gray-500">プロジェクトを選択してください</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- ガイドオーバーレイ -->
-        <div 
-            v-if="showGuideOverlay"
-            class="flex fixed inset-0 z-50 justify-center items-center bg-black bg-opacity-50"
-            @click.self="closeGuide"
-        >
-            <div class="relative mx-4 w-full max-w-lg bg-white rounded-lg shadow-xl">
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-bold text-gray-900">
-                            使い方ガイド ({{ currentStep + 1 }}/{{ guideSteps.length }})
-                        </h3>
-                        <button
-                            @click="closeGuide"
-                            class="p-1 text-gray-400 hover:text-gray-600"
-                        >
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                    
-                    <div class="mb-6">
-                        <div class="mb-4">
-                            <h4 class="mb-2 text-lg font-semibold text-gray-900">
-                                {{ guideSteps[currentStep].title }}
-                            </h4>
-                            <p class="text-gray-600 whitespace-pre-line">
-                                {{ guideSteps[currentStep].description }}
-                            </p>
-                        </div>
-                        <div v-if="guideSteps[currentStep].action" class="p-3 bg-indigo-50 rounded-md border border-indigo-200">
-                            <p class="text-sm font-medium text-indigo-700">
-                                {{ guideSteps[currentStep].action }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-between items-center">
-                        <button
-                            v-if="currentStep > 0"
-                            @click="previousStep"
-                            class="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
-                        >
-                            前へ
-                        </button>
-                        <div v-else></div>
-                        <div class="flex gap-2">
-                            <button
-                                v-for="(step, index) in guideSteps"
-                                :key="index"
-                                @click="currentStep = index"
-                                :class="[
-                                    'w-2 h-2 rounded-full transition-colors',
-                                    currentStep === index ? 'bg-indigo-600' : 'bg-gray-300'
-                                ]"
-                            ></button>
-                        </div>
-                        <button
-                            v-if="currentStep < guideSteps.length - 1"
-                            @click="nextStep"
-                            class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
-                        >
-                            次へ
-                        </button>
-                        <button
-                            v-else
-                            @click="closeGuide"
-                            class="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
-                        >
-                            完了
-                        </button>
+                    <div class="text-center">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                        </svg>
+                        <p class="text-gray-400 text-sm">プロジェクトを選択してください</p>
                     </div>
                 </div>
             </div>
@@ -565,7 +436,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, Transition, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Head, router, useForm, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import AppFooter from '@/Components/AppFooter.vue';
@@ -576,12 +447,6 @@ import ProjectEditModal from '@/Components/Dashboard/ProjectEditModal.vue';
 import ProjectCreateModal from '@/Components/Dashboard/ProjectCreateModal.vue';
 import WebhookSetupModal from '@/Components/Dashboard/WebhookSetupModal.vue';
 import StagingUrlModal from '@/Components/Dashboard/StagingUrlModal.vue';
-import { EditorContent, useEditor } from '@tiptap/vue-3';
-import StarterKit from '@tiptap/starter-kit';
-import LinkExtension from '@tiptap/extension-link';
-import Image from '@tiptap/extension-image';
-import Underline from '@tiptap/extension-underline';
-import Placeholder from '@tiptap/extension-placeholder';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import axios from 'axios';
@@ -592,220 +457,43 @@ const props = defineProps({
 });
 
 const selectedProjectId = ref(null);
-const approvalMessage = ref('');
-const generatingUrl = ref(false);
-const generatedApprovalUrl = ref('');
-const generatedUrlCopied = ref(false);
-const showSuccessMessage = ref(false);
-const isRegenerating = ref(false);
-const isConvertingPaths = ref(false); // パス変換中フラグ
 const selectingProject = ref(false); // プロジェクト選択中フラグ
 const deletingProject = ref(false); // プロジェクト削除中フラグ
-
-const editor = useEditor({
-    extensions: [
-        StarterKit.configure({
-            heading: {
-                levels: [1, 2, 3],
-            },
-            bulletList: {
-                keepMarks: true,
-            },
-            orderedList: {
-                keepMarks: true,
-            },
-        }),
-        Underline,
-        LinkExtension.configure({
-            openOnClick: false,
-            autolink: true,
-            linkOnPaste: true,
-            HTMLAttributes: {
-                target: '_blank',
-                rel: 'noopener noreferrer',
-            },
-        }),
-        Image.configure({
-            inline: false,
-        }),
-        Placeholder.configure({
-            placeholder: '改善内容の入力...',
-        }),
-    ],
-    content: '',
-    onUpdate: ({ editor: editorInstance }) => {
-        approvalMessage.value = editorInstance.getHTML();
-        
-        // パスの自動リンク化処理（無限ループを避けるため、変換中はスキップ）
-        if (isConvertingPaths.value || !currentProject.value || !currentProject.value.staging_url) return;
-        
-        const stagingUrl = currentProject.value.staging_url.replace(/\/$/, ''); // 末尾のスラッシュを削除
-        
-        // エディター全体を走査してパスを検出
-        const pathsToConvert = [];
-        
-        editorInstance.state.doc.descendants((node, pos) => {
-            if (node.isText && node.text) {
-                const text = node.text;
-                // パスパターンを検出（/で始まり、空白、改行、句読点、または行末まで）
-                // 例: /top, /about, /products/item-1
-                const pathPattern = /(?:^|[\s\n,。、])(\/[\w\-/]+(?:\?[\w\-=&]+)?(?:#[\w\-]+)?)(?=[\s\n,。、]|$)/g;
-                
-                let match;
-                while ((match = pathPattern.exec(text)) !== null) {
-                    const path = match[1];
-                    const matchIndex = match.index + (match[0].startsWith('/') ? 0 : 1); // 前の文字を考慮
-                    const absoluteFrom = pos + matchIndex;
-                    const absoluteTo = absoluteFrom + path.length;
-                    
-                    // 既にリンクになっているかチェック
-                    const marksAt = node.marks;
-                    const isAlreadyLink = marksAt.some(mark => mark.type.name === 'link');
-                    
-                    if (!isAlreadyLink) {
-                        pathsToConvert.push({
-                            path,
-                            from: absoluteFrom,
-                            to: absoluteTo,
-                        });
-                    }
-                }
-            }
-        });
-        
-        // パスが見つかった場合、リンクに変換（逆順にソートして後ろから変換）
-        if (pathsToConvert.length > 0) {
-            isConvertingPaths.value = true;
-            pathsToConvert.sort((a, b) => b.from - a.from);
-            
-            // 一度にすべてのパスを変換するのではなく、次のフレームで処理
-            nextTick(() => {
-                pathsToConvert.forEach(({ path, from: pathFrom, to: pathTo }) => {
-                    const fullUrl = stagingUrl + path;
-                    const displayText = stagingUrl + path; // 表示テキスト: ステージングURL + パス
-                    
-                    // 既にリンクになっていないか再確認
-                    const marksAt = editorInstance.state.doc.resolve(pathFrom).marks();
-                    const isAlreadyLink = marksAt.some(mark => mark.type.name === 'link');
-                    
-                    if (!isAlreadyLink) {
-                        // テキストを「ステージングURL + パス」に置き換えてリンクを設定
-                        const linkHtml = `<a href="${fullUrl}" target="_blank" rel="noopener noreferrer">${displayText}</a>`;
-                        editorInstance.chain()
-                            .setTextSelection({ from: pathFrom, to: pathTo })
-                            .deleteSelection()
-                            .insertContent(linkHtml)
-                            .run();
-                    }
-                });
-                
-                // 変換完了後、フラグをリセット
-                setTimeout(() => {
-                    isConvertingPaths.value = false;
-                }, 100);
-            });
-        }
-    },
-});
-
-const isApprovalMessageEmpty = computed(() => !editor.value || editor.value.isEmpty);
-
-// ガイド関連
-const showGuideOverlay = ref(false);
-const currentStep = ref(0);
-const approvalSection = ref(null);
-const generateButton = ref(null);
-const generatedUrlSection = ref(null);
-
-// リリースログの開閉状態管理
 const expandedLogs = ref({});
 
-const toggleLogExpansion = (logId) => {
-    expandedLogs.value[logId] = !expandedLogs.value[logId];
+// メニューの開閉状態（モバイルではデフォルトで閉じている）
+const isMenuOpen = ref(false);
+
+const toggleMenu = () => {
+    isMenuOpen.value = !isMenuOpen.value;
 };
 
-const toggleHeading = (level) => {
-    if (!editor.value) return;
-    editor.value.chain().focus().toggleHeading({ level }).run();
+// メニューの折りたたみ状態（デスクトップではデフォルトで展開）
+const isCollapsed = ref(false);
+
+const toggleCollapse = () => {
+    isCollapsed.value = !isCollapsed.value;
 };
 
-const toggleBold = () => {
-    if (!editor.value) return;
-    editor.value.chain().focus().toggleBold().run();
-};
-
-const toggleItalic = () => {
-    if (!editor.value) return;
-    editor.value.chain().focus().toggleItalic().run();
-};
-
-const toggleUnderline = () => {
-    if (!editor.value) return;
-    editor.value.chain().focus().toggleUnderline().run();
-};
-
-const toggleStrike = () => {
-    if (!editor.value) return;
-    editor.value.chain().focus().toggleStrike().run();
-};
-
-const toggleBulletList = () => {
-    if (!editor.value) return;
-    editor.value.chain().focus().toggleBulletList().run();
-};
-
-const toggleOrderedList = () => {
-    if (!editor.value) return;
-    editor.value.chain().focus().toggleOrderedList().run();
-};
-
-const toggleBlockquote = () => {
-    if (!editor.value) return;
-    editor.value.chain().focus().toggleBlockquote().run();
-};
-
-const toggleCodeBlock = () => {
-    if (!editor.value) return;
-    editor.value.chain().focus().toggleCodeBlock().run();
-};
-
-const toggleCode = () => {
-    if (!editor.value) return;
-    editor.value.chain().focus().toggleCode().run();
-};
-
-const setHorizontalRule = () => {
-    if (!editor.value) return;
-    editor.value.chain().focus().setHorizontalRule().run();
-};
-
-const setLink = () => {
-    if (!editor.value) return;
-    const previousUrl = editor.value.getAttributes('link').href;
-    const url = window.prompt('リンクURLを入力してください', previousUrl || '');
-    if (url === null) return;
-    if (url === '') {
-        editor.value.chain().focus().unsetLink().run();
-        return;
+// プロジェクト選択時にメニューを閉じる（モバイルのみ）
+const selectProjectWithMenuClose = async (projectId) => {
+    selectingProject.value = true;
+    try {
+        selectedProjectId.value = projectId;
+        // プロジェクト選択時にwebhookステータスを確認
+        const project = props.projects.find(p => p.id === projectId);
+        if (project && project.github_owner && project.github_repo) {
+            await checkWebhookStatus(project);
+        }
+        // 少し遅延を入れてローディング表示を見せる（UX向上）
+        await new Promise(resolve => setTimeout(resolve, 200));
+        // モバイルサイズの場合のみメニューを閉じる
+        if (window.innerWidth < 768) {
+            isMenuOpen.value = false;
+        }
+    } finally {
+        selectingProject.value = false;
     }
-    editor.value.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-};
-
-const addImage = () => {
-    if (!editor.value) return;
-    const url = window.prompt('画像URLを入力してください');
-    if (!url) return;
-    editor.value.chain().focus().setImage({ src: url }).run();
-};
-
-const undo = () => {
-    if (!editor.value) return;
-    editor.value.chain().focus().undo().run();
-};
-
-const redo = () => {
-    if (!editor.value) return;
-    editor.value.chain().focus().redo().run();
 };
 
 // 編集モーダル関連
@@ -1042,57 +730,6 @@ const submitEditForm = () => {
     });
 };
 
-const guideSteps = [
-    {
-        title: '改善内容を入力',
-        description: '改善したページや変更点を入力してください。\n\n例：\n- トップページのデザインを更新\n- 改善ページ: /about, /products/item-1\n- 変更点: ヘッダーの色を変更',
-        action: '「改善内容（マークダウン対応）」のテキストエリアに入力してください'
-    },
-    {
-        title: '承認URLを生成',
-        description: '入力した内容を確認し、「承認URLを生成」ボタンをクリックしてください。\n\n改善ページURLは「/about」のようにパスだけ入力すると、テスト環境URLと自動的に結合されます。',
-        action: '「承認URLを生成」ボタンをクリックしてください'
-    },
-    {
-        title: 'URLをコピーして共有',
-        description: '生成された承認URLをコピーして、クライアントに共有してください。\n\nクライアントがこのURLを開くと、改善内容と改善ページへのリンクが表示されます。',
-        action: '「生成されたURLをコピー」ボタンをクリックして、Slackやメールで共有してください'
-    },
-    {
-        title: 'クライアントが承認',
-        description: 'クライアントが承認ページで改善内容を確認し、「承認してデプロイ」ボタンをクリックします。\n\n承認と同時にGitHub Actionsが実行され、本番環境にデプロイされます。',
-        action: null
-    },
-    {
-        title: 'リリースログで確認',
-        description: 'デプロイの結果は「リリースログ」セクションで確認できます。\n\n承認時に共有した内容も記録されるため、過去の改善内容を振り返ることができます。',
-        action: null
-    }
-];
-
-const showGuide = () => {
-    showGuideOverlay.value = true;
-    currentStep.value = 0;
-};
-
-const closeGuide = () => {
-    showGuideOverlay.value = false;
-    // ガイドを見たことを記録
-    localStorage.setItem('approve-deployment-guide-viewed', 'true');
-};
-
-const nextStep = () => {
-    if (currentStep.value < guideSteps.length - 1) {
-        currentStep.value++;
-    }
-};
-
-const previousStep = () => {
-    if (currentStep.value > 0) {
-        currentStep.value--;
-    }
-};
-
 // デプロイログの同期処理（非同期実行）
 const syncDeployLogs = async () => {
     try {
@@ -1140,17 +777,6 @@ onMounted(() => {
     if (props.selectedProject) {
         selectedProjectId.value = props.selectedProject.id;
     }
-    
-    // 初回訪問時にガイドを表示
-    nextTick(() => {
-        const guideViewed = localStorage.getItem('approve-deployment-guide-viewed');
-        if (!guideViewed && props.selectedProject) {
-            // 少し遅延させて表示（ページ読み込み後に）
-            setTimeout(() => {
-                showGuide();
-            }, 1000);
-        }
-    });
 
     // デプロイログの同期を非同期で実行（ページロードをブロックしない）
     setTimeout(() => {
@@ -1249,6 +875,10 @@ const formatApprovalMessage = (message) => {
     return DOMPurify.sanitize(html, {
         ADD_ATTR: ['target', 'rel'],
     });
+};
+
+const toggleLogExpansion = (logId) => {
+    expandedLogs.value[logId] = !expandedLogs.value[logId];
 };
 
 // Webhookステータス管理
@@ -1520,6 +1150,27 @@ const submitStagingUrl = () => {
     });
 };
 
+const submitImproveUrl = () => {
+    if (!currentProject.value) return;
+    goToImprovePage();
+};
+
+const goToImprovePage = () => {
+    if (!currentProject.value) return;
+    const nextUrl = (stagingUrlForm.staging_url || '').trim();
+    if (!nextUrl) {
+        alert('改善内容URLを入力してください。');
+        return;
+    }
+
+    stagingUrlForm.staging_url = nextUrl;
+    stagingUrlForm.patch(route('projects.update', currentProject.value.id), {
+        onSuccess: () => {
+            router.visit(route('projects.improve', currentProject.value.id));
+        },
+    });
+};
+
 const selectProject = async (projectId) => {
     selectingProject.value = true;
     try {
@@ -1534,79 +1185,6 @@ const selectProject = async (projectId) => {
     } finally {
         selectingProject.value = false;
     }
-};
-
-const generateApprovalUrl = async () => {
-    if (!currentProject.value || isApprovalMessageEmpty.value || !isCurrentProjectSetupComplete.value) return;
-    
-    // 再生成かどうかを判定
-    const wasRegenerating = !!generatedApprovalUrl.value;
-    isRegenerating.value = wasRegenerating;
-    
-    // 再生成の場合は、既存のサクセスメッセージを一度フェードアウト
-    if (wasRegenerating && showSuccessMessage.value) {
-        showSuccessMessage.value = false;
-        // フェードアウトアニメーション完了を待つ（200ms + 少し余裕）
-        await new Promise(resolve => setTimeout(resolve, 250));
-    }
-    
-    generatingUrl.value = true;
-    try {
-        const response = await fetch(route('projects.generate-approval-url', currentProject.value.id), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-            },
-            body: JSON.stringify({
-                message: approvalMessage.value,
-            }),
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            generatedApprovalUrl.value = data.approval_url;
-            generatedUrlCopied.value = false;
-            // サクセスメッセージを表示（再生成の場合はフェードイン）
-            showSuccessMessage.value = true;
-        } else {
-            alert('承認URLの生成に失敗しました');
-        }
-    } catch (error) {
-        console.error('Error generating approval URL:', error);
-        alert('承認URLの生成に失敗しました');
-    } finally {
-        generatingUrl.value = false;
-    }
-};
-
-const resetApprovalForm = () => {
-    if (editor.value) {
-        editor.value.commands.clearContent(true);
-    }
-    approvalMessage.value = '';
-    generatedApprovalUrl.value = '';
-    generatedUrlCopied.value = false;
-    showSuccessMessage.value = false;
-    isRegenerating.value = false;
-};
-
-const copyGeneratedApprovalUrl = async () => {
-    if (!generatedApprovalUrl.value) return;
-    
-    try {
-        await navigator.clipboard.writeText(generatedApprovalUrl.value);
-        generatedUrlCopied.value = true;
-        setTimeout(() => {
-            generatedUrlCopied.value = false;
-        }, 2000);
-    } catch (err) {
-        console.error('Failed to copy:', err);
-    }
-};
-
-const closeSuccessMessage = () => {
-    showSuccessMessage.value = false;
 };
 
 const confirmDelete = () => {
@@ -1674,62 +1252,3 @@ const formatDurationFromSeconds = (seconds) => {
     return `${secs}秒`;
 };
 </script>
-
-<style scoped>
-.tiptap-editor {
-    border: 1px solid rgb(199, 210, 254);
-    border-radius: 0.5rem;
-    background-color: white;
-    overflow: hidden;
-}
-
-.tiptap-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-    padding: 0.5rem;
-    border-bottom: 1px solid rgb(199, 210, 254);
-    background-color: white;
-}
-
-.tiptap-toolbar button {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-    color: #475569;
-    border-radius: 0.375rem;
-    border: 1px solid transparent;
-}
-
-.tiptap-toolbar button.is-active {
-    background-color: #e0e7ff;
-    color: #4338ca;
-    border-color: #c7d2fe;
-}
-
-.tiptap-toolbar button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-
-.tiptap-toolbar .divider {
-    width: 1px;
-    height: 1.25rem;
-    background-color: #e2e8f0;
-    margin: 0 0.25rem;
-}
-
-.tiptap-content :deep(.ProseMirror) {
-    min-height: 260px;
-    padding: 0.75rem;
-    outline: none;
-}
-
-.tiptap-content :deep(.ProseMirror p.is-editor-empty:first-child::before) {
-    color: #94a3b8;
-    content: attr(data-placeholder);
-    float: left;
-    height: 0;
-    pointer-events: none;
-    white-space: pre-wrap;
-}
-</style>
