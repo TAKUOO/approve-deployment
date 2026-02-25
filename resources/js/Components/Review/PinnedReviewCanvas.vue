@@ -1,30 +1,21 @@
 <template>
-    <div>
+    <div class="relative w-full min-h-[70vh]">
         <div class="flex flex-wrap gap-2 justify-between items-center">
             <div class="text-sm text-gray-600">
-                <span v-if="!reviewUrl">URLを入力するとここにサイトが表示されます。</span>
+                <span v-if="!currentReviewUrl">左のパネルでURLを追加するとプレビューが表示されます。</span>
                 <span v-else-if="!commentingEnabled">改善内容を作成するとピン留めコメントが使えます。</span>
-            </div>
-            <div class="flex gap-2 items-center">
-                <button
-                    v-if="hasNewComments"
-                    type="button"
-                    class="px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 rounded-full border border-amber-200"
-                    @click="markAllSeen"
-                >
-                    新しいコメント
-                </button>
             </div>
         </div>
 
-        <div ref="canvasRef" class="overflow-hidden relative shadow-xl">
-            <div v-if="!reviewUrl" class="flex justify-center items-center w-full text-sm text-gray-500" :style="{ height: frameHeight }">
-                右上の入力欄にURLを入力して表示してください。
+        <div class="relative w-full" :style="{ minHeight: frameHeight }">
+        <div ref="canvasRef" class="overflow-hidden relative w-full shadow-xl">
+            <div v-if="!currentReviewUrl" class="flex justify-center items-center w-full text-sm text-gray-500" :style="{ height: frameHeight }">
+                左のパネルでURLを追加して表示してください。
             </div>
             <div v-else>
                 <iframe
                     ref="iframeRef"
-                    :src="reviewUrl"
+                    :src="currentReviewUrl"
                     class="w-full"
                     :style="{ height: frameHeight }"
                     frameborder="0"
@@ -37,13 +28,13 @@
                 >
                     <div class="space-y-2 text-center">
                         <div>このサイトは埋め込みを許可していない可能性があります。</div>
-                        <a :href="reviewUrl" target="_blank" class="text-indigo-600 underline">新しいタブで開く</a>
+                        <a :href="currentReviewUrl" target="_blank" class="text-indigo-600 underline">新しいタブで開く</a>
                     </div>
                 </div>
             </div>
 
             <div
-                v-if="pinMode && reviewUrl && commentingEnabled && canCreate"
+                v-if="pinMode && currentReviewUrl && commentingEnabled && canCreate"
                 class="absolute inset-0 cursor-crosshair"
                 @mousedown.prevent="handlePointerDown"
                 @mousemove.prevent="handlePointerMove"
@@ -179,20 +170,97 @@
                 </div>
             </div>
         </div>
-
-        <button
-            v-if="commentingEnabled && canCreate"
-            type="button"
-            class="flex fixed right-6 bottom-6 z-40 gap-2 items-center px-4 py-3 text-sm font-semibold text-white bg-indigo-600 rounded-full shadow-lg transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            :class="pinMode ? 'opacity-100' : ''"
-            @click="togglePinMode"
-        >
-            <span v-if="pinMode">配置中…（終了）</span>
-            <span v-else>コメント追加</span>
-        </button>
-
-        <div v-if="errorMessage" class="text-xs text-red-600">{{ errorMessage }}</div>
+        </div>
     </div>
+            <!-- 左端: パワポ風サムネイル一覧 + URL追加 -->
+            <aside class="overflow-hidden absolute top-0 bottom-0 left-0 z-10 w-80 max-h-full bg-white border-r border-gray-200 shadow-lg">
+            <div class="flex-shrink-0 p-4 border-b border-gray-100">
+                <label class="block mb-1 font-semibold text-gray-600 text-md">URLを追加</label>
+                <div class="flex gap-3">
+                    <input
+                        v-model="newUrlInput"
+                        type="url"
+                        class="flex-1 px-3 py-2 min-w-0 rounded-xl border border-gray-200 text-md focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="https://..."
+                    />
+                    <button
+                        type="button"
+                        class="flex-shrink-0 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 disabled:opacity-50"
+                        :disabled="!addableUrl"
+                        @click="addUrl"
+                    >
+                        追加
+                    </button>
+                </div>
+            </div>
+            <div class="overflow-y-auto flex-1 p-2 space-y-2 min-h-0">
+                <button
+                    v-for="(url, idx) in urlList"
+                    :key="idx"
+                    type="button"
+                    class="flex overflow-hidden flex-col w-full text-left rounded border-2 transition"
+                    :class="currentUrlIndex === idx ? 'border-indigo-500 bg-indigo-50 shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'"
+                    @click="currentUrlIndex = idx"
+                >
+                    <div class="flex flex-shrink-0 justify-center items-center w-full bg-gray-100 aspect-video">
+                        <span class="text-sm font-semibold text-gray-400">{{ idx + 1 }}</span>
+                    </div>
+                    <div class="flex-shrink-0 p-1.5">
+                        <p class="text-xs text-gray-700 truncate" :title="url">{{ displayUrlLabel(url) }}</p>
+                    </div>
+                </button>
+                <p v-if="urlList.length === 0" class="px-1 py-2 text-xs text-gray-400">上でURLを追加</p>
+            </div>
+        </aside>
+    <!-- 右端: Figma風コメントパネル（スクロールに付かない） -->
+    <aside class="flex overflow-hidden absolute top-0 right-0 bottom-0 z-10 flex-col w-80 max-h-full bg-white border-l border-gray-200 shadow-lg">
+        <div class="flex flex-shrink-0 gap-2 justify-between items-center p-3 border-b border-gray-100">
+            <span class="text-sm font-semibold text-gray-800">コメント</span>
+            <button
+                v-if="commentingEnabled && canCreate"
+                type="button"
+                class="flex gap-1.5 items-center px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                :class="pinMode ? 'ring-2 ring-indigo-400' : ''"
+                @click="togglePinMode"
+            >
+                <span v-if="pinMode">配置中…（終了）</span>
+                <span v-else>コメント追加</span>
+            </button>
+        </div>
+        <div v-if="hasNewComments" class="flex-shrink-0 px-3 py-1.5">
+            <button
+                type="button"
+                class="px-2 py-1 w-full text-xs font-semibold text-amber-700 bg-amber-50 rounded border border-amber-200"
+                @click="markAllSeen"
+            >
+                新しいコメント
+            </button>
+        </div>
+        <div class="overflow-y-auto flex-1 p-2 space-y-2 min-h-0">
+            <div
+                v-for="comment in comments"
+                :key="comment.id"
+                class="p-3 bg-gray-50 rounded-lg border border-gray-200 transition cursor-pointer hover:border-indigo-200 hover:bg-indigo-50/50"
+                :class="{ 'ring-2 ring-indigo-400 border-indigo-300 bg-indigo-50/80': activeCard?.comment?.id === comment.id }"
+                @click="openComment(comment)"
+            >
+                <div class="flex gap-2 items-start">
+                    <span class="flex flex-shrink-0 justify-center items-center w-6 h-6 text-xs font-semibold text-white bg-indigo-600 rounded-full">{{ commentIndex(comment) }}</span>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex flex-wrap gap-1 items-center">
+                            <span class="text-xs font-semibold text-gray-700">{{ comment.author_name || '名無し' }}</span>
+                            <span class="text-xs text-gray-400">{{ formatTimestamp(comment.created_at) }}</span>
+                            <span v-if="comment.w_ratio != null && comment.h_ratio != null && (comment.w_ratio > 0 || comment.h_ratio > 0)" class="text-[10px] text-amber-600 bg-amber-100 px-1 rounded">範囲</span>
+                        </div>
+                        <p class="mt-1 text-sm text-gray-700 whitespace-pre-line break-words line-clamp-3" v-html="formatBody(comment.body)"></p>
+                    </div>
+                </div>
+            </div>
+            <p v-if="comments.length === 0 && commentingEnabled" class="px-2 py-4 text-xs text-center text-gray-400">コメントはまだありません</p>
+            <p v-if="!commentingEnabled" class="px-2 py-4 text-xs text-center text-gray-400">改善内容を作成するとコメントが使えます</p>
+        </div>
+        <div v-if="errorMessage" class="flex-shrink-0 px-3 py-2 text-xs text-red-600 border-t border-gray-100">{{ errorMessage }}</div>
+    </aside>
 </template>
 
 <script setup>
@@ -274,6 +342,44 @@ const lastSeenKey = computed(() => props.approvalMessageId ? `review_comments_se
 
 const commentingEnabled = computed(() => !!props.approvalMessageId);
 
+const urlList = ref([]);
+const currentUrlIndex = ref(0);
+const newUrlInput = ref('');
+
+const currentReviewUrl = computed(() => {
+    if (urlList.value.length === 0) return props.reviewUrl || '';
+    return urlList.value[currentUrlIndex.value] || urlList.value[0] || props.reviewUrl || '';
+});
+
+const addableUrl = computed(() => {
+    const u = newUrlInput.value?.trim();
+    if (!u) return false;
+    try {
+        new URL(u);
+        return true;
+    } catch {
+        return false;
+    }
+});
+
+const addUrl = () => {
+    const u = newUrlInput.value?.trim();
+    if (!addableUrl.value) return;
+    urlList.value = [...urlList.value, u];
+    currentUrlIndex.value = urlList.value.length - 1;
+    newUrlInput.value = '';
+    iframeError.value = false;
+};
+
+const displayUrlLabel = (url) => {
+    if (!url) return '未設定';
+    try {
+        return new URL(url).hostname;
+    } catch {
+        return url.length > 30 ? url.slice(0, 30) + '…' : url;
+    }
+};
+
 const commentIndex = (comment) => {
     const index = comments.value.findIndex(c => c.id === comment.id);
     return index >= 0 ? index + 1 : 1;
@@ -343,7 +449,7 @@ const cancelEdit = () => {
 };
 
 const togglePinMode = () => {
-    if (!props.canCreate || !commentingEnabled.value || !props.reviewUrl) return;
+    if (!props.canCreate || !commentingEnabled.value || !currentReviewUrl.value) return;
     pinMode.value = !pinMode.value;
     if (!pinMode.value) {
         cancelDraft();
@@ -586,9 +692,13 @@ watch(() => props.approvalMessageId, () => {
     setupPolling();
 });
 
-watch(() => props.reviewUrl, () => {
+watch(() => props.reviewUrl, (url) => {
     iframeError.value = false;
-});
+    if (url && urlList.value.length === 0) {
+        urlList.value = [url];
+        currentUrlIndex.value = 0;
+    }
+}, { immediate: true });
 
 const commentsWithRect = computed(() => comments.value.filter(c => c.w_ratio != null && c.h_ratio != null && (c.w_ratio > 0 || c.h_ratio > 0)));
 </script>

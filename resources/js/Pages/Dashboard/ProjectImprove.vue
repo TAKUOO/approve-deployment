@@ -35,9 +35,8 @@
                     </div>
                 </div>
             </div>
-
-
-            <div class="mx-auto max-w-7xl">
+            <div class="relative">
+                <div class="mx-auto max-w-7xl">
                 <div v-if="generatedApprovalUrl" class="p-3 mt-4 bg-indigo-50 rounded-xl border border-indigo-200">
                     <div class="flex flex-wrap gap-2 items-center">
                         <div class="text-sm text-indigo-700">共有URLを生成しました。</div>
@@ -65,6 +64,7 @@
                     :poll-interval-ms="5000"
                     frame-height="100vh"
                 />
+            </div>
             </div>
         </div>
     </AuthenticatedLayout>
