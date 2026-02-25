@@ -5,6 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\ApprovalCommentController;
+use App\Http\Controllers\ScreenshotController;
 
 Route::get('/', function () {
     // ログイン済みの場合はプロジェクト一覧にリダイレクト
@@ -94,6 +95,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/projects/{project}/comments/{comment}', [ApprovalCommentController::class, 'updateForProject'])->name('projects.comments.update');
     Route::delete('/projects/{project}/comments/{comment}', [ApprovalCommentController::class, 'destroyForProject'])->name('projects.comments.destroy');
     
+    // Screenshot API (for preview thumbnails)
+    Route::get('/api/screenshot', ScreenshotController::class)->name('api.screenshot');
+
     // GitHub API Proxy
     Route::get('/api/github/organizations', [\App\Http\Controllers\ProjectController::class, 'getOrganizations'])->name('api.github.organizations');
     Route::get('/api/github/repositories', [\App\Http\Controllers\ProjectController::class, 'getRepositories'])->name('api.github.repositories');

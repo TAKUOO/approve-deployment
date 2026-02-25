@@ -172,46 +172,76 @@
         </div>
         </div>
     </div>
-            <!-- 左端: パワポ風サムネイル一覧 + URL追加 -->
-            <aside class="overflow-hidden absolute top-0 bottom-0 left-0 z-10 w-80 max-h-full bg-white border-r border-gray-200 shadow-lg">
-            <div class="flex-shrink-0 p-4 border-b border-gray-100">
-                <label class="block mb-1 font-semibold text-gray-600 text-md">URLを追加</label>
-                <div class="flex gap-3">
+            <!-- 左端: URL追加 + 一覧（ProjectListサイドバーと同デザイン） -->
+            <aside class="flex flex-col absolute top-2 bottom-2 left-2 z-10 w-56 md:w-64 lg:w-72 max-h-[calc(100%-1rem)] bg-white rounded-3xl shadow-lg border border-gray-200 overflow-hidden">
+                <!-- ロゴ（上部） -->
+                <div class="flex-shrink-0 border-b border-gray-200 px-3 py-4 md:px-4 md:py-5">
+                    <Link :href="route('projects.index')" class="flex items-center shrink-0 justify-center">
+                        <ApplicationLogo />
+                    </Link>
+                </div>
+                <!-- スロット: ロゴ下・URL入力上（戻る・共有する等） -->
+                <div v-if="$slots.headerActions" class="flex-shrink-0 border-b border-gray-200 px-3 py-2 md:px-4 md:py-3">
+                    <slot name="headerActions" />
+                </div>
+                <!-- URL追加 -->
+                <div class="flex-shrink-0 border-b border-gray-200 px-3 py-2 md:px-4 md:py-3">
                     <input
                         v-model="newUrlInput"
                         type="url"
-                        class="flex-1 px-3 py-2 min-w-0 rounded-xl border border-gray-200 text-md focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="https://..."
+                        class="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="https://... (Enterで追加)"
+                        @keyup.enter="addUrl"
                     />
-                    <button
-                        type="button"
-                        class="flex-shrink-0 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 disabled:opacity-50"
-                        :disabled="!addableUrl"
-                        @click="addUrl"
-                    >
-                        追加
-                    </button>
                 </div>
-            </div>
-            <div class="overflow-y-auto flex-1 p-2 space-y-2 min-h-0">
-                <button
-                    v-for="(url, idx) in urlList"
-                    :key="idx"
-                    type="button"
-                    class="flex overflow-hidden flex-col w-full text-left rounded border-2 transition"
-                    :class="currentUrlIndex === idx ? 'border-indigo-500 bg-indigo-50 shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'"
-                    @click="currentUrlIndex = idx"
-                >
-                    <div class="flex flex-shrink-0 justify-center items-center w-full bg-gray-100 aspect-video">
-                        <span class="text-sm font-semibold text-gray-400">{{ idx + 1 }}</span>
+                <!-- URLリスト -->
+                <div class="overflow-y-auto flex-1 py-2 min-h-0">
+                    <div v-if="urlList.length === 0" class="py-8 text-center px-3 md:px-4">
+                        <p class="text-xs md:text-sm text-gray-500">上でURLを追加</p>
                     </div>
-                    <div class="flex-shrink-0 p-1.5">
-                        <p class="text-xs text-gray-700 truncate" :title="url">{{ displayUrlLabel(url) }}</p>
+                    <div v-else class="px-1.5 md:px-2">
+                        <div
+                            v-for="(url, idx) in urlList"
+                            :key="idx"
+                            class="group relative flex items-center rounded-xl cursor-pointer transition-colors mb-1"
+                            :class="[
+                                'gap-2 md:gap-3 px-2 md:px-3 py-2 md:py-2.5',
+                                currentUrlIndex === idx
+                                    ? 'bg-indigo-50 text-indigo-700 font-semibold'
+                                    : 'text-gray-700 hover:bg-gray-50 font-medium'
+                            ]"
+                            @click="currentUrlIndex = idx"
+                        >
+                            <!-- アクティブインジケーター -->
+                            <div
+                                v-if="currentUrlIndex === idx"
+                                class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 md:h-6 bg-indigo-600 rounded-r"
+                            ></div>
+                            <!-- フォルダアイコン -->
+                            <svg
+                                class="w-4 h-4 flex-shrink-0"
+                                :class="currentUrlIndex === idx ? 'text-indigo-600' : 'text-gray-500 group-hover:text-gray-700'"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                            </svg>
+                            <span class="flex-1 min-w-0 text-xs md:text-sm truncate" :title="url">{{ displayUrlLabel(url) }}</span>
+                            <button
+                                type="button"
+                                class="flex-shrink-0 p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
+                                title="削除"
+                                @click.stop="removeUrl(idx)"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                </button>
-                <p v-if="urlList.length === 0" class="px-1 py-2 text-xs text-gray-400">上でURLを追加</p>
-            </div>
-        </aside>
+                </div>
+            </aside>
     <!-- 右端: Figma風コメントパネル（スクロールに付かない） -->
     <aside class="flex overflow-hidden absolute top-0 right-0 bottom-0 z-10 flex-col w-80 max-h-full bg-white border-l border-gray-200 shadow-lg">
         <div class="flex flex-shrink-0 gap-2 justify-between items-center p-3 border-b border-gray-100">
@@ -264,8 +294,10 @@
 </template>
 
 <script setup>
+import { Link } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import axios from 'axios';
+import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 
 const props = defineProps({
     reviewUrl: {
@@ -371,12 +403,23 @@ const addUrl = () => {
     iframeError.value = false;
 };
 
+const removeUrl = (idx) => {
+    urlList.value = urlList.value.filter((_, i) => i !== idx);
+    if (currentUrlIndex.value >= urlList.value.length) {
+        currentUrlIndex.value = Math.max(0, urlList.value.length - 1);
+    } else if (currentUrlIndex.value > idx) {
+        currentUrlIndex.value -= 1;
+    }
+};
+
 const displayUrlLabel = (url) => {
     if (!url) return '未設定';
     try {
-        return new URL(url).hostname;
+        const u = new URL(url);
+        const path = u.pathname && u.pathname !== '/' ? u.pathname : '';
+        return u.hostname + path;
     } catch {
-        return url.length > 30 ? url.slice(0, 30) + '…' : url;
+        return url.length > 50 ? url.slice(0, 50) + '…' : url;
     }
 };
 

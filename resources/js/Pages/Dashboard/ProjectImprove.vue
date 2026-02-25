@@ -1,56 +1,8 @@
 <template>
     <Head title="改善内容画面" />
     <AuthenticatedLayout>
-        <div class="w-full min-h-screen bg-indigo-100">
-            <div class="sticky top-0 z-30 bg-gray-100/95">
-                <div class="flex flex-wrap gap-3 justify-between items-center px-6 py-2 mx-auto">
-                    <div class="gap-4 text-sm">
-                        <span class="font-semibold text-gray-500">URL：</span>
-                        <a
-                            v-if="reviewUrl"
-                            :href="reviewUrl"
-                            target="_blank"
-                            class="text-indigo-600 underline break-all"
-                        >
-                            {{ reviewUrl }}
-                        </a>
-                        <span v-else class="text-gray-400">未設定</span>
-                    </div>
-                    <div class="flex gap-2 items-center">
-                        <button
-                            type="button"
-                            class="px-3 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
-                            @click="goBack"
-                        >
-                            戻る
-                        </button>
-                        <button
-                            type="button"
-                            class="px-3 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg disabled:opacity-60"
-                            :disabled="generatingUrl"
-                            @click="generateApprovalUrl"
-                        >
-                            {{ generatingUrl ? '生成中...' : '共有する' }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="relative">
-                <div class="mx-auto max-w-7xl">
-                <div v-if="generatedApprovalUrl" class="p-3 mt-4 bg-indigo-50 rounded-xl border border-indigo-200">
-                    <div class="flex flex-wrap gap-2 items-center">
-                        <div class="text-sm text-indigo-700">共有URLを生成しました。</div>
-                        <button
-                            type="button"
-                            class="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded-full"
-                            @click="copyGeneratedApprovalUrl"
-                        >
-                            {{ generatedUrlCopied ? 'コピーしました' : 'URLをコピー' }}
-                        </button>
-                    </div>
-                    <div class="mt-2 text-xs text-indigo-700 break-all">{{ generatedApprovalUrl }}</div>
-                </div>
-
+        <div class="relative w-full min-h-screen bg-indigo-100">
+            <div class="mx-auto max-w-7xl">
                 <PinnedReviewCanvas
                     :review-url="reviewUrl"
                     :approval-message-id="approvalMessageId"
@@ -63,8 +15,59 @@
                     :require-author-name="false"
                     :poll-interval-ms="5000"
                     frame-height="100vh"
-                />
+                >
+                    <template #headerActions>
+                        <div class="flex gap-2">
+                            <button
+                                type="button"
+                                class="flex-shrink-0 px-3 py-2 text-sm font-semibold text-gray-700 bg-gray-100 rounded-xl transition hover:bg-gray-200"
+                                @click="goBack"
+                            >
+                                戻る
+                            </button>
+                            <button
+                                type="button"
+                                class="flex-1 min-w-0 px-3 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-xl transition hover:bg-indigo-700 disabled:opacity-60"
+                                :disabled="generatingUrl"
+                                @click="generateApprovalUrl"
+                            >
+                                {{ generatingUrl ? '生成中...' : '共有する' }}
+                            </button>
+                        </div>
+                    </template>
+                </PinnedReviewCanvas>
             </div>
+
+            <!-- 共有URL生成時のフローティング通知 -->
+            <div
+                v-if="generatedApprovalUrl"
+                class="fixed left-1/2 bottom-6 z-50 w-full max-w-md -translate-x-1/2 p-4 mx-4 bg-white rounded-xl border border-indigo-200 shadow-lg"
+            >
+                <div class="flex justify-between gap-2 items-start">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex flex-wrap gap-2 items-center">
+                            <span class="text-sm font-medium text-indigo-700">共有URLを生成しました</span>
+                            <button
+                                type="button"
+                                class="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded-full hover:bg-indigo-700"
+                                @click="copyGeneratedApprovalUrl"
+                            >
+                                {{ generatedUrlCopied ? 'コピーしました' : 'URLをコピー' }}
+                            </button>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-600 break-all">{{ generatedApprovalUrl }}</p>
+                    </div>
+                    <button
+                        type="button"
+                        class="flex-shrink-0 p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition"
+                        title="閉じる"
+                        @click="generatedApprovalUrl = ''"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
     </AuthenticatedLayout>
