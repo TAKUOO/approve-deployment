@@ -11,6 +11,7 @@ class DeployLog extends Model
         'project_id',
         'status',
         'github_run_id',
+        'pr_title',
         'access_token',
         'started_at',
         'finished_at',

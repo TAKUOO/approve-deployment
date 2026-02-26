@@ -201,6 +201,7 @@ class DeployLogController extends Controller
                     $deployLog->update([
                         'status' => $mappedStatus,
                         'finished_at' => ($mappedStatus === 'success' || $mappedStatus === 'failed') ? now() : null,
+                        'pr_title' => $deployLog->pr_title ?: ($runData['display_title'] ?? null),
                     ]);
 
                     \Illuminate\Support\Facades\Log::info('Deploy status synced from GitHub', [

@@ -32,33 +32,39 @@ class SlackNotifier
         $statusLabel = $status === 'success' ? '✅ 本番反映完了' : '❌ デプロイ失敗';
         $statusColor = $status === 'success' ? '#16a34a' : '#dc2626';
 
+        $fields = [
+            [
+                'title' => 'プロジェクト',
+                'value' => $project->name,
+                'short' => true,
+            ],
+            [
+                'title' => 'ステータス',
+                'value' => $status === 'success' ? '成功' : '失敗',
+                'short' => true,
+            ],
+        ];
+
+        if ($deployLog->pr_title) {
+            $fields[] = [
+                'title' => 'PR / コミット',
+                'value' => $deployLog->pr_title,
+                'short' => false,
+            ];
+        }
+
+        $fields[] = [
+            'title' => 'GitHub Run ID',
+            'value' => $deployLog->github_run_id ?: '-',
+            'short' => true,
+        ];
+
         $payload = [
             'text' => $statusLabel,
             'attachments' => [
                 [
                     'color' => $statusColor,
-                    'fields' => [
-                        [
-                            'title' => 'プロジェクト',
-                            'value' => $project->name,
-                            'short' => true,
-                        ],
-                        [
-                            'title' => 'ステータス',
-                            'value' => $status === 'success' ? '成功' : '失敗',
-                            'short' => true,
-                        ],
-                        [
-                            'title' => 'Deploy Log ID',
-                            'value' => (string) $deployLog->id,
-                            'short' => true,
-                        ],
-                        [
-                            'title' => 'GitHub Run ID',
-                            'value' => $deployLog->github_run_id ?: '-',
-                            'short' => true,
-                        ],
-                    ],
+                    'fields' => $fields,
                 ],
             ],
         ];
